@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ImageIcon, PlusIcon, SaveIcon, TrashIcon } from "lucide-react";
+import { ImageIcon, PlusIcon, SaveIcon, TrashIcon, ImagePlusIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface UIConfigPanelProps {
@@ -363,7 +363,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       value={config.slot_booking.button_format || ""} 
                       onChange={(e) => handleInputChange("slot_booking", "button_format", e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground">Use {"{slot_id}"} as placeholder for dynamic slot ID</p>
+                    <p className="text-xs text-muted-foreground">Use {slot_id} as placeholder for dynamic slot ID</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="slot_callback_data">Callback Data</Label>
@@ -372,7 +372,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       value={config.slot_booking.callback_data || ""} 
                       onChange={(e) => handleInputChange("slot_booking", "callback_data", e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground">Use {"{slot_id}"} as placeholder for dynamic slot ID</p>
+                    <p className="text-xs text-muted-foreground">Use {slot_id} as placeholder for dynamic slot ID</p>
                   </div>
                 </div>
               </div>
@@ -427,7 +427,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       value={config.approve_flow.account_format || ""} 
                       onChange={(e) => handleInputChange("approve_flow", "account_format", e.target.value)}
                     />
-                    <p className="text-xs text-muted-foreground">Use {"{email}"} and {"{password}"} as placeholders</p>
+                    <p className="text-xs text-muted-foreground">Use {email} and {password} as placeholders</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="approve_gif">GIF URL</Label>
