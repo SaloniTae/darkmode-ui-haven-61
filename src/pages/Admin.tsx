@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,11 +12,9 @@ import { Loader2 } from "lucide-react";
 import { fetchData } from "@/lib/firebase";
 import { DatabaseSchema } from "@/types/database";
 import { toast } from "sonner";
-
 export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [dbData, setDbData] = useState<DatabaseSchema | null>(null);
-
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -34,7 +31,6 @@ export default function Admin() {
     };
     loadData();
   }, []);
-
   if (loading) {
     return <MainLayout className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -43,7 +39,6 @@ export default function Admin() {
         </div>
       </MainLayout>;
   }
-
   if (!dbData) {
     return <MainLayout>
         <div className="glass-morphism p-8 text-center">
@@ -52,9 +47,10 @@ export default function Admin() {
         </div>
       </MainLayout>;
   }
-
   return <MainLayout>
       <div className="space-y-8">
+        
+
         <Tabs defaultValue="admin" className="w-full">
           <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-7 h-auto p-1 glass-morphism shadow-lg">
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="admin">Admins</TabsTrigger>
@@ -67,36 +63,36 @@ export default function Admin() {
           </TabsList>
           
           <TabsContent value="admin" className="mt-0">
-            <AdminPanel adminConfig={dbData.admin_config} service="crunchyroll" />
+            <AdminPanel adminConfig={dbData.admin_config} />
           </TabsContent>
           
           <TabsContent value="credentials" className="mt-0">
             <CredentialsPanel credentials={{
-              cred1: dbData.cred1,
-              cred2: dbData.cred2,
-              cred3: dbData.cred3,
-              cred4: dbData.cred4
-            }} slots={dbData.settings.slots} service="crunchyroll" />
+            cred1: dbData.cred1,
+            cred2: dbData.cred2,
+            cred3: dbData.cred3,
+            cred4: dbData.cred4
+          }} slots={dbData.settings.slots} />
           </TabsContent>
           
           <TabsContent value="slots" className="mt-0">
-            <SlotsPanel slots={dbData.settings.slots} service="crunchyroll" />
+            <SlotsPanel slots={dbData.settings.slots} />
           </TabsContent>
           
           <TabsContent value="referrals" className="mt-0">
-            <ReferralsPanel referrals={dbData.referrals} referralSettings={dbData.referral_settings} freeTrialClaims={dbData.free_trial_claims} service="crunchyroll" />
+            <ReferralsPanel referrals={dbData.referrals} referralSettings={dbData.referral_settings} freeTrialClaims={dbData.free_trial_claims} />
           </TabsContent>
           
           <TabsContent value="transactions" className="mt-0">
-            <TransactionsPanel transactions={dbData.transactions} usedOrderIds={dbData.used_orderids} service="crunchyroll" />
+            <TransactionsPanel transactions={dbData.transactions} usedOrderIds={dbData.used_orderids} />
           </TabsContent>
           
           <TabsContent value="uiconfig" className="mt-0">
-            <UIConfigPanel uiConfig={dbData.ui_config} service="crunchyroll" />
+            <UIConfigPanel uiConfig={dbData.ui_config} />
           </TabsContent>
           
           <TabsContent value="users" className="mt-0">
-            <UsersPanel users={dbData.users} service="crunchyroll" />
+            <UsersPanel users={dbData.users} />
           </TabsContent>
         </Tabs>
       </div>
