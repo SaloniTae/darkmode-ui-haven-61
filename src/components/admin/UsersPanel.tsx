@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
@@ -58,7 +59,6 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
     } catch (error) {
       console.error("Error adding user:", error);
       toast.error("Failed to add user");
-      throw error;
     }
   };
   
@@ -75,7 +75,6 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
     } catch (error) {
       console.error("Error removing user:", error);
       toast.error("Failed to remove user");
-      throw error;
     }
   };
   
@@ -94,7 +93,7 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
     }
   };
   
-  const filteredUsers = Object.entries(localUsers).filter(([userId]) =>
+  const filteredUsers = Object.entries(localUsers || {}).filter(([userId]) =>
     userId.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
@@ -124,7 +123,7 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
         </div>
       </div>
       
-      <DataCard title={`All Users (${Object.keys(localUsers).length})`}>
+      <DataCard title={`All Users (${Object.keys(localUsers || {}).length})`}>
         <div className="glass-morphism rounded-lg overflow-hidden">
           {sortedUsers.length > 0 ? (
             <div className="max-h-[600px] overflow-y-auto scrollbar-none">

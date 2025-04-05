@@ -28,7 +28,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     setEditedConfig(uiConfig);
   }, [uiConfig]);
 
-  const handleInputChange = (path: string[], value: string) => {
+  const handleInputChange = (path: string[], value: string | string[]) => {
     setEditedConfig((prevConfig) => {
       const newConfig = { ...prevConfig };
       let current: any = newConfig;
@@ -96,7 +96,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     onChange={(e) => {
                       const newArray = [...value];
                       newArray[idx] = e.target.value;
-                      handleInputChange(path, newArray);
+                      handleInputChange(path, newArray as any);
                     }}
                   />
                 );
