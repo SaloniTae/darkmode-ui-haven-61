@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Edit, Save, Lock, Unlock, Check, X, CalendarIcon, PlusCircle, Trash } from "lucide-react";
-import { updateData, setData, removeData } from "@/lib/firebase";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, parse } from "date-fns";
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useFirebaseService } from "@/hooks/useFirebaseService";
 
 interface Credential {
   belongs_to_slot: string;
@@ -44,9 +44,10 @@ interface CredentialsPanelProps {
     [key: string]: Credential;
   };
   slots: Slots;
+  service: string;
 }
 
-export function CredentialsPanel({ credentials, slots }: CredentialsPanelProps) {
+export function CredentialsPanel({ credentials, slots, service }: CredentialsPanelProps) {
   const [editingCredential, setEditingCredential] = useState<string | null>(null);
   const [editedCredentials, setEditedCredentials] = useState({ ...credentials });
   const [confirmationDialog, setConfirmationDialog] = useState<{open: boolean; action: () => Promise<void>; title: string; description: string}>({
@@ -67,6 +68,8 @@ export function CredentialsPanel({ credentials, slots }: CredentialsPanelProps) 
     usage_count: 0
   });
   const [newCredentialKey, setNewCredentialKey] = useState("");
+  
+  const { updateData, setData, removeData } = useFirebaseService(service);
 
   const handleEditCredential = (credKey: string) => {
     setEditingCredential(credKey);
