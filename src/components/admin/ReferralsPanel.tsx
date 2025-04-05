@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Referral, ReferralSettings } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -7,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Edit, Save, Award, User, Users, Trash2, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { updateData, removeData } from "@/lib/firebaseService";
 import { toast } from "sonner";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import {
@@ -17,16 +19,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useFirebaseService } from "@/hooks/useFirebaseService";
 
 interface ReferralsPanelProps {
   referrals: { [key: string]: Referral };
   referralSettings: ReferralSettings;
   freeTrialClaims: { [key: string]: boolean };
-  service: string;
 }
 
-export function ReferralsPanel({ referrals, referralSettings, freeTrialClaims, service }: ReferralsPanelProps) {
+export function ReferralsPanel({ referrals, referralSettings, freeTrialClaims }: ReferralsPanelProps) {
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editedSettings, setEditedSettings] = useState<ReferralSettings>({ ...referralSettings });
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,8 +36,6 @@ export function ReferralsPanel({ referrals, referralSettings, freeTrialClaims, s
     open: false,
     userId: ""
   });
-  
-  const { updateData, removeData } = useFirebaseService(service);
 
   const handleSaveSettings = async () => {
     try {
@@ -96,11 +94,13 @@ export function ReferralsPanel({ referrals, referralSettings, freeTrialClaims, s
     }
   };
 
+  // Filter referrals based on search term
   const filteredReferrals = Object.entries(referrals).filter(([userId, referral]) =>
     userId.toLowerCase().includes(searchTerm.toLowerCase()) || 
     referral.referral_code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Sort referrals by points (highest first)
   const sortedReferrals = filteredReferrals.sort((a, b) => 
     b[1].referral_points - a[1].referral_points
   );
@@ -325,6 +325,7 @@ export function ReferralsPanel({ referrals, referralSettings, freeTrialClaims, s
         </div>
       </div>
       
+      {/* Edit Referral Dialog */}
       {editedReferral && (
         <Dialog open={!!editingReferral} onOpenChange={(open) => {
           if (!open) {
@@ -407,6 +408,7 @@ export function ReferralsPanel({ referrals, referralSettings, freeTrialClaims, s
         </Dialog>
       )}
       
+      {/* Delete Confirmation Dialog */}
       <ConfirmationDialog 
         open={deleteConfirmation.open} 
         onOpenChange={(open) => {

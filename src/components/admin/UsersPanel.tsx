@@ -34,6 +34,7 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
   
   const { setData, removeData } = useFirebaseService(service);
   
+  // Update local state when props change
   useEffect(() => {
     setLocalUsers(users || {});
   }, [users]);
@@ -48,6 +49,7 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
       await setData(`/users/${newUserId}`, true);
       toast.success(`User ${newUserId} added successfully`);
       
+      // Update local state
       setLocalUsers(prev => ({
         ...prev,
         [newUserId]: true
@@ -69,6 +71,7 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
       await removeData(`/users/${selectedUser}`);
       toast.success(`User ${selectedUser} removed successfully`);
       
+      // Update local state
       const updatedUsers = {...localUsers};
       delete updatedUsers[selectedUser];
       setLocalUsers(updatedUsers);
@@ -84,6 +87,7 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
       await setData(`/users/${userId}`, !currentStatus);
       toast.success(`User ${userId} ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
       
+      // Update local state
       setLocalUsers(prev => ({
         ...prev,
         [userId]: !currentStatus
@@ -94,10 +98,12 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
     }
   };
   
+  // Filter users based on search term
   const filteredUsers = Object.entries(localUsers).filter(([userId]) =>
     userId.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
+  // Sort users by ID
   const sortedUsers = filteredUsers.sort((a, b) => 
     a[0].localeCompare(b[0])
   );
@@ -196,6 +202,7 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
         </div>
       </DataCard>
       
+      {/* Add User Dialog */}
       <AlertDialog open={isAddingUser} onOpenChange={setIsAddingUser}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -222,6 +229,7 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
         </AlertDialogContent>
       </AlertDialog>
       
+      {/* Confirm Delete Dialog */}
       <ConfirmationDialog 
         open={isConfirmingDelete} 
         onOpenChange={setIsConfirmingDelete}
