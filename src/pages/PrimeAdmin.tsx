@@ -119,7 +119,7 @@ export default function PrimeAdmin() {
           </TabsContent>
           
           <TabsContent value="users" className="mt-0">
-            <UsersPanel users={dbData.users} userData={dbData.userData} service="prime" />
+            <UsersPanel users={dbData.users} service="prime" />
           </TabsContent>
         </Tabs>
       </div>

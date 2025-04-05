@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useCallback } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -233,7 +232,7 @@ export default function CrunchyrollAdmin() {
           </TabsContent>
           
           <TabsContent value="users" className="mt-0">
-            <UsersPanel users={dbData?.users || {}} userData={dbData?.userData} service="crunchyroll" />
+            <UsersPanel users={dbData?.users || {}} service="crunchyroll" />
           </TabsContent>
         </Tabs>
       </div>

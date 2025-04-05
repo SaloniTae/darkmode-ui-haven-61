@@ -15,8 +15,7 @@ import PersistLogin from "@/components/auth/PersistLogin";
 const CrunchyrollAdmin = lazy(() => import("./pages/CrunchyrollAdmin"));
 const NetflixAdmin = lazy(() => import("./pages/NetflixAdmin"));
 const PrimeAdmin = lazy(() => import("./pages/PrimeAdmin"));
-// Import LoginPage directly instead of using lazy loading to avoid dynamic import issues
-import LoginPage from "./pages/LoginPage";
+const LoginPage = lazy(() => import("./pages/LoginPage"));
 const PasswordResetPage = lazy(() => import("./pages/PasswordResetPage"));
 
 // Create a new QueryClient with optimized settings
