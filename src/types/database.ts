@@ -136,6 +136,26 @@ export interface UIConfig {
   };
 }
 
+// User types
+export interface UserInfo {
+  email?: string;
+  [key: string]: any;
+}
+
+export interface User {
+  [userId: string]: UserInfo;
+}
+
+export interface UserDataEntry {
+  locked?: number;
+  verified?: number;
+  [key: string]: any;
+}
+
+export interface UserData {
+  [userId: string]: UserDataEntry;
+}
+
 // Database Schema
 export interface DatabaseSchema {
   admin_config: AdminConfig;
@@ -156,7 +176,6 @@ export interface DatabaseSchema {
   used_orderids: {
     [key: string]: boolean;
   };
-  users: {
-    [key: string]: boolean;
-  };
+  users: User;
+  userData?: UserData;
 }

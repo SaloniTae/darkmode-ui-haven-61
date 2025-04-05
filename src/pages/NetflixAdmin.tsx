@@ -119,7 +119,7 @@ export default function NetflixAdmin() {
           </TabsContent>
           
           <TabsContent value="users" className="mt-0">
-            <UsersPanel users={dbData.users} service="netflix" />
+            <UsersPanel users={dbData.users} userData={dbData.userData} service="netflix" />
           </TabsContent>
         </Tabs>
       </div>

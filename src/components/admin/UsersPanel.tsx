@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { User, UserData } from "@/types/database";
+import { User, UserData, UserInfo } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,13 +15,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface UsersPanelProps {
   users: User;
-  userData: UserData;
+  userData?: UserData;
   service: string;
 }
 
-export function UsersPanel({ users, userData, service }: UsersPanelProps) {
+export function UsersPanel({ users, userData = {}, service }: UsersPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [editedUserData, setEditedUserData] = useState<UserData>({ ...userData });
+  const [editedUserData, setEditedUserData] = useState<UserData>({});
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{
     open: boolean;
@@ -35,7 +35,7 @@ export function UsersPanel({ users, userData, service }: UsersPanelProps) {
     description: ""
   });
   
-  const { updateData } = useFirebaseService(service);
+  const { updateData, fetchData } = useFirebaseService(service);
 
   // Make sure userData exists and has a safe default
   useEffect(() => {
@@ -44,12 +44,35 @@ export function UsersPanel({ users, userData, service }: UsersPanelProps) {
     }
   }, [userData]);
 
+  // Fetch userData if not provided
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (Object.keys(editedUserData).length === 0) {
+        try {
+          const data = await fetchData("/userData");
+          if (data) {
+            setEditedUserData(data);
+          }
+        } catch (error) {
+          console.error("Error loading user data:", error);
+        }
+      }
+    };
+    
+    loadUserData();
+  }, [fetchData]);
+
   const handleEditUser = (userId: string) => {
     setEditingUser(userId);
   };
 
   const handleSaveUser = async (userId: string) => {
     try {
+      if (!editedUserData[userId]) {
+        // Create default userData if it doesn't exist
+        editedUserData[userId] = { locked: 0, verified: 0 };
+      }
+      
       await updateData(`/userData/${userId}`, editedUserData[userId]);
       toast.success(`User ${userId} updated successfully`);
       setEditingUser(null);
@@ -72,8 +95,8 @@ export function UsersPanel({ users, userData, service }: UsersPanelProps) {
   const handleToggleLock = async (userId: string) => {
     // Make sure the user data exists
     if (!editedUserData[userId]) {
-      toast.error(`User data for ${userId} not found`);
-      return;
+      // Initialize user data if it doesn't exist
+      editedUserData[userId] = { locked: 0, verified: 0 };
     }
     
     const currentLockState = editedUserData[userId].locked || 0; // Default to 0 if undefined
@@ -110,8 +133,8 @@ export function UsersPanel({ users, userData, service }: UsersPanelProps) {
   const handleToggleVerification = async (userId: string) => {
     // Make sure the user data exists
     if (!editedUserData[userId]) {
-      toast.error(`User data for ${userId} not found`);
-      return;
+      // Initialize user data if it doesn't exist
+      editedUserData[userId] = { locked: 0, verified: 0 };
     }
     
     const currentVerificationState = editedUserData[userId].verified || 0; // Default to 0 if undefined
@@ -146,8 +169,9 @@ export function UsersPanel({ users, userData, service }: UsersPanelProps) {
   };
 
   const filteredUsers = Object.entries(users || {}).filter(([userId, user]) => {
+    const userInfo = user as UserInfo;
     return userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()));
+           (userInfo.email && typeof userInfo.email === 'string' && userInfo.email.toLowerCase().includes(searchTerm.toLowerCase()));
   });
 
   return (
@@ -180,14 +204,15 @@ export function UsersPanel({ users, userData, service }: UsersPanelProps) {
               <TableBody>
                 {filteredUsers.length > 0 ? (
                   filteredUsers.map(([userId, user]) => {
+                    const userInfo = user as UserInfo;
                     // Make sure userData and user-specific data exists
-                    const userSpecificData = editedUserData?.[userId] || {};
+                    const userSpecificData = editedUserData?.[userId] || { locked: 0, verified: 0 };
                     const isEditing = editingUser === userId;
                     
                     return (
                       <TableRow key={userId}>
                         <TableCell className="font-medium">{userId}</TableCell>
-                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{userInfo.email || 'No email'}</TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
                             <Badge variant={userSpecificData.locked === 1 ? "destructive" : "outline"}>
