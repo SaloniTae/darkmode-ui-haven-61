@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Transactions } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -9,7 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ConfirmationDialog } from "./ConfirmationDialog";
-import { format } from "date-fns";
+import { safeFormat } from "@/utils/dateFormatUtils";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
 
 interface TransactionsPanelProps {
@@ -49,7 +50,7 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
     const regularTransactions: Record<string, any> = {};
     const specialTransactions: Record<string, Record<string, any>> = {};
     
-    Object.entries(transactions).forEach(([key, value]) => {
+    Object.entries(transactions || {}).forEach(([key, value]) => {
       if (key === "FTRIAL-ID" || key === "REF-ID") {
         specialTransactions[key] = value as Record<string, any>;
       } else {
@@ -98,12 +99,24 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
       });
     });
     
-    return processedTransactions.sort((a, b) => 
-      new Date(b.approved).getTime() - new Date(a.approved).getTime()
-    );
+    return processedTransactions.sort((a, b) => {
+      // Safe comparison with fallback to alphabetical sorting if dates are invalid
+      try {
+        const dateA = new Date(a.approved).getTime();
+        const dateB = new Date(b.approved).getTime();
+        
+        if (isNaN(dateA) || isNaN(dateB)) {
+          // If either date is invalid, fall back to string comparison
+          return a.id.localeCompare(b.id);
+        }
+        
+        return dateB - dateA;
+      } catch (error) {
+        console.warn("Error sorting by date:", error);
+        return a.id.localeCompare(b.id);
+      }
+    });
   };
-
-  const processedTransactions = processTransactions();
 
   const handleDeleteTransaction = async () => {
     const { id, type } = deleteConfirmation;
@@ -133,13 +146,46 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
     }
   };
 
-  const formatDateTime = (dateString: string): string => {
+  // Safe formatting for date display
+  const formatDateTime = (dateString: string | undefined): string => {
+    if (!dateString) return "N/A";
+    return safeFormat(dateString, "PPP p", "Invalid Date");
+  };
+
+  // Safely format time for display
+  const formatTimeRange = (startTime?: string, endTime?: string): JSX.Element | string => {
+    if (!startTime || !endTime) return "N/A";
+    
     try {
-      return format(new Date(dateString), "PPP p");
-    } catch (e) {
-      return dateString;
+      const startDate = new Date(startTime);
+      const endDate = new Date(endTime);
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return "Invalid Time Range";
+      }
+      
+      return (
+        <div className="text-xs">
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            <span>{safeFormat(startDate, "MMM dd, yyyy", "Invalid Date")}</span>
+          </div>
+          <div className="flex items-center gap-1 mt-1">
+            <Clock className="h-3 w-3" />
+            <span>
+              {safeFormat(startDate, "h:mm a", "?")} - 
+              {safeFormat(endDate, "h:mm a", "?")}
+            </span>
+          </div>
+        </div>
+      );
+    } catch (error) {
+      console.error("Error formatting time range:", error);
+      return "Error formatting time";
     }
   };
+
+  const processedTransactions = processTransactions();
 
   return (
     <div className="space-y-6">
@@ -175,7 +221,7 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
         <DataCard title="Total Transactions" className="text-center">
           <div className="py-4">
             <span className="text-3xl font-bold">
-              {Object.keys(transactions).filter(key => key !== "FTRIAL-ID" && key !== "REF-ID").length}
+              {Object.keys(transactions || {}).filter(key => key !== "FTRIAL-ID" && key !== "REF-ID").length}
             </span>
             <p className="text-muted-foreground text-sm mt-1">Regular transactions</p>
           </div>
@@ -184,7 +230,7 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
         <DataCard title="Free Trials" className="text-center">
           <div className="py-4">
             <span className="text-3xl font-bold">
-              {transactions["FTRIAL-ID"] && 
+              {transactions && transactions["FTRIAL-ID"] && 
                Object.keys(transactions["FTRIAL-ID"]).filter(id => id !== "FTRIAL-ID-OTTONRENT").length}
             </span>
             <p className="text-muted-foreground text-sm mt-1">Total claimed</p>
@@ -194,7 +240,7 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
         <DataCard title="Referral Redemptions" className="text-center">
           <div className="py-4">
             <span className="text-3xl font-bold">
-              {transactions["REF-ID"] ? 
+              {transactions && transactions["REF-ID"] ? 
                Object.keys(transactions["REF-ID"]).filter(key => key !== "REF-ID-OTTONRENT").length : 
                0}
             </span>
@@ -232,28 +278,10 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
                     </TableCell>
                     <TableCell>{transaction.slot || "N/A"}</TableCell>
                     <TableCell>
-                      {transaction.startTime && transaction.endTime ? (
-                        <div className="text-xs">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>{new Date(transaction.startTime).toLocaleDateString()}</span>
-                          </div>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Clock className="h-3 w-3" />
-                            <span>
-                              {format(new Date(transaction.startTime), "h:mm a")} - 
-                              {format(new Date(transaction.endTime), "h:mm a")}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        "N/A"
-                      )}
+                      {formatTimeRange(transaction.startTime, transaction.endTime)}
                     </TableCell>
                     <TableCell className="text-xs">
-                      {transaction.approved !== "Unknown" ? 
-                        format(new Date(transaction.approved), "PPP p") : 
-                        "Unknown"}
+                      {formatDateTime(transaction.approved)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end">
@@ -289,7 +317,7 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
         <div className="glass-morphism rounded-lg overflow-hidden">
           <div className="overflow-auto p-4" style={{ maxHeight: '200px' }}>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-              {Object.entries(usedOrderIds).map(([orderId, used]) => (
+              {Object.entries(usedOrderIds || {}).map(([orderId, used]) => (
                 <div key={orderId} className="flex items-center justify-between p-2 rounded-md bg-white/5">
                   <span className="text-sm truncate mr-2">{orderId}</span>
                   <div className="flex gap-1">

@@ -49,3 +49,27 @@ export const getTimePickerValues = () => {
   const periods = ['AM', 'PM'];
   return { hours, minutes, periods };
 };
+
+/**
+ * Safely formats a date with fallback for invalid dates
+ * @param date A Date object or string to format
+ * @param formatStr The format string
+ * @param fallback Fallback string to return if date is invalid
+ */
+export const safeFormat = (date: Date | string | null | undefined, formatStr: string, fallback: string = "N/A"): string => {
+  try {
+    if (!date) return fallback;
+    
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    if (!isValid(dateObj)) {
+      console.warn(`Invalid date value: ${date}`);
+      return fallback;
+    }
+    
+    return format(dateObj, formatStr);
+  } catch (error) {
+    console.warn(`Error formatting date: ${date}`, error);
+    return fallback;
+  }
+};

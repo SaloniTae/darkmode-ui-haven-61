@@ -16,9 +16,9 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar as CalendarIcon, Check } from "lucide-react";
-import { format, isValid } from "date-fns";
+import { isValid } from "date-fns";
 import { toast } from "sonner";
-import { parseSlotDateTime, getTimePickerValues } from "@/utils/dateFormatUtils";
+import { parseSlotDateTime, getTimePickerValues, safeFormat } from "@/utils/dateFormatUtils";
 
 interface DateTimePickerProps {
   value: string;
@@ -31,19 +31,6 @@ export function DateTimePicker({ value, onChange, align = "end" }: DateTimePicke
   
   // Safely parse the date and provide a fallback if invalid
   const selectedDate = parseSlotDateTime(value);
-  
-  // Safe formatter function to avoid errors with invalid dates
-  const safeFormat = (date: Date, formatString: string): string => {
-    try {
-      if (!isValid(date)) {
-        return "";
-      }
-      return format(date, formatString);
-    } catch (error) {
-      console.warn("Error formatting date:", error);
-      return "";
-    }
-  };
 
   return (
     <Popover>
@@ -59,13 +46,18 @@ export function DateTimePicker({ value, onChange, align = "end" }: DateTimePicke
             selected={selectedDate}
             onSelect={(date) => {
               if (date) {
-                const currentDateTime = selectedDate;
-                const newDate = new Date(date);
-                newDate.setHours(
-                  currentDateTime.getHours(),
-                  currentDateTime.getMinutes()
-                );
-                onChange(newDate);
+                try {
+                  const currentDateTime = selectedDate;
+                  const newDate = new Date(date);
+                  newDate.setHours(
+                    currentDateTime.getHours(),
+                    currentDateTime.getMinutes()
+                  );
+                  onChange(newDate);
+                } catch (error) {
+                  console.error("Error selecting date:", error);
+                  toast.error("Error selecting date");
+                }
               }
             }}
             initialFocus
@@ -76,7 +68,7 @@ export function DateTimePicker({ value, onChange, align = "end" }: DateTimePicke
             <div className="flex items-center gap-2">
               <div className="relative w-20">
                 <Select 
-                  value={safeFormat(selectedDate, 'hh')}
+                  value={safeFormat(selectedDate, 'hh', '12')}
                   onValueChange={(hour) => {
                     try {
                       const date = new Date(selectedDate);
@@ -105,7 +97,7 @@ export function DateTimePicker({ value, onChange, align = "end" }: DateTimePicke
               <span className="flex items-center">:</span>
               <div className="relative w-20">
                 <Select 
-                  value={safeFormat(selectedDate, 'mm')}
+                  value={safeFormat(selectedDate, 'mm', '00')}
                   onValueChange={(minute) => {
                     try {
                       const date = new Date(selectedDate);
@@ -131,7 +123,7 @@ export function DateTimePicker({ value, onChange, align = "end" }: DateTimePicke
               </div>
               <div className="relative w-20">
                 <Select 
-                  value={safeFormat(selectedDate, 'a')}
+                  value={safeFormat(selectedDate, 'a', 'AM')}
                   onValueChange={(period) => {
                     try {
                       const date = new Date(selectedDate);
