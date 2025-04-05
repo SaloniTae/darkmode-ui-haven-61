@@ -1,232 +1,272 @@
 
 import { useState, useEffect } from "react";
+import { User, UserData } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, UserCheck, UserMinus, Plus, Check } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Edit, Save, Lock, Unlock, UserCheck, UserX, Search } from "lucide-react";
 import { toast } from "sonner";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface UsersPanelProps {
-  users: { [key: string]: boolean };
+  users: User;
+  userData: UserData;
   service: string;
 }
 
-export function UsersPanel({ users, service }: UsersPanelProps) {
+export function UsersPanel({ users, userData, service }: UsersPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddingUser, setIsAddingUser] = useState(false);
-  const [newUserId, setNewUserId] = useState("");
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-  const [localUsers, setLocalUsers] = useState<{[key: string]: boolean}>(users || {});
+  const [editedUserData, setEditedUserData] = useState<UserData>({ ...userData });
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    open: boolean;
+    action: () => Promise<void>;
+    title: string;
+    description: string;
+  }>({
+    open: false,
+    action: async () => {},
+    title: "",
+    description: ""
+  });
   
-  const { setData, removeData } = useFirebaseService(service);
-  
+  const { updateData } = useFirebaseService(service);
+
+  // Make sure userData exists and has a safe default
   useEffect(() => {
-    setLocalUsers(users || {});
-  }, [users]);
-  
-  const handleAddUser = async () => {
-    if (!newUserId.trim()) {
-      toast.error("Please enter a user ID");
+    if (userData) {
+      setEditedUserData(userData);
+    }
+  }, [userData]);
+
+  const handleEditUser = (userId: string) => {
+    setEditingUser(userId);
+  };
+
+  const handleSaveUser = async (userId: string) => {
+    try {
+      await updateData(`/userData/${userId}`, editedUserData[userId]);
+      toast.success(`User ${userId} updated successfully`);
+      setEditingUser(null);
+    } catch (error) {
+      console.error(`Error updating user ${userId}:`, error);
+      toast.error(`Failed to update user ${userId}`);
+    }
+  };
+
+  const handleInputChange = (userId: string, field: string, value: any) => {
+    setEditedUserData({
+      ...editedUserData,
+      [userId]: {
+        ...editedUserData[userId],
+        [field]: value
+      }
+    });
+  };
+
+  const handleToggleLock = async (userId: string) => {
+    // Make sure the user data exists
+    if (!editedUserData[userId]) {
+      toast.error(`User data for ${userId} not found`);
       return;
     }
     
-    try {
-      await setData(`/users/${newUserId}`, true);
-      toast.success(`User ${newUserId} added successfully`);
-      
-      setLocalUsers(prev => ({
-        ...prev,
-        [newUserId]: true
-      }));
-      
-      setNewUserId("");
-      setIsAddingUser(false);
-    } catch (error) {
-      console.error("Error adding user:", error);
-      toast.error("Failed to add user");
-    }
-  };
-  
-  const handleDeleteUser = async () => {
-    if (!selectedUser) return;
+    const currentLockState = editedUserData[userId].locked || 0; // Default to 0 if undefined
+    const newLockState = currentLockState === 0 ? 1 : 0;
     
-    try {
-      await removeData(`/users/${selectedUser}`);
-      toast.success(`User ${selectedUser} removed successfully`);
-      
-      const updatedUsers = {...localUsers};
-      delete updatedUsers[selectedUser];
-      setLocalUsers(updatedUsers);
-    } catch (error) {
-      console.error("Error removing user:", error);
-      toast.error("Failed to remove user");
-    }
+    setConfirmAction({
+      open: true,
+      action: async () => {
+        try {
+          await updateData(`/userData/${userId}`, {
+            ...editedUserData[userId],
+            locked: newLockState
+          });
+          
+          setEditedUserData({
+            ...editedUserData,
+            [userId]: {
+              ...editedUserData[userId],
+              locked: newLockState
+            }
+          });
+          
+          toast.success(`User ${userId} ${newLockState === 1 ? 'locked' : 'unlocked'} successfully`);
+        } catch (error) {
+          console.error(`Error toggling lock state for user ${userId}:`, error);
+          toast.error(`Failed to ${newLockState === 1 ? 'lock' : 'unlock'} user ${userId}`);
+        }
+      },
+      title: `${currentLockState === 0 ? 'Lock' : 'Unlock'} User`,
+      description: `Are you sure you want to ${currentLockState === 0 ? 'lock' : 'unlock'} user ${userId}?`
+    });
   };
-  
-  const handleToggleUserStatus = async (userId: string, currentStatus: boolean) => {
-    try {
-      await setData(`/users/${userId}`, !currentStatus);
-      toast.success(`User ${userId} ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
-      
-      setLocalUsers(prev => ({
-        ...prev,
-        [userId]: !currentStatus
-      }));
-    } catch (error) {
-      console.error("Error updating user status:", error);
-      toast.error("Failed to update user status");
+
+  const handleToggleVerification = async (userId: string) => {
+    // Make sure the user data exists
+    if (!editedUserData[userId]) {
+      toast.error(`User data for ${userId} not found`);
+      return;
     }
+    
+    const currentVerificationState = editedUserData[userId].verified || 0; // Default to 0 if undefined
+    const newVerificationState = currentVerificationState === 0 ? 1 : 0;
+    
+    setConfirmAction({
+      open: true,
+      action: async () => {
+        try {
+          await updateData(`/userData/${userId}`, {
+            ...editedUserData[userId],
+            verified: newVerificationState
+          });
+          
+          setEditedUserData({
+            ...editedUserData,
+            [userId]: {
+              ...editedUserData[userId],
+              verified: newVerificationState
+            }
+          });
+          
+          toast.success(`User ${userId} ${newVerificationState === 1 ? 'verified' : 'unverified'} successfully`);
+        } catch (error) {
+          console.error(`Error toggling verification state for user ${userId}:`, error);
+          toast.error(`Failed to ${newVerificationState === 1 ? 'verify' : 'unverify'} user ${userId}`);
+        }
+      },
+      title: `${currentVerificationState === 0 ? 'Verify' : 'Unverify'} User`,
+      description: `Are you sure you want to ${currentVerificationState === 0 ? 'verify' : 'unverify'} user ${userId}?`
+    });
   };
-  
-  const filteredUsers = Object.entries(localUsers || {}).filter(([userId]) =>
-    userId.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  const sortedUsers = filteredUsers.sort((a, b) => 
-    a[0].localeCompare(b[0])
-  );
+
+  const filteredUsers = Object.entries(users || {}).filter(([userId, user]) => {
+    return userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()));
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold">Users Management</h2>
-        
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search users..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <Button onClick={() => setIsAddingUser(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Add User
-          </Button>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">User Management</h2>
+        <div className="relative w-64">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search users..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </div>
       
-      <DataCard title={`All Users (${Object.keys(localUsers || {}).length})`}>
-        <div className="glass-morphism rounded-lg overflow-hidden">
-          {sortedUsers.length > 0 ? (
-            <div className="max-h-[600px] overflow-y-auto scrollbar-none">
-              <Table>
-                <TableHeader className="sticky top-0 bg-background z-10">
+      <DataCard title="Users" className="w-full">
+        <div className="rounded-md border">
+          <ScrollArea className="h-[400px]">
+            <Table>
+              <TableHeader className="sticky top-0 bg-secondary z-10">
+                <TableRow>
+                  <TableHead>User ID</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map(([userId, user]) => {
+                    // Make sure userData and user-specific data exists
+                    const userSpecificData = editedUserData?.[userId] || {};
+                    const isEditing = editingUser === userId;
+                    
+                    return (
+                      <TableRow key={userId}>
+                        <TableCell className="font-medium">{userId}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Badge variant={userSpecificData.locked === 1 ? "destructive" : "outline"}>
+                              {userSpecificData.locked === 1 ? "Locked" : "Unlocked"}
+                            </Badge>
+                            <Badge variant={userSpecificData.verified === 1 ? "success" : "secondary"}>
+                              {userSpecificData.verified === 1 ? "Verified" : "Unverified"}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button 
+                              variant={userSpecificData.locked === 1 ? "outline" : "destructive"} 
+                              size="sm"
+                              onClick={() => handleToggleLock(userId)}
+                            >
+                              {userSpecificData.locked === 1 ? (
+                                <><Unlock className="mr-2 h-4 w-4" /> Unlock</>
+                              ) : (
+                                <><Lock className="mr-2 h-4 w-4" /> Lock</>
+                              )}
+                            </Button>
+                            <Button 
+                              variant={userSpecificData.verified === 1 ? "destructive" : "outline"} 
+                              size="sm"
+                              onClick={() => handleToggleVerification(userId)}
+                            >
+                              {userSpecificData.verified === 1 ? (
+                                <><UserX className="mr-2 h-4 w-4" /> Unverify</>
+                              ) : (
+                                <><UserCheck className="mr-2 h-4 w-4" /> Verify</>
+                              )}
+                            </Button>
+                            {isEditing ? (
+                              <Button 
+                                variant="default" 
+                                size="sm"
+                                onClick={() => handleSaveUser(userId)}
+                              >
+                                <Save className="mr-2 h-4 w-4" /> Save
+                              </Button>
+                            ) : (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditUser(userId)}
+                              >
+                                <Edit className="mr-2 h-4 w-4" /> Edit
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
                   <TableRow>
-                    <TableHead>User ID</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      No users found.
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedUsers.map(([userId, isActive]) => (
-                    <TableRow key={userId}>
-                      <TableCell className="font-medium">{userId}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          {isActive ? (
-                            <>
-                              <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                              <span className="text-sm">Active</span>
-                            </>
-                          ) : (
-                            <>
-                              <div className="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
-                              <span className="text-sm">Inactive</span>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant={isActive ? "destructive" : "outline"} 
-                            size="sm"
-                            onClick={() => handleToggleUserStatus(userId, isActive)}
-                          >
-                            {isActive ? "Deactivate" : "Activate"}
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(userId);
-                              setIsConfirmingDelete(true);
-                            }}
-                          >
-                            <UserMinus className="h-4 w-4 mr-1" /> Remove
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <EmptyState 
-              title="No users found"
-              description={searchTerm ? "Try adjusting your search" : "Start by adding users"}
-              icon={<UserCheck className="h-10 w-10" />}
-              action={
-                <Button onClick={() => setIsAddingUser(true)}>
-                  <Plus className="h-4 w-4 mr-2" /> Add User
-                </Button>
-              }
-            />
-          )}
+                )}
+              </TableBody>
+            </Table>
+          </ScrollArea>
         </div>
       </DataCard>
       
-      <AlertDialog open={isAddingUser} onOpenChange={setIsAddingUser}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Add New User</AlertDialogTitle>
-            <AlertDialogDescription>
-              Enter the ID of the user you want to add to the system.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          
-          <div className="my-4">
-            <Input
-              placeholder="User ID"
-              value={newUserId}
-              onChange={(e) => setNewUserId(e.target.value)}
-            />
-          </div>
-          
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleAddUser}>
-              <Check className="h-4 w-4 mr-2" /> Add User
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      
       <ConfirmationDialog 
-        open={isConfirmingDelete} 
-        onOpenChange={setIsConfirmingDelete}
-        title="Confirm Removal"
-        description={`Are you sure you want to remove user ${selectedUser}? This action cannot be undone.`}
-        onConfirm={handleDeleteUser}
+        open={confirmAction.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmAction({...confirmAction, open: false});
+          }
+        }}
+        title={confirmAction.title}
+        description={confirmAction.description}
+        onConfirm={confirmAction.action}
       />
     </div>
   );
