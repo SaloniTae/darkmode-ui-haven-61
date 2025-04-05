@@ -139,10 +139,10 @@ export interface UIConfig {
 // Database Schema
 export interface DatabaseSchema {
   admin_config: AdminConfig;
-  cred1: Credential;
-  cred2: Credential;
-  cred3: Credential;
-  cred4: Credential;
+  cred1?: Credential;
+  cred2?: Credential;
+  cred3?: Credential;
+  cred4?: Credential;
   free_trial_claims: {
     [key: string]: boolean;
   };
@@ -159,4 +159,5 @@ export interface DatabaseSchema {
   users: {
     [key: string]: boolean;
   };
+  [key: string]: any; // Allow for dynamic credential keys beyond cred1-cred4
 }

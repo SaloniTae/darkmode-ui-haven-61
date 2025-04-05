@@ -37,19 +37,21 @@ interface Credential {
 
 interface CredentialsPanelProps {
   credentials: {
-    cred1: Credential;
-    cred2: Credential;
-    cred3: Credential;
-    cred4: Credential;
-    [key: string]: Credential;
+    cred1?: Credential;
+    cred2?: Credential;
+    cred3?: Credential;
+    cred4?: Credential;
+    [key: string]: Credential | undefined;
   };
   slots: Slots;
   service: string;
 }
 
 export function CredentialsPanel({ credentials, slots, service }: CredentialsPanelProps) {
+  const safeCredentials = credentials || {};
+  
   const [editingCredential, setEditingCredential] = useState<string | null>(null);
-  const [editedCredentials, setEditedCredentials] = useState({ ...credentials });
+  const [editedCredentials, setEditedCredentials] = useState({ ...safeCredentials });
   const [confirmationDialog, setConfirmationDialog] = useState<{open: boolean; action: () => Promise<void>; title: string; description: string}>({
     open: false,
     action: async () => {},
@@ -76,21 +78,31 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     
     try {
       const currentCred = editedCredentials[credKey];
-      setSelectedDate(parse(currentCred.expiry_date, 'yyyy-MM-dd', new Date()));
+      if (currentCred?.expiry_date) {
+        setSelectedDate(parse(currentCred.expiry_date, 'yyyy-MM-dd', new Date()));
+      } else {
+        setSelectedDate(new Date());
+      }
     } catch (e) {
       setSelectedDate(new Date());
     }
   };
 
   const handleCancelEdit = () => {
-    setEditedCredentials({ ...credentials });
+    setEditedCredentials({ ...safeCredentials });
     setEditingCredential(null);
     setSelectedDate(undefined);
   };
 
   const handleSaveCredential = async (credKey: string) => {
     try {
-      await updateData(`/${credKey}`, editedCredentials[credKey]);
+      const credToSave = editedCredentials[credKey];
+      if (!credToSave) {
+        toast.error(`Cannot save undefined credential: ${credKey}`);
+        return;
+      }
+      
+      await updateData(`/${credKey}`, credToSave);
       toast.success(`${credKey} updated successfully`);
       setEditingCredential(null);
       setSelectedDate(undefined);
@@ -104,14 +116,19 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     setEditedCredentials({
       ...editedCredentials,
       [credKey]: {
-        ...editedCredentials[credKey],
+        ...(editedCredentials[credKey] || {}),
         [field]: value
-      }
+      } as Credential
     });
   };
 
   const handleToggleLock = async (credKey: string) => {
     const currentCred = editedCredentials[credKey];
+    if (!currentCred) {
+      toast.error(`Cannot toggle lock for undefined credential: ${credKey}`);
+      return;
+    }
+    
     const newLockedValue = currentCred.locked === 0 ? 1 : 0;
     
     try {
@@ -134,6 +151,11 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
 
   const toggleLockState = (credKey: string) => {
     const currentCred = editedCredentials[credKey];
+    if (!currentCred) {
+      toast.error(`Cannot toggle lock state for undefined credential: ${credKey}`);
+      return;
+    }
+    
     const newLockedValue = currentCred.locked === 0 ? 1 : 0;
     
     setConfirmationDialog({
@@ -231,6 +253,168 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     }
   };
 
+  const validCredentialEntries = Object.entries(editedCredentials).filter(
+    ([_, cred]) => cred !== undefined && cred !== null
+  );
+
+  if (validCredentialEntries.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Credentials Management</h2>
+          <Button onClick={() => setIsAddingCredential(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Credential
+          </Button>
+        </div>
+        
+        <div className="glass-morphism p-8 text-center">
+          <h3 className="text-xl font-medium mb-4">No credentials found</h3>
+          <p className="text-muted-foreground mb-6">Add credentials to manage user access</p>
+          <Button onClick={() => setIsAddingCredential(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Add First Credential
+          </Button>
+        </div>
+        
+        <AlertDialog 
+          open={isAddingCredential} 
+          onOpenChange={setIsAddingCredential}
+        >
+          <AlertDialogContent className="bg-background">
+            <ScrollArea className="max-h-[85vh]">
+              <div className="p-6">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Add New Credential</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Create a new credential for user access
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-cred-key">Credential Key</Label>
+                    <Input
+                      id="new-cred-key"
+                      placeholder="e.g., cred5"
+                      value={newCredentialKey}
+                      onChange={(e) => setNewCredentialKey(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="new-cred-email">Email</Label>
+                    <Input
+                      id="new-cred-email"
+                      placeholder="email@example.com"
+                      value={newCredential.email}
+                      onChange={(e) => handleNewCredentialChange('email', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="new-cred-password">Password</Label>
+                    <Input
+                      id="new-cred-password"
+                      placeholder="password"
+                      value={newCredential.password}
+                      onChange={(e) => handleNewCredentialChange('password', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="new-cred-slot">Slot</Label>
+                    <Select
+                      value={newCredential.belongs_to_slot}
+                      onValueChange={(value) => handleNewCredentialChange('belongs_to_slot', value)}
+                    >
+                      <SelectTrigger id="new-cred-slot">
+                        <SelectValue placeholder="Select slot" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border border-input">
+                        {Object.keys(slots || {}).map((slotKey) => (
+                          <SelectItem key={slotKey} value={slotKey}>{slotKey}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="new-cred-expiry">Expiry Date</Label>
+                    <div className="flex">
+                      <Input
+                        id="new-cred-expiry"
+                        value={newCredential.expiry_date}
+                        onChange={(e) => handleNewCredentialChange('expiry_date', e.target.value)}
+                        className="flex-1"
+                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="ml-2">
+                            <CalendarIcon className="h-4 w-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-popover">
+                          <Calendar
+                            mode="single"
+                            selected={parse(newCredential.expiry_date, 'yyyy-MM-dd', new Date())}
+                            onSelect={(date) => handleDateSelect('new', date)}
+                            initialFocus
+                            className="bg-background"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="new-cred-max-usage">Max Usage</Label>
+                      <Input
+                        id="new-cred-max-usage"
+                        type="number"
+                        value={newCredential.max_usage}
+                        onChange={(e) => handleNewCredentialChange('max_usage', parseInt(e.target.value))}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="new-cred-lock">Lock Status</Label>
+                      <div className="flex items-center h-10 space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => handleNewCredentialChange('locked', newCredential.locked === 0 ? 1 : 0)}
+                          className={cn(
+                            "flex items-center justify-center w-6 h-6 rounded-full transition-colors",
+                            newCredential.locked === 0 
+                              ? "bg-green-500 text-white hover:bg-green-600" 
+                              : "bg-red-500 text-white hover:bg-red-600"
+                          )}
+                        >
+                          {newCredential.locked === 0 ? (
+                            <Unlock className="w-4 h-4" />
+                          ) : (
+                            <Lock className="w-4 h-4" />
+                          )}
+                        </button>
+                        <span>{newCredential.locked === 0 ? "Unlocked" : "Locked"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleCreateCredential}>
+                    Create Credential
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </div>
+            </ScrollArea>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -241,9 +425,13 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {Object.entries(editedCredentials).map(([credKey, cred]) => {
+        {validCredentialEntries.map(([credKey, cred]) => {
+          if (!cred) return null;
+          
           const isEditing = editingCredential === credKey;
           const currentCred = editedCredentials[credKey];
+          
+          if (!currentCred) return null;
           
           return (
             <DataCard
@@ -284,7 +472,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                             <SelectValue placeholder="Select slot" />
                           </SelectTrigger>
                           <SelectContent className="bg-background border border-input">
-                            {Object.keys(slots).map((slotKey) => (
+                            {Object.keys(slots || {}).map((slotKey) => (
                               <SelectItem key={slotKey} value={slotKey}>{slotKey}</SelectItem>
                             ))}
                           </SelectContent>
@@ -527,7 +715,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                       <SelectValue placeholder="Select slot" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border border-input">
-                      {Object.keys(slots).map((slotKey) => (
+                      {Object.keys(slots || {}).map((slotKey) => (
                         <SelectItem key={slotKey} value={slotKey}>{slotKey}</SelectItem>
                       ))}
                     </SelectContent>
