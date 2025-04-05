@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useCallback } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,10 +10,10 @@ import { UIConfigPanel } from "@/components/admin/UIConfigPanel";
 import { UsersPanel } from "@/components/admin/UsersPanel";
 import { TokenGenerator } from "@/components/admin/TokenGenerator";
 import { Loader2 } from "lucide-react";
-import { fetchData, subscribeToData } from "@/lib/firebaseService";
 import { DatabaseSchema } from "@/types/database";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { useFirebaseService } from "@/hooks/useFirebaseService";
 
 export default function CrunchyrollAdmin() {
   const [loading, setLoading] = useState(false);
@@ -22,6 +21,7 @@ export default function CrunchyrollAdmin() {
   const { isAuthenticated } = useAuth();
   const dataFetchedRef = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
+  const { fetchData, subscribeToData } = useFirebaseService('crunchyroll');
 
   const loadData = useCallback(async () => {
     try {
@@ -44,7 +44,7 @@ export default function CrunchyrollAdmin() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchData, subscribeToData]);
 
   useEffect(() => {
     // Only fetch data if authenticated and not already fetched
@@ -103,7 +103,7 @@ export default function CrunchyrollAdmin() {
           </TabsContent>
           
           <TabsContent value="admin" className="mt-0">
-            <AdminPanel adminConfig={dbData?.admin_config || { superior_admins: [], inferior_admins: [] }} />
+            <AdminPanel adminConfig={dbData?.admin_config || { superior_admins: [], inferior_admins: [] }} service="crunchyroll" />
           </TabsContent>
           
           <TabsContent value="credentials" className="mt-0">
@@ -149,11 +149,11 @@ export default function CrunchyrollAdmin() {
                   .filter(([key]) => key.startsWith('cred') && !['cred1', 'cred2', 'cred3', 'cred4'].includes(key))
                   .map(([key, value]) => [key, value])
               )
-            }} slots={dbData?.settings?.slots || {}} />
+            }} slots={dbData?.settings?.slots || {}} service="crunchyroll" />
           </TabsContent>
           
           <TabsContent value="slots" className="mt-0">
-            <SlotsPanel slots={dbData?.settings?.slots || {}} />
+            <SlotsPanel slots={dbData?.settings?.slots || {}} service="crunchyroll" />
           </TabsContent>
           
           <TabsContent value="referrals" className="mt-0">
@@ -165,12 +165,13 @@ export default function CrunchyrollAdmin() {
                 points_per_referral: 0,
                 required_point: 0
               }} 
-              freeTrialClaims={dbData?.free_trial_claims || {}} 
+              freeTrialClaims={dbData?.free_trial_claims || {}}
+              service="crunchyroll"
             />
           </TabsContent>
           
           <TabsContent value="transactions" className="mt-0">
-            <TransactionsPanel transactions={dbData?.transactions || {}} usedOrderIds={dbData?.used_orderids || {}} />
+            <TransactionsPanel transactions={dbData?.transactions || {}} usedOrderIds={dbData?.used_orderids || {}} service="crunchyroll" />
           </TabsContent>
           
           <TabsContent value="uiconfig" className="mt-0">
@@ -227,11 +228,11 @@ export default function CrunchyrollAdmin() {
                 welcome_photo: "",
                 welcome_text: ""
               }
-            }} />
+            }} service="crunchyroll" />
           </TabsContent>
           
           <TabsContent value="users" className="mt-0">
-            <UsersPanel users={dbData?.users || {}} />
+            <UsersPanel users={dbData?.users || {}} service="crunchyroll" />
           </TabsContent>
         </Tabs>
       </div>

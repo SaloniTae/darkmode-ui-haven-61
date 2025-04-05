@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, UserCheck, UserMinus, Plus, Check, Ban } from "lucide-react";
+import { Search, UserCheck, UserMinus, Plus, Check } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { 
@@ -16,21 +15,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { updateData, removeData, setData } from "@/lib/firebaseService";
 import { toast } from "sonner";
 import { ConfirmationDialog } from "./ConfirmationDialog";
+import { useFirebaseService } from "@/hooks/useFirebaseService";
 
 interface UsersPanelProps {
   users: { [key: string]: boolean };
+  service: string;
 }
 
-export function UsersPanel({ users }: UsersPanelProps) {
+export function UsersPanel({ users, service }: UsersPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [newUserId, setNewUserId] = useState("");
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [localUsers, setLocalUsers] = useState<{[key: string]: boolean}>(users || {});
+  
+  const { setData, removeData } = useFirebaseService(service);
   
   // Update local state when props change
   useEffect(() => {

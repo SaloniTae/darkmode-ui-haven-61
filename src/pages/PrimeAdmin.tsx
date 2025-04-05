@@ -10,25 +10,26 @@ import { TransactionsPanel } from "@/components/admin/TransactionsPanel";
 import { UIConfigPanel } from "@/components/admin/UIConfigPanel";
 import { UsersPanel } from "@/components/admin/UsersPanel";
 import { Loader2 } from "lucide-react";
-import { fetchPrimeData, subscribeToPrimeData } from "@/lib/firebaseService";
 import { DatabaseSchema } from "@/types/database";
 import { toast } from "sonner";
+import { useFirebaseService } from "@/hooks/useFirebaseService";
 
 export default function PrimeAdmin() {
   const [loading, setLoading] = useState(true);
   const [dbData, setDbData] = useState<DatabaseSchema | null>(null);
   const unsubscribeRef = useRef<(() => void) | null>(null);
+  const { fetchData, subscribeToData } = useFirebaseService('prime');
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       // Initial data load
-      const data = await fetchPrimeData("/");
+      const data = await fetchData("/");
       setDbData(data);
       toast.success("Prime database loaded successfully");
       
       // Set up real-time listener
-      unsubscribeRef.current = subscribeToPrimeData("/", (realtimeData) => {
+      unsubscribeRef.current = subscribeToData("/", (realtimeData) => {
         if (realtimeData) {
           setDbData(realtimeData);
         }
@@ -39,7 +40,7 @@ export default function PrimeAdmin() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchData, subscribeToData]);
 
   useEffect(() => {
     loadData();
@@ -84,7 +85,7 @@ export default function PrimeAdmin() {
           </TabsList>
           
           <TabsContent value="admin" className="mt-0">
-            <AdminPanel adminConfig={dbData.admin_config} />
+            <AdminPanel adminConfig={dbData.admin_config} service="prime" />
           </TabsContent>
           
           <TabsContent value="credentials" className="mt-0">
@@ -98,27 +99,27 @@ export default function PrimeAdmin() {
                   .filter(([key]) => key.startsWith('cred') && !['cred1', 'cred2', 'cred3', 'cred4'].includes(key))
                   .map(([key, value]) => [key, value])
               )
-            }} slots={dbData.settings.slots} />
+            }} slots={dbData.settings.slots} service="prime" />
           </TabsContent>
           
           <TabsContent value="slots" className="mt-0">
-            <SlotsPanel slots={dbData.settings.slots} />
+            <SlotsPanel slots={dbData.settings.slots} service="prime" />
           </TabsContent>
           
           <TabsContent value="referrals" className="mt-0">
-            <ReferralsPanel referrals={dbData.referrals} referralSettings={dbData.referral_settings} freeTrialClaims={dbData.free_trial_claims} />
+            <ReferralsPanel referrals={dbData.referrals} referralSettings={dbData.referral_settings} freeTrialClaims={dbData.free_trial_claims} service="prime" />
           </TabsContent>
           
           <TabsContent value="transactions" className="mt-0">
-            <TransactionsPanel transactions={dbData.transactions} usedOrderIds={dbData.used_orderids} />
+            <TransactionsPanel transactions={dbData.transactions} usedOrderIds={dbData.used_orderids} service="prime" />
           </TabsContent>
           
           <TabsContent value="uiconfig" className="mt-0">
-            <UIConfigPanel uiConfig={dbData.ui_config} />
+            <UIConfigPanel uiConfig={dbData.ui_config} service="prime" />
           </TabsContent>
           
           <TabsContent value="users" className="mt-0">
-            <UsersPanel users={dbData.users} />
+            <UsersPanel users={dbData.users} service="prime" />
           </TabsContent>
         </Tabs>
       </div>

@@ -1,22 +1,21 @@
-
 import { useState } from "react";
 import { Transactions } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search, Calendar, Clock, CheckCircle, AlertCircle, Filter } from "lucide-react";
+import { Trash2, Search, Calendar, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { removeData } from "@/lib/firebaseService";
 import { toast } from "sonner";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import { format } from "date-fns";
+import { useFirebaseService } from "@/hooks/useFirebaseService";
 
 interface TransactionsPanelProps {
   transactions: Transactions;
   usedOrderIds: { [key: string]: boolean };
+  service: string;
 }
 
 interface ProcessedTransaction {
@@ -29,7 +28,7 @@ interface ProcessedTransaction {
   originalData: any;
 }
 
-export function TransactionsPanel({ transactions, usedOrderIds }: TransactionsPanelProps) {
+export function TransactionsPanel({ transactions, usedOrderIds, service }: TransactionsPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [deleteConfirmation, setDeleteConfirmation] = useState<{open: boolean; id: string; type: string}>({
@@ -41,6 +40,8 @@ export function TransactionsPanel({ transactions, usedOrderIds }: TransactionsPa
     open: false,
     orderId: ""
   });
+  
+  const { removeData } = useFirebaseService(service);
   
   const processTransactions = (): ProcessedTransaction[] => {
     const processedTransactions: ProcessedTransaction[] = [];

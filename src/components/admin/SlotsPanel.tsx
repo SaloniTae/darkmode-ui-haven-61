@@ -4,18 +4,19 @@ import { Slots, Slot } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { updateData, setData, removeData } from "@/lib/firebase";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { SlotCard } from "./SlotCard";
 import { NewSlotDialog } from "./NewSlotDialog";
 import { ConfirmationDialog } from "./ConfirmationDialog";
+import { useFirebaseService } from "@/hooks/useFirebaseService";
 
 interface SlotsPanelProps {
   slots: Slots;
+  service: string;
 }
 
-export function SlotsPanel({ slots }: SlotsPanelProps) {
+export function SlotsPanel({ slots, service }: SlotsPanelProps) {
   // Initialize with empty object if slots is undefined
   const safeSlots = slots || {};
   
@@ -33,6 +34,8 @@ export function SlotsPanel({ slots }: SlotsPanelProps) {
     description: ""
   });
   const [isAddingSlot, setIsAddingSlot] = useState(false);
+  
+  const { updateData, setData, removeData } = useFirebaseService(service);
 
   const handleEditSlot = (slotKey: string) => {
     setEditingSlot(slotKey);
@@ -74,7 +77,7 @@ export function SlotsPanel({ slots }: SlotsPanelProps) {
       open: true,
       action: async () => {
         try {
-          // FIX 1: Just update the enabled field, not the entire object
+          // Just update the enabled field, not the entire object
           await updateData(`/settings/slots/${slotKey}`, { enabled: newEnabledValue });
           
           setEditedSlots({

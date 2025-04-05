@@ -1,10 +1,8 @@
-
 import { useState } from "react";
 import { AdminConfig } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Trash, Plus, Save, Edit } from "lucide-react";
 import { 
   AlertDialog,
@@ -16,14 +14,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { updateData } from "@/lib/firebase";
 import { toast } from "sonner";
+import { useFirebaseService } from "@/hooks/useFirebaseService";
 
 interface AdminPanelProps {
   adminConfig: AdminConfig;
+  service: string;
 }
 
-export function AdminPanel({ adminConfig }: AdminPanelProps) {
+export function AdminPanel({ adminConfig, service }: AdminPanelProps) {
   const [editedConfig, setEditedConfig] = useState<AdminConfig>({ ...adminConfig });
   const [isEditing, setIsEditing] = useState(false);
   const [isRemovingSuperior, setIsRemovingSuperior] = useState(false);
@@ -31,6 +30,8 @@ export function AdminPanel({ adminConfig }: AdminPanelProps) {
   const [adminToRemove, setAdminToRemove] = useState<string | null>(null);
   const [newSuperiorAdmin, setNewSuperiorAdmin] = useState("");
   const [newInferiorAdmin, setNewInferiorAdmin] = useState("");
+  
+  const { updateData } = useFirebaseService(service);
 
   const handleSaveChanges = async () => {
     try {
@@ -144,7 +145,24 @@ export function AdminPanel({ adminConfig }: AdminPanelProps) {
                   value={newSuperiorAdmin}
                   onChange={(e) => setNewSuperiorAdmin(e.target.value)}
                 />
-                <Button onClick={handleAddSuperiorAdmin}>
+                <Button onClick={() => {
+                  if (!newSuperiorAdmin.trim()) return;
+                  
+                  const adminId = newSuperiorAdmin.trim();
+                  
+                  if (editedConfig.superior_admins.includes(adminId)) {
+                    toast.error("This admin is already a superior admin");
+                    return;
+                  }
+                  
+                  setEditedConfig({
+                    ...editedConfig,
+                    superior_admins: [...editedConfig.superior_admins, adminId]
+                  });
+                  
+                  setNewSuperiorAdmin("");
+                  toast.success(`Added ${adminId} as superior admin`);
+                }}>
                   <Plus className="h-4 w-4 mr-2" /> Add
                 </Button>
               </div>
@@ -161,7 +179,10 @@ export function AdminPanel({ adminConfig }: AdminPanelProps) {
                     <Button 
                       variant="destructive" 
                       size="sm"
-                      onClick={() => confirmRemoveSuperiorAdmin(admin)}
+                      onClick={() => {
+                        setAdminToRemove(admin);
+                        setIsRemovingSuperior(true);
+                      }}
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
@@ -181,7 +202,24 @@ export function AdminPanel({ adminConfig }: AdminPanelProps) {
                   value={newInferiorAdmin}
                   onChange={(e) => setNewInferiorAdmin(e.target.value)}
                 />
-                <Button onClick={handleAddInferiorAdmin}>
+                <Button onClick={() => {
+                  if (!newInferiorAdmin.trim()) return;
+                  
+                  const adminId = newInferiorAdmin.trim();
+                  
+                  if (editedConfig.inferior_admins.includes(adminId)) {
+                    toast.error("This admin is already an inferior admin");
+                    return;
+                  }
+                  
+                  setEditedConfig({
+                    ...editedConfig,
+                    inferior_admins: [...editedConfig.inferior_admins, adminId]
+                  });
+                  
+                  setNewInferiorAdmin("");
+                  toast.success(`Added ${adminId} as inferior admin`);
+                }}>
                   <Plus className="h-4 w-4 mr-2" /> Add
                 </Button>
               </div>
@@ -198,7 +236,10 @@ export function AdminPanel({ adminConfig }: AdminPanelProps) {
                     <Button 
                       variant="destructive" 
                       size="sm"
-                      onClick={() => confirmRemoveInferiorAdmin(admin)}
+                      onClick={() => {
+                        setAdminToRemove(admin);
+                        setIsRemovingInferior(true);
+                      }}
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
@@ -230,7 +271,18 @@ export function AdminPanel({ adminConfig }: AdminPanelProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveSuperiorAdmin}>Continue</AlertDialogAction>
+            <AlertDialogAction onClick={() => {
+              if (adminToRemove === null) return;
+              
+              setEditedConfig({
+                ...editedConfig,
+                superior_admins: editedConfig.superior_admins.filter(id => id !== adminToRemove)
+              });
+              
+              setIsRemovingSuperior(false);
+              setAdminToRemove(null);
+              toast.success(`Removed ${adminToRemove} from superior admins`);
+            }}>Continue</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -247,7 +299,18 @@ export function AdminPanel({ adminConfig }: AdminPanelProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveInferiorAdmin}>Continue</AlertDialogAction>
+            <AlertDialogAction onClick={() => {
+              if (adminToRemove === null) return;
+              
+              setEditedConfig({
+                ...editedConfig,
+                inferior_admins: editedConfig.inferior_admins.filter(id => id !== adminToRemove)
+              });
+              
+              setIsRemovingInferior(false);
+              setAdminToRemove(null);
+              toast.success(`Removed ${adminToRemove} from inferior admins`);
+            }}>Continue</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
