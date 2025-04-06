@@ -16,14 +16,21 @@ export function UIConfigHeader({
   onCancel 
 }: UIConfigHeaderProps) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between mb-6">
       <h2 className="text-2xl font-bold">UI Configuration</h2>
       {isEditing ? (
-        <div className="space-x-2">
-          <Button onClick={onCancel} variant="outline">
+        <div>
+          <Button 
+            onClick={onCancel} 
+            variant="outline"
+            className="absolute top-4 right-4 z-10"
+          >
             Cancel
           </Button>
-          <Button onClick={onSave}>
+          <Button 
+            onClick={onSave}
+            className="fixed bottom-8 right-8 z-10 flex items-center"
+          >
             <Save className="mr-2 h-4 w-4" /> Save Changes
           </Button>
         </div>
