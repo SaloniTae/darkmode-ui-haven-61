@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -16,9 +15,10 @@ import { useLocation } from "react-router-dom";
 
 interface UIConfigPanelProps {
   uiConfig: UIConfig;
+  service: string;
 }
 
-export function UIConfigPanel({ uiConfig }: UIConfigPanelProps) {
+export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
   const [activeSection, setActiveSection] = useState("start_command");
   const [editedConfig, setEditedConfig] = useState<UIConfig>({ ...uiConfig });
   const [isEditing, setIsEditing] = useState(false);
@@ -186,13 +186,14 @@ export function UIConfigPanel({ uiConfig }: UIConfigPanelProps) {
       </div>
 
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto p-1 glass-morphism">
+        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 h-auto p-1 glass-morphism">
           <TabsTrigger value="start_command">Start</TabsTrigger>
           <TabsTrigger value="crunchyroll_screen">Crunchyroll</TabsTrigger>
           <TabsTrigger value="slot_booking">Slot Booking</TabsTrigger>
           <TabsTrigger value="confirmation_flow">Confirmation</TabsTrigger>
           <TabsTrigger value="phonepe_screen">PhonePe</TabsTrigger>
           <TabsTrigger value="approve_flow">Approve</TabsTrigger>
+          <TabsTrigger value="reject_flow">Reject</TabsTrigger>
           <TabsTrigger value="posters">Posters</TabsTrigger>
           <TabsTrigger value="other">Other</TabsTrigger>
         </TabsList>
@@ -760,6 +761,58 @@ export function UIConfigPanel({ uiConfig }: UIConfigPanelProps) {
           </DataCard>
         </TabsContent>
         
+        <TabsContent value="reject_flow" className="mt-0">
+          <DataCard title="Reject Flow Configuration">
+            <div className="space-y-6">
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reject-error-text">Error Text</Label>
+                    <Textarea
+                      id="reject-error-text"
+                      value={editedConfig.reject_flow.error_text}
+                      onChange={(e) => handleInputChange('reject_flow', 'error_text', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="reject-gif">GIF URL</Label>
+                    <Input
+                      id="reject-gif"
+                      value={editedConfig.reject_flow.gif_url}
+                      onChange={(e) => handleInputChange('reject_flow', 'gif_url', e.target.value)}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="glass-morphism p-4 rounded-md">
+                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Error Text</h3>
+                    <p className="whitespace-pre-line">{editedConfig.reject_flow.error_text}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">GIF</h3>
+                    <div className="glass-morphism p-2 rounded-md overflow-hidden">
+                      <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
+                        <img
+                          src={editedConfig.reject_flow.gif_url}
+                          alt="Reject Flow GIF"
+                          className="absolute inset-0 w-full h-full object-cover object-center"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=GIF+Not+Found';
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DataCard>
+        </TabsContent>
+        
         <TabsContent value="posters" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <DataCard title="Referral Info">
@@ -925,8 +978,6 @@ export function UIConfigPanel({ uiConfig }: UIConfigPanelProps) {
             </DataCard>
           </div>
         </TabsContent>
-        
-        {/* Add more TabsContent sections for other UI config elements */}
         
       </Tabs>
       
