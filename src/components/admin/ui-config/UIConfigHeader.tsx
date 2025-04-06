@@ -20,7 +20,7 @@ export function UIConfigHeader({
       <h2 className="text-2xl font-bold">UI Configuration</h2>
       {isEditing ? (
         <div className="space-x-2">
-          <Button variant="outline" onClick={onCancel}>
+          <Button onClick={onCancel} variant="outline">
             Cancel
           </Button>
           <Button onClick={onSave}>
@@ -28,7 +28,7 @@ export function UIConfigHeader({
           </Button>
         </div>
       ) : (
-        <Button variant="outline" onClick={() => setIsEditing(true)}>
+        <Button onClick={() => setIsEditing(true)} variant="outline">
           <Edit className="mr-2 h-4 w-4" /> Edit
         </Button>
       )}
