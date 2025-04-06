@@ -261,7 +261,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Credentials Management</h2>
+          <h2 className="text-2xl font-bold">Credentials<br className="md:hidden" />Management</h2>
           <Button onClick={() => setIsAddingCredential(true)}>
             <PlusCircle className="mr-2 h-4 w-4" /> Add Credential
           </Button>
