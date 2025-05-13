@@ -2,16 +2,15 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, set, remove, update, onValue, off } from "firebase/database";
 
-// Firebase configuration for Crunchyroll
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyA2pIQ4la9Pgzg3uDe-iN5k3w_kahiXYkw",
-  authDomain: "get-crunchy-credentials.firebaseapp.com",
-  databaseURL: "https://get-crunchy-credentials-default-rtdb.firebaseio.com",
-  projectId: "get-crunchy-credentials",
-  storageBucket: "get-crunchy-credentials.firebasestorage.app",
-  messagingSenderId: "96256317713",
-  appId: "1:96256317713:web:152cc652466fc84e1654b0",
-  measurementId: "G-5XKQEDN0GW"
+  apiKey: "AIzaSyA02dPt8yMTSmhzyj9PIrm4UlWr1a1waD4",
+  authDomain: "testing-6de54.firebaseapp.com",
+  databaseURL: "https://testing-6de54-default-rtdb.firebaseio.com",
+  projectId: "testing-6de54",
+  storageBucket: "testing-6de54.firebasestorage.app",
+  messagingSenderId: "159795986690",
+  appId: "1:159795986690:web:2e4de44d725826dc01821b"
 };
 
 // Initialize Firebase
