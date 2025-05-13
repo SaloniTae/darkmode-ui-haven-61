@@ -1,6 +1,23 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap');
 
+/* Custom font declarations */
+@font-face {
+  font-family: 'NexaLight';
+  src: url('/fonts/Nexa-Trial-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NexaExtraBold';
+  src: url('/fonts/Nexa-Trial-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -130,10 +147,18 @@
   
   /* Time button styles to match reference */
   .time-button {
-    @apply border border-white/20 bg-black/60 rounded-full px-6 py-3 min-w-[200px] flex items-center justify-center;
+    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[120px] h-[42px] flex items-center justify-center transition-all hover:bg-black/80;
   }
   
   .time-text {
-    @apply font-mono text-xl tracking-wider;
+    @apply text-base tracking-wider;
+  }
+  
+  .time-hour-minute {
+    @apply font-['NexaLight'];
+  }
+  
+  .time-am-pm {
+    @apply font-['NexaExtraBold'] text-sm ml-0.5;
   }
 }

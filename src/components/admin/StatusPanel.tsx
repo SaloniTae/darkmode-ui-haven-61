@@ -90,6 +90,23 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     setIsDialogOpen(true);
   };
 
+  // Custom formatting function to separate hours+minutes from AM/PM
+  const formatTimeWithCustomFonts = (timeString: string) => {
+    const formattedTime = formatTimeWithAmPm(timeString);
+    const parts = formattedTime.split(' ');
+    
+    if (parts.length === 2) {
+      return (
+        <>
+          <span className="time-hour-minute">{parts[0]}</span>
+          <span className="time-am-pm">{parts[1]}</span>
+        </>
+      );
+    }
+    
+    return formattedTime;
+  };
+
   return (
     <div className="space-y-6">
       <DataCard title="Account Status">
@@ -98,7 +115,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold uppercase tracking-wider">ACTIVE</h2>
             
-            <div className="flex flex-wrap gap-4">
+            <div className="grid grid-cols-3 gap-3">
               {activeTransactions.length > 0 ? (
                 activeTransactions.map(([id, transaction]) => (
                   <button
@@ -107,12 +124,12 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     className="time-button"
                   >
                     <span className="time-text">
-                      {formatTimeWithAmPm(transaction.end_time)}
+                      {formatTimeWithCustomFonts(transaction.end_time)}
                     </span>
                   </button>
                 ))
               ) : (
-                <div className="text-center w-full py-6">
+                <div className="text-center col-span-3 py-6">
                   <p className="text-white/60">No active accounts</p>
                 </div>
               )}
@@ -128,7 +145,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold uppercase text-white tracking-wider">EXPIRED</h2>
             
-            <div className="flex flex-wrap gap-4">
+            <div className="grid grid-cols-3 gap-3">
               {expiredTransactions.length > 0 ? (
                 expiredTransactions.map(([id, transaction]) => (
                   <button
@@ -137,12 +154,12 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     className="time-button"
                   >
                     <span className="time-text text-red-400">
-                      {formatTimeWithAmPm(transaction.end_time)}
+                      {formatTimeWithCustomFonts(transaction.end_time)}
                     </span>
                   </button>
                 ))
               ) : (
-                <div className="text-center w-full py-6">
+                <div className="text-center col-span-3 py-6">
                   <p className="text-white/60">No expired accounts</p>
                 </div>
               )}

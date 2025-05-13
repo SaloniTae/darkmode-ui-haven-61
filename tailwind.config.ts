@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -21,6 +20,8 @@ export default {
 		extend: {
 			fontFamily: {
 				mono: ["'Roboto Mono'", 'monospace'],
+				'nexa-light': ['NexaLight', 'sans-serif'],
+				'nexa-extrabold': ['NexaExtraBold', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
