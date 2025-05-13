@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { DataCard } from "@/components/ui/DataCard";
 import { Separator } from "@/components/ui/separator";
 import { formatDateTimeForDisplay, formatTimeWithAmPm } from "@/utils/dateFormatUtils";
-import { Clock, HorizontalRule } from "lucide-react";
+import { Minus } from "lucide-react";
 
 interface Transaction {
   approved_at: string;
@@ -159,7 +159,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           </div>
           
           <div className="flex items-center justify-center my-6">
-            <HorizontalRule className="w-full h-4 text-neutral-gray" />
+            <Minus className="w-full h-4 text-neutral-gray" />
           </div>
           
           <div className="space-y-4">
