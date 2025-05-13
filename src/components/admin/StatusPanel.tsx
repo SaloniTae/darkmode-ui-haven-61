@@ -1,9 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { DataCard } from "@/components/ui/DataCard";
-import { Separator } from "@/components/ui/separator";
-import { formatDateTimeForDisplay, formatTimeWithAmPm } from "@/utils/dateFormatUtils";
+import { formatTimeWithAmPm } from "@/utils/dateFormatUtils";
 import { Minus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface Transaction {
   approved_at: string;
@@ -25,6 +26,8 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
   const [activeTransactions, setActiveTransactions] = useState<[string, Transaction][]>([]);
   const [expiredTransactions, setExpiredTransactions] = useState<[string, Transaction][]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedTransaction, setSelectedTransaction] = useState<[string, Transaction] | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Filter transactions into active and expired
   const filterTransactions = () => {
@@ -82,152 +85,61 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     filterTransactions();
   }, [currentTime]);
 
+  const openTransactionDetails = (transaction: [string, Transaction]) => {
+    setSelectedTransaction(transaction);
+    setIsDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <DataCard title="Account Status">
-        <div className="space-y-6">
+        <div className="space-y-10 py-4">
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">ACTIVE</h2>
-            <div className="space-y-4">
+            
+            <div className="flex flex-wrap gap-3">
               {activeTransactions.length > 0 ? (
                 activeTransactions.map(([id, transaction]) => (
-                  <div key={id} className="glass-morphism p-4 rounded-md">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-muted-foreground">ID: {id}</span>
-                      <span className="text-sm text-muted-foreground">
-                        Slot: {transaction.slot_id}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      {transaction.start_time && (
-                        <div className="flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-sm text-muted-foreground mb-1">Start</div>
-                            <div className="glass-morphism px-6 py-3 rounded-full inline-flex justify-center">
-                              <span className="text-xl font-medium">
-                                {formatTimeWithAmPm(transaction.start_time)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {transaction.approved_at && (
-                        <div className="flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-sm text-muted-foreground mb-1">Approved</div>
-                            <div className="glass-morphism px-6 py-3 rounded-full inline-flex justify-center">
-                              <span className="text-xl font-medium">
-                                {formatTimeWithAmPm(transaction.approved_at)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {transaction.end_time && (
-                        <div className="flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-sm text-muted-foreground mb-1">End</div>
-                            <div className="glass-morphism px-6 py-3 rounded-full inline-flex justify-center">
-                              <span className="text-xl font-medium">
-                                {formatTimeWithAmPm(transaction.end_time)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {transaction.last_email && (
-                      <div className="text-center mt-2">
-                        <p className="text-sm text-muted-foreground">
-                          {transaction.assign_to && (
-                            <span className="mr-2">Account: {transaction.assign_to}</span>
-                          )}
-                          {transaction.last_email && (
-                            <span>Email: {transaction.last_email}</span>
-                          )}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    key={id}
+                    onClick={() => openTransactionDetails([id, transaction])}
+                    className="glass-morphism rounded-full px-6 py-3 transition-all hover:scale-105"
+                  >
+                    <span className="text-xl font-medium">
+                      {formatTimeWithAmPm(transaction.end_time)}
+                    </span>
+                  </button>
                 ))
               ) : (
-                <div className="text-center py-6">
+                <div className="text-center w-full py-6">
                   <p className="text-muted-foreground">No active accounts</p>
                 </div>
               )}
             </div>
           </div>
           
-          <div className="flex items-center justify-center my-6">
-            <Minus className="w-full h-4 text-neutral-gray" />
+          <div className="flex items-center justify-center">
+            <Minus className="w-full h-1 text-white/50" />
           </div>
           
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-red-400">EXPIRED</h2>
-            <div className="space-y-4">
+            
+            <div className="flex flex-wrap gap-3">
               {expiredTransactions.length > 0 ? (
                 expiredTransactions.map(([id, transaction]) => (
-                  <div key={id} className="glass-morphism p-4 rounded-md">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-muted-foreground">ID: {id}</span>
-                      <span className="text-sm text-muted-foreground">
-                        Slot: {transaction.slot_id}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      {transaction.start_time && (
-                        <div className="flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-sm text-muted-foreground mb-1">Start</div>
-                            <div className="glass-morphism px-6 py-3 rounded-full inline-flex justify-center">
-                              <span className="text-xl font-medium text-red-400">
-                                {formatTimeWithAmPm(transaction.start_time)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {transaction.approved_at && (
-                        <div className="flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-sm text-muted-foreground mb-1">Approved</div>
-                            <div className="glass-morphism px-6 py-3 rounded-full inline-flex justify-center">
-                              <span className="text-xl font-medium text-red-400">
-                                {formatTimeWithAmPm(transaction.approved_at)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {transaction.end_time && (
-                        <div className="flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-sm text-muted-foreground mb-1">End</div>
-                            <div className="glass-morphism px-6 py-3 rounded-full inline-flex justify-center">
-                              <span className="text-xl font-medium text-red-400">
-                                {formatTimeWithAmPm(transaction.end_time)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    {transaction.last_email && (
-                      <div className="text-center mt-2">
-                        <p className="text-sm text-muted-foreground">
-                          {transaction.assign_to && (
-                            <span className="mr-2">Account: {transaction.assign_to}</span>
-                          )}
-                          {transaction.last_email && (
-                            <span>Email: {transaction.last_email}</span>
-                          )}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    key={id}
+                    onClick={() => openTransactionDetails([id, transaction])}
+                    className="glass-morphism rounded-full px-6 py-3 transition-all hover:scale-105"
+                  >
+                    <span className="text-xl font-medium text-red-400">
+                      {formatTimeWithAmPm(transaction.end_time)}
+                    </span>
+                  </button>
                 ))
               ) : (
-                <div className="text-center py-6">
+                <div className="text-center w-full py-6">
                   <p className="text-muted-foreground">No expired accounts</p>
                 </div>
               )}
@@ -235,6 +147,80 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           </div>
         </div>
       </DataCard>
+      
+      {/* Transaction Details Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="glass-morphism border-none backdrop-blur-xl bg-black/70 text-white sm:max-w-md">
+          {selectedTransaction && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-center">Account Details</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">ID:</span>
+                  <span>{selectedTransaction[0]}</span>
+                </div>
+                
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Slot:</span>
+                  <span>{selectedTransaction[1].slot_id}</span>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4">
+                  {selectedTransaction[1].start_time && (
+                    <div className="text-center">
+                      <div className="text-sm text-muted-foreground mb-1">Start</div>
+                      <div className={cn("px-3 py-2 rounded-full glass-morphism inline-flex justify-center")}>
+                        {formatTimeWithAmPm(selectedTransaction[1].start_time)}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {selectedTransaction[1].approved_at && (
+                    <div className="text-center">
+                      <div className="text-sm text-muted-foreground mb-1">Approved</div>
+                      <div className={cn("px-3 py-2 rounded-full glass-morphism inline-flex justify-center")}>
+                        {formatTimeWithAmPm(selectedTransaction[1].approved_at)}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {selectedTransaction[1].end_time && (
+                    <div className="text-center">
+                      <div className="text-sm text-muted-foreground mb-1">End</div>
+                      <div className={cn(
+                        "px-3 py-2 rounded-full glass-morphism inline-flex justify-center",
+                        new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-red-400" : ""
+                      )}>
+                        {formatTimeWithAmPm(selectedTransaction[1].end_time)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {selectedTransaction[1].assign_to && (
+                  <div className="text-center mt-4">
+                    <p className="font-semibold">Account: {selectedTransaction[1].assign_to}</p>
+                  </div>
+                )}
+                
+                {selectedTransaction[1].last_email && (
+                  <div className="text-center">
+                    <p className="text-sm">Email: {selectedTransaction[1].last_email}</p>
+                  </div>
+                )}
+                
+                {selectedTransaction[1].user_id && (
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">User ID: {selectedTransaction[1].user_id}</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
