@@ -115,13 +115,13 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold uppercase tracking-wider">ACTIVE</h2>
             
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-1">
               {activeTransactions.length > 0 ? (
                 activeTransactions.map(([id, transaction]) => (
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="time-button"
+                    className="time-button max-[400px]:w-full max-[400px]:mx-auto"
                   >
                     <span className="time-text">
                       {formatTimeWithCustomFonts(transaction.end_time)}
@@ -129,7 +129,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   </button>
                 ))
               ) : (
-                <div className="text-center col-span-3 py-6">
+                <div className="text-center col-span-3 max-[400px]:col-span-1 py-6">
                   <p className="text-white/60">No active accounts</p>
                 </div>
               )}
@@ -145,13 +145,13 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold uppercase text-white tracking-wider">EXPIRED</h2>
             
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-1">
               {expiredTransactions.length > 0 ? (
                 expiredTransactions.map(([id, transaction]) => (
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="time-button"
+                    className="time-button max-[400px]:w-full max-[400px]:mx-auto"
                   >
                     <span className="time-text text-red-400">
                       {formatTimeWithCustomFonts(transaction.end_time)}
@@ -159,7 +159,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   </button>
                 ))
               ) : (
-                <div className="text-center col-span-3 py-6">
+                <div className="text-center col-span-3 max-[400px]:col-span-1 py-6">
                   <p className="text-white/60">No expired accounts</p>
                 </div>
               )}
@@ -170,7 +170,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       
       {/* Transaction Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-black border-white/10 backdrop-blur-xl text-white max-w-sm">
+        <DialogContent className="bg-black border-white/10 backdrop-blur-xl text-white max-w-sm max-[400px]:max-w-[90%]">
           {selectedTransaction && (
             <>
               <DialogHeader>
@@ -179,7 +179,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
               <div className="space-y-4 mt-4">
                 <div className="flex justify-between">
                   <span className="text-white/60">ID:</span>
-                  <span>{selectedTransaction[0]}</span>
+                  <span className="break-all">{selectedTransaction[0]}</span>
                 </div>
                 
                 <div className="flex justify-between">
@@ -187,11 +187,11 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   <span>{selectedTransaction[1].slot_id}</span>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-4 max-[400px]:grid-cols-1 max-[400px]:gap-2">
                   {selectedTransaction[1].start_time && (
                     <div className="text-center">
                       <div className="text-sm text-white/60 mb-1">Start</div>
-                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono">
+                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono max-[400px]:w-full">
                         {formatTimeWithAmPm(selectedTransaction[1].start_time)}
                       </div>
                     </div>
@@ -200,7 +200,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   {selectedTransaction[1].approved_at && (
                     <div className="text-center">
                       <div className="text-sm text-white/60 mb-1">Approved</div>
-                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono">
+                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono max-[400px]:w-full">
                         {formatTimeWithAmPm(selectedTransaction[1].approved_at)}
                       </div>
                     </div>
@@ -210,7 +210,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     <div className="text-center">
                       <div className="text-sm text-white/60 mb-1">End</div>
                       <div className={cn(
-                        "px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono",
+                        "px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono max-[400px]:w-full",
                         new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-red-400" : ""
                       )}>
                         {formatTimeWithAmPm(selectedTransaction[1].end_time)}
@@ -221,13 +221,13 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                 
                 {selectedTransaction[1].assign_to && (
                   <div className="text-center mt-4">
-                    <p className="font-semibold">Account: {selectedTransaction[1].assign_to}</p>
+                    <p className="font-semibold max-[400px]:break-all">Account: {selectedTransaction[1].assign_to}</p>
                   </div>
                 )}
                 
                 {selectedTransaction[1].last_email && (
                   <div className="text-center">
-                    <p className="text-sm">Email: {selectedTransaction[1].last_email}</p>
+                    <p className="text-sm max-[400px]:break-all">Email: {selectedTransaction[1].last_email}</p>
                   </div>
                 )}
                 

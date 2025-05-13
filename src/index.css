@@ -147,11 +147,11 @@
   
   /* Time button styles to match reference */
   .time-button {
-    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[120px] h-[42px] flex items-center justify-center transition-all hover:bg-black/80;
+    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[120px] h-[42px] flex items-center justify-center transition-all hover:bg-black/80 max-[400px]:min-w-0 max-[400px]:h-[38px] max-[400px]:py-1;
   }
   
   .time-text {
-    @apply text-base tracking-wider;
+    @apply text-base tracking-wider max-[400px]:text-sm;
   }
   
   .time-hour-minute {
@@ -159,6 +159,6 @@
   }
   
   .time-am-pm {
-    @apply font-['NexaExtraBold'] text-sm ml-0.5;
+    @apply font-['NexaExtraBold'] text-sm ml-0.5 max-[400px]:text-xs;
   }
 }
