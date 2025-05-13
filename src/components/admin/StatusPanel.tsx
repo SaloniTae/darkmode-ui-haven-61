@@ -94,53 +94,56 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     <div className="space-y-6">
       <DataCard title="Account Status">
         <div className="space-y-10 py-4">
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">ACTIVE</h2>
+          {/* Active Section */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold uppercase tracking-wider">ACTIVE</h2>
             
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-4">
               {activeTransactions.length > 0 ? (
                 activeTransactions.map(([id, transaction]) => (
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="glass-morphism rounded-full px-6 py-3 transition-all hover:scale-105"
+                    className="time-button"
                   >
-                    <span className="text-xl font-medium">
+                    <span className="time-text">
                       {formatTimeWithAmPm(transaction.end_time)}
                     </span>
                   </button>
                 ))
               ) : (
                 <div className="text-center w-full py-6">
-                  <p className="text-muted-foreground">No active accounts</p>
+                  <p className="text-white/60">No active accounts</p>
                 </div>
               )}
             </div>
           </div>
           
-          <div className="flex items-center justify-center">
-            <Minus className="w-full h-1 text-white/50" />
+          {/* Divider */}
+          <div className="flex items-center justify-center py-1">
+            <Minus className="w-full h-0.5 text-white/50" />
           </div>
           
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-red-400">EXPIRED</h2>
+          {/* Expired Section */}
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold uppercase text-white tracking-wider">EXPIRED</h2>
             
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-4">
               {expiredTransactions.length > 0 ? (
                 expiredTransactions.map(([id, transaction]) => (
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="glass-morphism rounded-full px-6 py-3 transition-all hover:scale-105"
+                    className="time-button"
                   >
-                    <span className="text-xl font-medium text-red-400">
+                    <span className="time-text text-red-400">
                       {formatTimeWithAmPm(transaction.end_time)}
                     </span>
                   </button>
                 ))
               ) : (
                 <div className="text-center w-full py-6">
-                  <p className="text-muted-foreground">No expired accounts</p>
+                  <p className="text-white/60">No expired accounts</p>
                 </div>
               )}
             </div>
@@ -150,7 +153,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       
       {/* Transaction Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="glass-morphism border-none backdrop-blur-xl bg-black/70 text-white sm:max-w-md">
+        <DialogContent className="bg-black border-white/10 backdrop-blur-xl text-white max-w-sm">
           {selectedTransaction && (
             <>
               <DialogHeader>
@@ -158,20 +161,20 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">ID:</span>
+                  <span className="text-white/60">ID:</span>
                   <span>{selectedTransaction[0]}</span>
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Slot:</span>
+                  <span className="text-white/60">Slot:</span>
                   <span>{selectedTransaction[1].slot_id}</span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4">
                   {selectedTransaction[1].start_time && (
                     <div className="text-center">
-                      <div className="text-sm text-muted-foreground mb-1">Start</div>
-                      <div className={cn("px-3 py-2 rounded-full glass-morphism inline-flex justify-center")}>
+                      <div className="text-sm text-white/60 mb-1">Start</div>
+                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono">
                         {formatTimeWithAmPm(selectedTransaction[1].start_time)}
                       </div>
                     </div>
@@ -179,8 +182,8 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   
                   {selectedTransaction[1].approved_at && (
                     <div className="text-center">
-                      <div className="text-sm text-muted-foreground mb-1">Approved</div>
-                      <div className={cn("px-3 py-2 rounded-full glass-morphism inline-flex justify-center")}>
+                      <div className="text-sm text-white/60 mb-1">Approved</div>
+                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono">
                         {formatTimeWithAmPm(selectedTransaction[1].approved_at)}
                       </div>
                     </div>
@@ -188,9 +191,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   
                   {selectedTransaction[1].end_time && (
                     <div className="text-center">
-                      <div className="text-sm text-muted-foreground mb-1">End</div>
+                      <div className="text-sm text-white/60 mb-1">End</div>
                       <div className={cn(
-                        "px-3 py-2 rounded-full glass-morphism inline-flex justify-center",
+                        "px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono",
                         new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-red-400" : ""
                       )}>
                         {formatTimeWithAmPm(selectedTransaction[1].end_time)}
@@ -213,7 +216,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                 
                 {selectedTransaction[1].user_id && (
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground">User ID: {selectedTransaction[1].user_id}</p>
+                    <p className="text-sm text-white/60">User ID: {selectedTransaction[1].user_id}</p>
                   </div>
                 )}
               </div>
