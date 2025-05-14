@@ -145,17 +145,13 @@
     @apply bg-gradient-to-br from-black via-black/90 to-black/70 bg-clip-text text-transparent dark:from-white dark:via-white/90 dark:to-white/70;
   }
   
-  /* Time button styles with hover/active effects */
+  /* Time button styles to match reference */
   .time-button {
-    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[100px] h-[38px] flex items-center justify-center transition-all hover:bg-white hover:border-white active:bg-white max-[400px]:min-w-0 max-[400px]:h-[34px] max-[400px]:py-1;
-  }
-  
-  .time-button-expired {
-    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[100px] h-[38px] flex items-center justify-center transition-all hover:bg-red-400 hover:border-red-400 active:bg-red-400 active:border-red-400 max-[400px]:min-w-0 max-[400px]:h-[34px] max-[400px]:py-1;
+    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[120px] h-[42px] flex items-center justify-center transition-all hover:bg-black/80 max-[400px]:min-w-0 max-[400px]:h-[38px] max-[400px]:py-1;
   }
   
   .time-text {
-    @apply text-sm tracking-wider max-[400px]:text-xs;
+    @apply text-base tracking-wider max-[400px]:text-sm;
   }
   
   .time-hour-minute {
@@ -163,6 +159,6 @@
   }
   
   .time-am-pm {
-    @apply font-['NexaExtraBold'] text-xs ml-0.5 max-[400px]:text-[0.65rem];
+    @apply font-['NexaExtraBold'] text-sm ml-0.5 max-[400px]:text-xs;
   }
 }

@@ -45,18 +45,10 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       // Parse the end time
       const endTime = new Date(transaction.end_time.replace(' ', 'T'));
       
-      // Check if it's active (future end time)
       if (endTime > now) {
         active.push([id, transaction]);
       } else {
-        // For expired, check if it's within the last 24 hours
-        const twentyFourHoursAgo = new Date(now);
-        twentyFourHoursAgo.setHours(now.getHours() - 24);
-        
-        if (endTime >= twentyFourHoursAgo) {
-          expired.push([id, transaction]);
-        }
-        // If older than 24 hours, don't include it
+        expired.push([id, transaction]);
       }
     });
 
@@ -129,9 +121,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="time-button group max-[400px]:w-full max-[400px]:mx-auto"
+                    className="time-button max-[400px]:w-full max-[400px]:mx-auto"
                   >
-                    <span className="time-text group-hover:text-black group-active:text-black">
+                    <span className="time-text">
                       {formatTimeWithCustomFonts(transaction.end_time)}
                     </span>
                   </button>
@@ -159,9 +151,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="time-button-expired group max-[400px]:w-full max-[400px]:mx-auto"
+                    className="time-button max-[400px]:w-full max-[400px]:mx-auto"
                   >
-                    <span className="time-text text-red-400 group-hover:text-white group-active:text-white">
+                    <span className="time-text text-red-400">
                       {formatTimeWithCustomFonts(transaction.end_time)}
                     </span>
                   </button>
@@ -199,9 +191,8 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   {selectedTransaction[1].start_time && (
                     <div className="text-center">
                       <div className="text-sm text-white/60 mb-1">Start</div>
-                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center max-[400px]:w-full">
-                        <span className="font-['NexaLight'] tracking-wider">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[0]}</span>
-                        <span className="font-['NexaExtraBold'] text-sm ml-0.5">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[1]}</span>
+                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono max-[400px]:w-full">
+                        {formatTimeWithAmPm(selectedTransaction[1].start_time)}
                       </div>
                     </div>
                   )}
@@ -209,9 +200,8 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   {selectedTransaction[1].approved_at && (
                     <div className="text-center">
                       <div className="text-sm text-white/60 mb-1">Approved</div>
-                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center max-[400px]:w-full">
-                        <span className="font-['NexaLight'] tracking-wider">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[0]}</span>
-                        <span className="font-['NexaExtraBold'] text-sm ml-0.5">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[1]}</span>
+                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono max-[400px]:w-full">
+                        {formatTimeWithAmPm(selectedTransaction[1].approved_at)}
                       </div>
                     </div>
                   )}
@@ -220,11 +210,10 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     <div className="text-center">
                       <div className="text-sm text-white/60 mb-1">End</div>
                       <div className={cn(
-                        "px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center max-[400px]:w-full",
+                        "px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono max-[400px]:w-full",
                         new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-red-400" : ""
                       )}>
-                        <span className="font-['NexaLight'] tracking-wider">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[0]}</span>
-                        <span className="font-['NexaExtraBold'] text-sm ml-0.5">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[1]}</span>
+                        {formatTimeWithAmPm(selectedTransaction[1].end_time)}
                       </div>
                     </div>
                   )}
