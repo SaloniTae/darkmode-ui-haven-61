@@ -147,12 +147,12 @@
   
   /* Time button styles */
   .time-button {
-    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[110px] h-[38px] flex items-center justify-center transition-all max-[400px]:min-w-0 max-[400px]:px-2 max-[400px]:h-[34px] max-[400px]:py-0.5;
+    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[110px] h-[38px] flex items-center justify-center max-[400px]:min-w-0 max-[400px]:px-2 max-[400px]:h-[34px] max-[400px]:py-0.5;
   }
   
   /* Active time button hover and active states */
   .active-time-button {
-    @apply hover:bg-white hover:border-white hover:text-black focus:bg-white focus:border-white focus:text-black transition-all duration-200;
+    @apply hover:bg-white hover:border-white hover:text-black focus:bg-white focus:border-white focus:text-black transition-colors duration-300;
   }
   
   .active-time-button:hover .time-text,
@@ -162,7 +162,7 @@
   
   /* Expired time button hover and active states */
   .expired-time-button {
-    @apply hover:bg-red-400 hover:border-red-400 hover:text-white focus:bg-red-400 focus:border-red-400 focus:text-white transition-all duration-200;
+    @apply hover:bg-red-400 hover:border-red-400 hover:text-white focus:bg-red-400 focus:border-red-400 focus:text-white transition-colors duration-300;
   }
   
   .expired-time-button:hover .time-text,
@@ -171,20 +171,36 @@
   }
   
   .time-text {
-    @apply text-base tracking-wider max-[400px]:text-sm transition-colors duration-200;
+    @apply text-base tracking-wider max-[400px]:text-sm transition-colors duration-300;
   }
   
   .time-hour-minute {
-    @apply font-['NexaLight'] transition-colors duration-200;
+    @apply font-['NexaLight'] transition-colors duration-300;
   }
   
   .time-am-pm {
-    @apply font-['NexaExtraBold'] text-sm ml-0.5 max-[400px]:text-xs transition-colors duration-200;
+    @apply font-['NexaExtraBold'] text-sm inline-block ml-0.5 max-[400px]:text-xs transition-colors duration-300;
   }
   
   /* Dialog time button styles */
   .dialog-time-button {
-    @apply px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono max-[400px]:w-full max-[400px]:px-2 max-[400px]:py-1.5;
+    @apply px-3 py-2 rounded-full border border-white/10 bg-black/60 flex items-center justify-center font-mono max-[400px]:w-full max-[400px]:px-2 max-[400px]:py-1.5;
+  }
+  
+  /* Dialog animation */
+  .dialog-animation {
+    animation: dialogFadeIn 0.3s ease-out;
+  }
+  
+  @keyframes dialogFadeIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -48%) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
   }
 }
 

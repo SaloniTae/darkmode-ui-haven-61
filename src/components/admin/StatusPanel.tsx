@@ -174,7 +174,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       
       {/* Transaction Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-black border-white/10 backdrop-blur-xl text-white max-w-sm max-[400px]:max-w-[90%]">
+        <DialogContent className="bg-black border-white/10 backdrop-blur-xl text-white max-w-sm max-[400px]:max-w-[90%] dialog-animation">
           {selectedTransaction && (
             <>
               <DialogHeader>
@@ -196,8 +196,10 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     <div className="text-center">
                       <div className="text-sm text-white/60 mb-1">Start</div>
                       <div className="dialog-time-button">
-                        <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[0]}</span>
-                        <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[1]}</span>
+                        <span className="inline-flex items-center justify-center">
+                          <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[0]}</span>
+                          <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[1]}</span>
+                        </span>
                       </div>
                     </div>
                   )}
@@ -206,8 +208,10 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     <div className="text-center">
                       <div className="text-sm text-white/60 mb-1">Approved</div>
                       <div className="dialog-time-button">
-                        <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[0]}</span>
-                        <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[1]}</span>
+                        <span className="inline-flex items-center justify-center">
+                          <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[0]}</span>
+                          <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[1]}</span>
+                        </span>
                       </div>
                     </div>
                   )}
@@ -219,8 +223,10 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                         "dialog-time-button",
                         new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-red-400" : ""
                       )}>
-                        <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[0]}</span>
-                        <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[1]}</span>
+                        <span className="inline-flex items-center justify-center">
+                          <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[0]}</span>
+                          <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[1]}</span>
+                        </span>
                       </div>
                     </div>
                   )}
