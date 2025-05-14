@@ -1,7 +1,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap');
 
-/* Custom font declarations */
+/* Custom font declarations with preloading */
 @font-face {
   font-family: 'NexaLight';
   src: url('/fonts/Nexa-Trial-Light.ttf') format('truetype');
@@ -145,20 +145,58 @@
     @apply bg-gradient-to-br from-black via-black/90 to-black/70 bg-clip-text text-transparent dark:from-white dark:via-white/90 dark:to-white/70;
   }
   
-  /* Time button styles to match reference */
+  /* Time button styles */
   .time-button {
-    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[120px] h-[42px] flex items-center justify-center transition-all hover:bg-black/80 max-[400px]:min-w-0 max-[400px]:h-[38px] max-[400px]:py-1;
+    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[110px] h-[38px] flex items-center justify-center transition-all max-[400px]:min-w-0 max-[400px]:px-2 max-[400px]:h-[34px] max-[400px]:py-0.5;
+  }
+  
+  /* Active time button hover and active states */
+  .active-time-button {
+    @apply hover:bg-white hover:border-white hover:text-black focus:bg-white focus:border-white focus:text-black transition-all duration-200;
+  }
+  
+  .active-time-button:hover .time-text,
+  .active-time-button:focus .time-text {
+    @apply text-black;
+  }
+  
+  /* Expired time button hover and active states */
+  .expired-time-button {
+    @apply hover:bg-red-400 hover:border-red-400 hover:text-white focus:bg-red-400 focus:border-red-400 focus:text-white transition-all duration-200;
+  }
+  
+  .expired-time-button:hover .time-text,
+  .expired-time-button:focus .time-text {
+    @apply text-white;
   }
   
   .time-text {
-    @apply text-base tracking-wider max-[400px]:text-sm;
+    @apply text-base tracking-wider max-[400px]:text-sm transition-colors duration-200;
   }
   
   .time-hour-minute {
-    @apply font-['NexaLight'];
+    @apply font-['NexaLight'] transition-colors duration-200;
   }
   
   .time-am-pm {
-    @apply font-['NexaExtraBold'] text-sm ml-0.5 max-[400px]:text-xs;
+    @apply font-['NexaExtraBold'] text-sm ml-0.5 max-[400px]:text-xs transition-colors duration-200;
   }
+  
+  /* Dialog time button styles */
+  .dialog-time-button {
+    @apply px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono max-[400px]:w-full max-[400px]:px-2 max-[400px]:py-1.5;
+  }
+}
+
+/* Preload fonts */
+body::before {
+  content: '';
+  display: block;
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  z-index: -1;
+  background: url('/fonts/Nexa-Trial-Light.ttf') no-repeat, 
+              url('/fonts/Nexa-Trial-ExtraBold.ttf') no-repeat;
 }

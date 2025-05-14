@@ -48,7 +48,11 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       if (endTime > now) {
         active.push([id, transaction]);
       } else {
-        expired.push([id, transaction]);
+        // Only include expired transactions that are less than 24 hours old
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        if (endTime > twentyFourHoursAgo) {
+          expired.push([id, transaction]);
+        }
       }
     });
 
@@ -115,13 +119,13 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold uppercase tracking-wider">ACTIVE</h2>
             
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-1">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-3 max-[400px]:gap-2">
               {activeTransactions.length > 0 ? (
                 activeTransactions.map(([id, transaction]) => (
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="time-button max-[400px]:w-full max-[400px]:mx-auto"
+                    className="time-button active-time-button max-[400px]:w-full max-[400px]:mx-auto"
                   >
                     <span className="time-text">
                       {formatTimeWithCustomFonts(transaction.end_time)}
@@ -129,7 +133,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   </button>
                 ))
               ) : (
-                <div className="text-center col-span-3 max-[400px]:col-span-1 py-6">
+                <div className="text-center col-span-3 max-[400px]:col-span-3 py-6">
                   <p className="text-white/60">No active accounts</p>
                 </div>
               )}
@@ -145,13 +149,13 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold uppercase text-white tracking-wider">EXPIRED</h2>
             
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-1">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-3 max-[400px]:gap-2">
               {expiredTransactions.length > 0 ? (
                 expiredTransactions.map(([id, transaction]) => (
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="time-button max-[400px]:w-full max-[400px]:mx-auto"
+                    className="time-button expired-time-button max-[400px]:w-full max-[400px]:mx-auto"
                   >
                     <span className="time-text text-red-400">
                       {formatTimeWithCustomFonts(transaction.end_time)}
@@ -159,7 +163,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   </button>
                 ))
               ) : (
-                <div className="text-center col-span-3 max-[400px]:col-span-1 py-6">
+                <div className="text-center col-span-3 max-[400px]:col-span-3 py-6">
                   <p className="text-white/60">No expired accounts</p>
                 </div>
               )}
@@ -191,8 +195,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   {selectedTransaction[1].start_time && (
                     <div className="text-center">
                       <div className="text-sm text-white/60 mb-1">Start</div>
-                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono max-[400px]:w-full">
-                        {formatTimeWithAmPm(selectedTransaction[1].start_time)}
+                      <div className="dialog-time-button">
+                        <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[0]}</span>
+                        <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[1]}</span>
                       </div>
                     </div>
                   )}
@@ -200,8 +205,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   {selectedTransaction[1].approved_at && (
                     <div className="text-center">
                       <div className="text-sm text-white/60 mb-1">Approved</div>
-                      <div className="px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono max-[400px]:w-full">
-                        {formatTimeWithAmPm(selectedTransaction[1].approved_at)}
+                      <div className="dialog-time-button">
+                        <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[0]}</span>
+                        <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[1]}</span>
                       </div>
                     </div>
                   )}
@@ -210,10 +216,11 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     <div className="text-center">
                       <div className="text-sm text-white/60 mb-1">End</div>
                       <div className={cn(
-                        "px-3 py-2 rounded-full border border-white/10 bg-black/60 inline-flex justify-center font-mono max-[400px]:w-full",
+                        "dialog-time-button",
                         new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-red-400" : ""
                       )}>
-                        {formatTimeWithAmPm(selectedTransaction[1].end_time)}
+                        <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[0]}</span>
+                        <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[1]}</span>
                       </div>
                     </div>
                   )}
