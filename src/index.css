@@ -1,3 +1,23 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500;700&display=swap');
+
+/* Custom font declarations with preloading */
+@font-face {
+  font-family: 'NexaLight';
+  src: url('/fonts/Nexa-Trial-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NexaExtraBold';
+  src: url('/fonts/Nexa-Trial-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,172 +25,194 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-
+    --foreground: 240 10% 3.9%;
+    
     --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
- 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
- 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
+    --card-foreground: 240 10% 3.9%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --ring: 222.2 47.4% 11.2%;
-
-    --radius: 0.5rem;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+    
+    --radius: 0.75rem;
+    
+    --sidebar-background: 240 4.8% 95.9%;
+    --sidebar-foreground: 240 5.9% 10%;
+    --sidebar-primary: 224 76% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 240 5.9% 90%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
- 
+
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
- 
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
- 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --ring: 217.2 32.6% 17.5%;
-
-    --radius: 0.5rem;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    
+    --sidebar-background: 240 6% 10%;
+    --sidebar-foreground: 240 5% 84%;
+    --sidebar-primary: 224 76% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4% 16%;
+    --sidebar-accent-foreground: 240 5% 84%;
+    --sidebar-border: 240 4% 16%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
- 
+
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border selection:bg-primary/10 selection:text-primary;
   }
+  
+  .dark * {
+    @apply selection:bg-white/10 selection:text-white;
+  }
+  
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings:
-      "rlig" 1,
-      "calt" 1;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+  }
+
+  html {
+    @apply scroll-smooth;
   }
 }
 
-/* ===== Scrollbar CSS ===== */
-/* Firefox */
-* {
-  scrollbar-width: auto;
-  scrollbar-color: #8f54f0 #ffffff;
+@layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .glass-morphism {
+    @apply backdrop-blur-xl bg-black/5 border border-black/10 shadow-[0_4px_12px_-2px_rgba(0,0,0,0.2)] dark:bg-white/5 dark:border-white/10 dark:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.3)];
+  }
+  
+  .neo-blur {
+    @apply backdrop-blur-2xl bg-black/10 border border-black/20 dark:bg-black/40 dark:border-white/10;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-br from-black via-black/90 to-black/70 bg-clip-text text-transparent dark:from-white dark:via-white/90 dark:to-white/70;
+  }
+  
+  /* Time button styles */
+  .time-button {
+    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[110px] h-[38px] flex items-center justify-center max-[400px]:min-w-0 max-[400px]:px-2 max-[400px]:h-[34px] max-[400px]:py-0.5;
+  }
+  
+  /* Active time button hover and active states */
+  .active-time-button {
+    @apply hover:bg-white hover:border-white hover:text-black focus:bg-white focus:border-white focus:text-black transition-colors duration-300;
+  }
+  
+  .active-time-button:hover .time-text,
+  .active-time-button:focus .time-text {
+    @apply text-black;
+  }
+  
+  /* Expired time button hover and active states */
+  .expired-time-button {
+    @apply hover:bg-red-400 hover:border-red-400 hover:text-white focus:bg-red-400 focus:border-red-400 focus:text-white transition-colors duration-300;
+  }
+  
+  .expired-time-button:hover .time-text,
+  .expired-time-button:focus .time-text {
+    @apply text-white;
+  }
+  
+  .time-text {
+    @apply text-base tracking-wider max-[400px]:text-sm transition-colors duration-300;
+  }
+  
+  .time-hour-minute {
+    @apply font-['NexaLight'] transition-colors duration-300;
+  }
+  
+  .time-am-pm {
+    @apply font-['NexaExtraBold'] text-sm inline-block ml-0.5 max-[400px]:text-xs transition-colors duration-300;
+  }
+  
+  /* Dialog time button styles */
+  .dialog-time-button {
+    @apply px-3 py-2 rounded-full border border-white/10 bg-black/60 flex items-center justify-center font-mono max-[400px]:w-full max-[400px]:px-2 max-[400px]:py-1.5;
+  }
+  
+  /* Dialog animation */
+  .dialog-animation {
+    animation: dialogFadeIn 0.3s ease-out;
+  }
+  
+  @keyframes dialogFadeIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -48%) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
 }
 
-/* Chrome, Edge, and Safari */
-*::-webkit-scrollbar {
-  width: 6px;
-}
-
-*::-webkit-scrollbar-track {
-  background: rgb(17 24 39);
-}
-
-*::-webkit-scrollbar-thumb {
-  background-color: rgb(107 114 128);
-  border-radius: 10px;
-  border: 0px solid rgb(17 24 39);
-}
-
-.glass-morphism {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(12.4px);
-  -webkit-backdrop-filter: blur(12.4px);
-  border: 1px solid rgba(255, 255, 255, 0.17);
-}
-
-/* Dialog animation for StatusPanel */
-.dialog-animation {
-  animation-duration: 0.3s;
-  animation-timing-function: ease-in-out;
-}
-
-/* Time button styles for StatusPanel */
-.time-button {
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  width: 100%;
-  transition: all 0.2s ease-in-out;
-}
-
-.active-time-button:hover,
-.active-time-button:active {
-  background-color: white !important;
-  color: black !important;
-}
-
-.expired-time-button:hover,
-.expired-time-button:active {
-  background-color: rgb(248 113 113) !important;
-  color: white !important;
-}
-
-/* Font preloading */
-@font-face {
-  font-family: 'Nexa';
-  src: url('/fonts/Nexa-Trial-Light.ttf') format('truetype');
-  font-weight: 300;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Nexa';
-  src: url('/fonts/Nexa-Trial-ExtraBold.ttf') format('truetype');
-  font-weight: 800;
-  font-display: swap;
-}
-
-/* Dialog time button styling */
-.dialog-time-button {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 0.375rem;
-  padding: 0.375rem;
-  font-family: 'Nexa', sans-serif;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 80px;
-}
-
-.time-hour-minute {
-  font-weight: 800;
-}
-
-.time-am-pm {
-  font-weight: 300;
-  font-size: 0.75rem;
+/* Preload fonts */
+body::before {
+  content: '';
+  display: block;
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  z-index: -1;
+  background: url('/fonts/Nexa-Trial-Light.ttf') no-repeat, 
+              url('/fonts/Nexa-Trial-ExtraBold.ttf') no-repeat;
 }
