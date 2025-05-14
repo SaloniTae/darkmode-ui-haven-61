@@ -5,6 +5,10 @@ import { formatTimeWithAmPm } from "@/utils/dateFormatUtils";
 import { Minus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { ConfirmationDialog } from "@/components/admin/ConfirmationDialog";
+import { useFirebaseService } from "@/hooks/useFirebaseService";
 
 interface Transaction {
   approved_at: string;
@@ -28,6 +32,8 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedTransaction, setSelectedTransaction] = useState<[string, Transaction] | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const { fetchData, updateData } = useFirebaseService(service);
 
   // Filter transactions into active and expired
   const filterTransactions = () => {
@@ -111,9 +117,68 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     return formattedTime;
   };
 
+  // Clear expired orders and update credentials
+  const handleClearExpired = async () => {
+    try {
+      // Get all the credential data
+      const credData = await fetchData("/");
+      
+      // Counter for cleared orders
+      let clearedCount = 0;
+      
+      // Process each expired transaction
+      for (const [id, transaction] of expiredTransactions) {
+        // Only process transactions with assign_to property
+        if (transaction.assign_to) {
+          const credKey = transaction.assign_to;
+          
+          // Check if the credential exists in the database
+          if (credData[credKey] && typeof credData[credKey].usage_count === 'number') {
+            // Decrement the usage count, ensuring it doesn't go below 0
+            const currentCount = credData[credKey].usage_count;
+            const newCount = Math.max(0, currentCount - 1);
+            
+            // Update the credential's usage count
+            await updateData(`/${credKey}`, {
+              usage_count: newCount
+            });
+            
+            clearedCount++;
+          }
+          
+          // Remove the transaction from the database
+          await updateData(`/transactions/${id}`, null);
+        }
+      }
+      
+      // Update UI by clearing expired transactions
+      setExpiredTransactions([]);
+      
+      // Show success toast
+      toast.success(`Cleared ${clearedCount} expired orders. Usage counts updated.`);
+    } catch (error) {
+      console.error("Error clearing expired orders:", error);
+      toast.error("Failed to clear expired orders. Please try again.");
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <DataCard title="Account Status">
+      <DataCard title={
+        <div className="flex justify-between items-center w-full">
+          <span>Account Status</span>
+          {expiredTransactions.length > 0 && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setIsConfirmationOpen(true)}
+              className="text-sm"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+      }>
         <div className="space-y-10 py-4">
           {/* Active Section */}
           <div className="space-y-6">
@@ -254,6 +319,15 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog for Clear Expired Orders */}
+      <ConfirmationDialog
+        open={isConfirmationOpen}
+        onOpenChange={setIsConfirmationOpen}
+        title="Clear Expired Orders"
+        description="Are you sure you want to clear all expired orders? This will also decrement usage counts on their accounts."
+        onConfirm={handleClearExpired}
+      />
     </div>
   );
 }
