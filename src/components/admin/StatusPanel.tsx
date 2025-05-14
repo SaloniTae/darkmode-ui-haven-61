@@ -5,6 +5,10 @@ import { formatTimeWithAmPm } from "@/utils/dateFormatUtils";
 import { Minus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { useFirebaseService } from "@/hooks/useFirebaseService";
 
 interface Transaction {
   approved_at: string;
@@ -28,6 +32,10 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedTransaction, setSelectedTransaction] = useState<[string, Transaction] | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  
+  const { fetchData, updateData } = useFirebaseService(service);
 
   // Filter transactions into active and expired
   const filterTransactions = () => {
@@ -94,6 +102,64 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     setIsDialogOpen(true);
   };
 
+  // Handle clearing expired transactions
+  const handleClearExpired = async () => {
+    if (expiredTransactions.length === 0) {
+      toast.info("No expired accounts to clear");
+      return;
+    }
+    
+    setIsClearConfirmOpen(true);
+  };
+
+  const confirmClearExpired = async () => {
+    try {
+      setIsClearing(true);
+      
+      // Get all credentials to update the usage counts
+      const credentialsData = await fetchData("/");
+      
+      // Track updates needed for each credential
+      const credentialUpdates: Record<string, { path: string, value: number }> = {};
+      
+      // Process each expired transaction
+      for (const [id, transaction] of expiredTransactions) {
+        if (transaction.assign_to) {
+          const credKey = transaction.assign_to;
+          
+          // Check if credential exists
+          if (credentialsData[credKey]) {
+            const currentCount = credentialsData[credKey].usage_count || 0;
+            
+            // Only decrease if count is greater than 0
+            if (currentCount > 0) {
+              credentialUpdates[credKey] = {
+                path: `/${credKey}/usage_count`,
+                value: currentCount - 1
+              };
+            }
+          }
+        }
+      }
+      
+      // Update all credentials with decremented usage counts
+      for (const credKey in credentialUpdates) {
+        const { path, value } = credentialUpdates[credKey];
+        await updateData(path, value);
+      }
+      
+      setExpiredTransactions([]); // Clear in UI
+      toast.success(`Cleared ${expiredTransactions.length} expired accounts. Usage counts updated.`);
+      
+      setIsClearConfirmOpen(false);
+    } catch (error) {
+      console.error("Error clearing expired accounts:", error);
+      toast.error("Failed to clear expired accounts");
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   // Custom formatting function to separate hours+minutes from AM/PM
   const formatTimeWithCustomFonts = (timeString: string) => {
     const formattedTime = formatTimeWithAmPm(timeString);
@@ -113,7 +179,19 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
 
   return (
     <div className="space-y-6">
-      <DataCard title="Account Status">
+      <DataCard title={
+        <div className="flex justify-between items-center w-full">
+          <h3 className="text-xl font-semibold">Account Status</h3>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleClearExpired}
+            disabled={expiredTransactions.length === 0 || isClearing}
+          >
+            Clear
+          </Button>
+        </div>
+      }>
         <div className="space-y-10 py-4">
           {/* Active Section */}
           <div className="space-y-6">
@@ -125,7 +203,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="time-button active-time-button max-[400px]:w-full max-[400px]:mx-auto"
+                    className="time-button active-time-button max-[400px]:w-full max-[400px]:mx-auto transition-colors hover:bg-white hover:text-black active:bg-white active:text-black"
                   >
                     <span className="time-text">
                       {formatTimeWithCustomFonts(transaction.end_time)}
@@ -155,7 +233,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="time-button expired-time-button max-[400px]:w-full max-[400px]:mx-auto"
+                    className="time-button expired-time-button max-[400px]:w-full max-[400px]:mx-auto transition-colors hover:bg-red-400 hover:text-white active:bg-red-400 active:text-white"
                   >
                     <span className="time-text text-red-400">
                       {formatTimeWithCustomFonts(transaction.end_time)}
@@ -173,8 +251,8 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       </DataCard>
       
       {/* Transaction Details Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-black border-white/10 backdrop-blur-xl text-white max-w-sm max-[400px]:max-w-[90%] dialog-animation">
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen} className="dialog-animation">
+        <DialogContent className="bg-black border-white/10 backdrop-blur-xl text-white max-w-sm max-[400px]:max-w-[90%] transition-all duration-300">
           {selectedTransaction && (
             <>
               <DialogHeader>
@@ -198,7 +276,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                       <div className="dialog-time-button">
                         <span className="inline-flex items-center justify-center">
                           <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[0]}</span>
-                          <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[1]}</span>
+                          <span className="time-am-pm ml-1">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[1]}</span>
                         </span>
                       </div>
                     </div>
@@ -210,7 +288,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                       <div className="dialog-time-button">
                         <span className="inline-flex items-center justify-center">
                           <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[0]}</span>
-                          <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[1]}</span>
+                          <span className="time-am-pm ml-1">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[1]}</span>
                         </span>
                       </div>
                     </div>
@@ -225,7 +303,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                       )}>
                         <span className="inline-flex items-center justify-center">
                           <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[0]}</span>
-                          <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[1]}</span>
+                          <span className="time-am-pm ml-1">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[1]}</span>
                         </span>
                       </div>
                     </div>
@@ -254,6 +332,28 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Clear Confirmation Dialog */}
+      <AlertDialog open={isClearConfirmOpen} onOpenChange={setIsClearConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Expired Accounts</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to clear all expired orders? This will also decrement usage counts on their accounts.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isClearing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmClearExpired}
+              disabled={isClearing}
+              className={isClearing ? "opacity-70 cursor-not-allowed" : ""}
+            >
+              {isClearing ? "Processing..." : "Yes"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
