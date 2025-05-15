@@ -19,6 +19,7 @@ interface Transaction {
   last_email?: string;
   last_password?: string;
   user_id?: number;
+  hidden?: boolean;
 }
 
 interface StatusPanelProps {
@@ -47,6 +48,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       
       const transaction = data as Transaction;
       if (!transaction.end_time) return;
+      
+      // Skip hidden transactions
+      if (transaction.hidden === true) return;
 
       // Parse the end time
       const endTime = new Date(transaction.end_time.replace(' ', 'T'));
@@ -117,7 +121,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     return formattedTime;
   };
 
-  // Clear expired orders and update credentials
+  // Mark expired orders as hidden and update credentials
   const handleClearExpired = async () => {
     try {
       // Get all the credential data
@@ -129,11 +133,16 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
 
       // Process each expired transaction
       const processingPromises = expiredTransactions.map(async ([id, transaction]) => {
-        // Only process transactions with assign_to property
-        if (transaction.assign_to) {
-          const credKey = transaction.assign_to;
+        try {
+          // Mark the transaction as hidden in the database
+          await updateData(`/transactions/${id}`, {
+            hidden: true
+          });
           
-          try {
+          // Only update credential usage if it has assign_to property
+          if (transaction.assign_to) {
+            const credKey = transaction.assign_to;
+            
             // Check if the credential exists in the database
             if (credData[credKey] && typeof credData[credKey].usage_count === 'number') {
               // Decrement the usage count, ensuring it doesn't go below 0
@@ -144,16 +153,13 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
               await updateData(`/${credKey}`, {
                 usage_count: newCount
               });
-              
-              // Remove the transaction from the database
-              await updateData(`/transactions/${id}`, null);
-              
-              clearedCount++;
             }
-          } catch (e) {
-            console.error(`Error processing transaction ${id}:`, e);
-            errorCount++;
           }
+          
+          clearedCount++;
+        } catch (e) {
+          console.error(`Error processing transaction ${id}:`, e);
+          errorCount++;
         }
       });
       

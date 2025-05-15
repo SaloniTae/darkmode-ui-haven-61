@@ -56,6 +56,11 @@ export interface Transaction {
   end_time: string;
   slot_id: string;
   start_time: string;
+  hidden?: boolean;
+  assign_to?: string;
+  last_email?: string;
+  last_password?: string;
+  user_id?: number;
 }
 
 export interface TransactionGroup {
