@@ -6,7 +6,7 @@ import { Minus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { ConfirmationDialog } from "@/components/admin/ConfirmationDialog";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
 
@@ -125,40 +125,75 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       
       // Counter for cleared orders
       let clearedCount = 0;
-      
+      let errorCount = 0;
+
       // Process each expired transaction
-      for (const [id, transaction] of expiredTransactions) {
+      const processingPromises = expiredTransactions.map(async ([id, transaction]) => {
         // Only process transactions with assign_to property
         if (transaction.assign_to) {
           const credKey = transaction.assign_to;
           
-          // Check if the credential exists in the database
-          if (credData[credKey] && typeof credData[credKey].usage_count === 'number') {
-            // Decrement the usage count, ensuring it doesn't go below 0
-            const currentCount = credData[credKey].usage_count;
-            const newCount = Math.max(0, currentCount - 1);
-            
-            // Update the credential's usage count
-            await updateData(`/${credKey}`, {
-              usage_count: newCount
-            });
-            
-            clearedCount++;
+          try {
+            // Check if the credential exists in the database
+            if (credData[credKey] && typeof credData[credKey].usage_count === 'number') {
+              // Decrement the usage count, ensuring it doesn't go below 0
+              const currentCount = credData[credKey].usage_count;
+              const newCount = Math.max(0, currentCount - 1);
+              
+              // Update the credential's usage count
+              await updateData(`/${credKey}`, {
+                usage_count: newCount
+              });
+              
+              // Remove the transaction from the database
+              await updateData(`/transactions/${id}`, null);
+              
+              clearedCount++;
+            }
+          } catch (e) {
+            console.error(`Error processing transaction ${id}:`, e);
+            errorCount++;
           }
-          
-          // Remove the transaction from the database
-          await updateData(`/transactions/${id}`, null);
         }
-      }
+      });
       
-      // Update UI by clearing expired transactions
+      // Wait for all processes to complete
+      await Promise.all(processingPromises);
+      
+      // Clear expired transactions from UI
       setExpiredTransactions([]);
       
-      // Show success toast
-      toast.success(`Cleared ${clearedCount} expired orders. Usage counts updated.`);
+      // Show appropriate toast message
+      if (errorCount > 0) {
+        if (clearedCount > 0) {
+          toast({
+            title: "Partially Completed",
+            description: `Cleared ${clearedCount} orders, but ${errorCount} failed. Some usage counts updated.`,
+            variant: "default"
+          });
+        } else {
+          toast({
+            title: "Failed to Clear Orders",
+            description: "Could not clear any expired orders. Please try again.",
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Success",
+          description: `Cleared ${clearedCount} expired orders. Usage counts updated.`,
+          variant: "default"
+        });
+      }
     } catch (error) {
       console.error("Error clearing expired orders:", error);
-      toast.error("Failed to clear expired orders. Please try again.");
+      toast({
+        title: "Error",
+        description: "Failed to clear expired orders. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsConfirmationOpen(false);
     }
   };
 
