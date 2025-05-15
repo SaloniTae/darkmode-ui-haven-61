@@ -205,10 +205,10 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
 
   return (
     <div className="space-y-6">
-      <DataCard title="Account Status">
-        <div className="flex justify-between items-center w-full mb-4">
-          <span className="text-lg font-semibold">Account Status</span>
-          {expiredTransactions.length > 0 && (
+      <DataCard 
+        title="Account Status" 
+        headerAction={
+          expiredTransactions.length > 0 ? (
             <Button 
               variant="outline" 
               size="sm"
@@ -217,8 +217,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
             >
               Clear
             </Button>
-          )}
-        </div>
+          ) : null
+        }
+      >
         <div className="space-y-10 py-4">
           {/* Active Section */}
           <div className="space-y-6">
