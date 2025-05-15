@@ -8,6 +8,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
+import { AccessControlProvider } from "@/context/AccessControlContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import PersistLogin from "@/components/auth/PersistLogin";
 
@@ -17,6 +18,7 @@ const NetflixAdmin = lazy(() => import("./pages/NetflixAdmin"));
 const PrimeAdmin = lazy(() => import("./pages/PrimeAdmin"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const PasswordResetPage = lazy(() => import("./pages/PasswordResetPage"));
+const ConfigPage = lazy(() => import("./pages/ConfigPage"));
 
 // Create a new QueryClient with optimized settings
 const queryClient = new QueryClient({
@@ -38,44 +40,52 @@ const App = memo(() => (
         <Toaster />
         <Sonner />
         <AuthProvider>
-          <Suspense fallback={
-            <div className="flex items-center justify-center min-h-screen">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-          }>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/password-reset" element={<PasswordResetPage />} />
-              
-              {/* Protected routes wrapped with PersistLogin */}
-              <Route element={<PersistLogin />}>
-                <Route path="/crunchyroll" element={
-                  <ProtectedRoute requiredService="crunchyroll">
-                    <CrunchyrollAdmin />
-                  </ProtectedRoute>
-                } />
+          <AccessControlProvider>
+            <Suspense fallback={
+              <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              </div>
+            }>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/password-reset" element={<PasswordResetPage />} />
                 
-                <Route path="/netflix" element={
-                  <ProtectedRoute requiredService="netflix">
-                    <NetflixAdmin />
-                  </ProtectedRoute>
-                } />
+                {/* Protected routes wrapped with PersistLogin */}
+                <Route element={<PersistLogin />}>
+                  <Route path="/crunchyroll" element={
+                    <ProtectedRoute requiredService="crunchyroll">
+                      <CrunchyrollAdmin />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/netflix" element={
+                    <ProtectedRoute requiredService="netflix">
+                      <NetflixAdmin />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/prime" element={
+                    <ProtectedRoute requiredService="prime">
+                      <PrimeAdmin />
+                    </ProtectedRoute>
+                  } />
+
+                  <Route path="/config" element={
+                    <ProtectedRoute>
+                      <ConfigPage />
+                    </ProtectedRoute>
+                  } />
+                </Route>
                 
-                <Route path="/prime" element={
-                  <ProtectedRoute requiredService="prime">
-                    <PrimeAdmin />
-                  </ProtectedRoute>
-                } />
-              </Route>
-              
-              {/* Redirect root to login page */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              
-              {/* Fallback for unknown routes */}
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
-          </Suspense>
+                {/* Redirect root to login page */}
+                <Route path="/" element={<Navigate to="/login" replace />} />
+                
+                {/* Fallback for unknown routes */}
+                <Route path="*" element={<Navigate to="/login" replace />} />
+              </Routes>
+            </Suspense>
+          </AccessControlProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
