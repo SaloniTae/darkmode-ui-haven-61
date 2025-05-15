@@ -10,6 +10,7 @@ interface DataCardProps {
   className?: string;
   cardClassName?: string;
   onClick?: () => void;
+  headerAction?: ReactNode;
 }
 
 export function DataCard({ 
@@ -18,7 +19,8 @@ export function DataCard({
   footer, 
   className, 
   cardClassName,
-  onClick
+  onClick,
+  headerAction
 }: DataCardProps) {
   return (
     <Card 
@@ -30,7 +32,10 @@ export function DataCard({
       onClick={onClick}
     >
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">{title}</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg font-medium">{title}</CardTitle>
+          {headerAction && <div>{headerAction}</div>}
+        </div>
       </CardHeader>
       <CardContent className={cn("", className)}>
         {children}
