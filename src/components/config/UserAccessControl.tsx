@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,8 +20,18 @@ interface UserSettings {
   service: string;
 }
 
+// Define a proper type for the users
+interface UserData {
+  id: string;
+  email: string;
+  user_metadata?: {
+    service?: string;
+    username?: string;
+  };
+}
+
 export function UserAccessControl() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -67,7 +76,7 @@ export function UserAccessControl() {
             toast.error("Failed to load Crunchyroll users");
             
             // Hard-coded real users as fallback
-            const realUsers = [
+            const realUsers: UserData[] = [
               { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
               { id: "user2", email: "iyush777pvt@gmail.com", user_metadata: { service: "crunchyroll", username: "iyush777pvt" } }
             ];
@@ -108,7 +117,7 @@ export function UserAccessControl() {
         toast.error("Failed to load user data");
         
         // Fallback to hardcoded real users
-        const realUsers = [
+        const realUsers: UserData[] = [
           { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
           { id: "user2", email: "iyush777pvt@gmail.com", user_metadata: { service: "crunchyroll", username: "iyush777pvt" } }
         ];
