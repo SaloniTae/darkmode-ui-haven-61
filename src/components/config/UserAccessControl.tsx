@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { DataCard } from "@/components/ui/DataCard";
 import { Switch } from "@/components/ui/switch";
 import { Shield, ShieldOff, UserPlus, Loader2 } from "lucide-react";
 import { useAccessControl } from "@/context/AccessControlContext";
+import { User } from "@supabase/supabase-js";
 
 interface UserSettings {
   id?: string;
@@ -99,10 +101,19 @@ export function UserAccessControl() {
             ]);
           }
         } else if (authData && authData.users) {
-          // Filter for Crunchyroll users only
-          const crunchyrollUsers = authData.users.filter(user => 
-            user.user_metadata && user.user_metadata.service === 'crunchyroll'
-          );
+          // Filter for Crunchyroll users only and map to our UserData type
+          const crunchyrollUsers: UserData[] = authData.users
+            .filter((user: User) => 
+              user.user_metadata && user.user_metadata.service === 'crunchyroll'
+            )
+            .map((user: User): UserData => ({
+              id: user.id,
+              email: user.email || '',
+              user_metadata: {
+                service: user.user_metadata?.service as string,
+                username: user.user_metadata?.username as string
+              }
+            }));
           
           setUsers(crunchyrollUsers.length > 0 ? crunchyrollUsers : [
             { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
