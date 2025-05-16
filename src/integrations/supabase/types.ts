@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_access_settings: {
+        Row: {
+          can_modify: boolean | null
+          created_at: string | null
+          id: string
+          restricted_tabs: string[] | null
+          service: string
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          can_modify?: boolean | null
+          created_at?: string | null
+          id?: string
+          restricted_tabs?: string[] | null
+          service: string
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          can_modify?: boolean | null
+          created_at?: string | null
+          id?: string
+          restricted_tabs?: string[] | null
+          service?: string
+          updated_at?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       tokens: {
         Row: {
           created_at: string
@@ -36,6 +69,33 @@ export type Database = {
           service?: string
           token?: string
           used?: boolean
+        }
+        Relationships: []
+      }
+      ui_restrictions: {
+        Row: {
+          created_at: string | null
+          element_id: string
+          id: string
+          restriction_type: string
+          updated_at: string | null
+          user_ids: string[] | null
+        }
+        Insert: {
+          created_at?: string | null
+          element_id: string
+          id?: string
+          restriction_type: string
+          updated_at?: string | null
+          user_ids?: string[] | null
+        }
+        Update: {
+          created_at?: string | null
+          element_id?: string
+          id?: string
+          restriction_type?: string
+          updated_at?: string | null
+          user_ids?: string[] | null
         }
         Relationships: []
       }

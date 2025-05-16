@@ -9,15 +9,16 @@ import { supabase } from "@/lib/supabase";
 import { Label } from "@/components/ui/label";
 import { DataCard } from "@/components/ui/DataCard";
 import { Switch } from "@/components/ui/switch";
-import { Shield, ShieldOff, UserPlus } from "lucide-react";
+import { Shield, ShieldOff, UserPlus, Loader2 } from "lucide-react";
+import { useAccessControl } from "@/context/AccessControlContext";
 
-interface UserAccessSettings {
-  [userId: string]: {
-    canModify: boolean;
-    restrictedTabs: string[];
-    username: string;
-    service: string;
-  };
+interface UserSettings {
+  id?: string;
+  user_id: string;
+  can_modify: boolean;
+  restricted_tabs: string[];
+  username: string;
+  service: string;
 }
 
 export function UserAccessControl() {
@@ -25,22 +26,31 @@ export function UserAccessControl() {
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [accessSettings, setAccessSettings] = useState<UserAccessSettings>({});
+  const [userSettings, setUserSettings] = useState<UserSettings[]>([]);
+  const [updatingSettings, setUpdatingSettings] = useState(false);
+  const { refreshSettings } = useAccessControl();
 
-  // Load users from Supabase auth
+  // Load users and settings from Supabase
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         
-        // First, try to get access settings from localStorage
-        const savedSettings = localStorage.getItem("admin_access_settings");
-        if (savedSettings) {
-          setAccessSettings(JSON.parse(savedSettings));
+        // Fetch settings from Supabase
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('admin_access_settings')
+          .select('*');
+        
+        if (settingsError) {
+          console.error("Error fetching settings:", settingsError);
+          toast.error("Failed to load user settings");
+          return;
         }
-
-        // For demo purposes, we'll load data from localStorage
-        // In a real app, this would come from Supabase
+        
+        setUserSettings(settingsData || []);
+        
+        // For demo purposes, we'll load demo users
+        // In a real app, you would fetch real users from Supabase Auth
         const demoUsers = [
           { id: "user1", email: "admin@crunchyroll.com", user_metadata: { service: "crunchyroll", username: "admin" } },
           { id: "user2", email: "manager@netflix.com", user_metadata: { service: "netflix", username: "manager" } },
@@ -49,31 +59,52 @@ export function UserAccessControl() {
         
         setUsers(demoUsers);
         
-        // Initialize access settings for any new users
-        let updatedSettings = { ...accessSettings };
-        demoUsers.forEach(user => {
-          if (!updatedSettings[user.id]) {
-            updatedSettings[user.id] = {
-              canModify: true,
-              restrictedTabs: [],
-              username: user.user_metadata?.username || user.email,
-              service: user.user_metadata?.service || "unknown"
-            };
-          }
-        });
+        // Initialize settings for users who don't have settings yet
+        const usersWithoutSettings = demoUsers.filter(user => 
+          !settingsData?.some(setting => setting.user_id === user.id)
+        );
         
-        setAccessSettings(updatedSettings);
-        localStorage.setItem("admin_access_settings", JSON.stringify(updatedSettings));
+        if (usersWithoutSettings.length > 0) {
+          const newSettings = usersWithoutSettings.map(user => ({
+            user_id: user.id,
+            can_modify: true,
+            restricted_tabs: [],
+            username: user.user_metadata?.username || user.email,
+            service: user.user_metadata?.service || "unknown"
+          }));
+          
+          if (newSettings.length > 0) {
+            const { error } = await supabase
+              .from('admin_access_settings')
+              .insert(newSettings);
+              
+            if (error) {
+              console.error("Error adding new user settings:", error);
+              toast.error("Failed to initialize user settings");
+            } else {
+              // Refresh settings
+              const { data: refreshedData } = await supabase
+                .from('admin_access_settings')
+                .select('*');
+                
+              setUserSettings(refreshedData || []);
+            }
+          }
+        }
       } catch (error) {
-        console.error("Error fetching users:", error);
-        toast.error("Failed to load users");
+        console.error("Error loading data:", error);
+        toast.error("Failed to load user data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUsers();
+    fetchData();
   }, []);
+  
+  const getUserSettings = (userId: string): UserSettings | null => {
+    return userSettings.find(setting => setting.user_id === userId) || null;
+  };
 
   const handleUserSearch = () => {
     const foundUser = users.find(
@@ -90,40 +121,90 @@ export function UserAccessControl() {
     }
   };
 
-  const toggleUserAccess = (userId: string, canModify: boolean) => {
-    const updatedSettings = { 
-      ...accessSettings,
-      [userId]: {
-        ...accessSettings[userId],
-        canModify
+  const toggleUserAccess = async (userId: string, canModify: boolean) => {
+    try {
+      setUpdatingSettings(true);
+      
+      const currentSettings = getUserSettings(userId);
+      if (!currentSettings) return;
+      
+      const { error } = await supabase
+        .from('admin_access_settings')
+        .update({ can_modify: canModify })
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error("Error updating user access:", error);
+        toast.error("Failed to update user access");
+        return;
       }
-    };
-    setAccessSettings(updatedSettings);
-    localStorage.setItem("admin_access_settings", JSON.stringify(updatedSettings));
-    toast.success(`User access ${canModify ? "enabled" : "restricted"}`);
+      
+      // Update local state
+      setUserSettings(prevSettings => 
+        prevSettings.map(setting => 
+          setting.user_id === userId 
+            ? { ...setting, can_modify: canModify } 
+            : setting
+        )
+      );
+      
+      // Refresh context
+      await refreshSettings();
+      
+      toast.success(`User access ${canModify ? "enabled" : "restricted"}`);
+    } catch (error) {
+      console.error("Error toggling user access:", error);
+      toast.error("Failed to update user access");
+    } finally {
+      setUpdatingSettings(false);
+    }
   };
 
-  const toggleTabRestriction = (userId: string, tabName: string) => {
-    const userSettings = accessSettings[userId];
-    let restrictedTabs = [...userSettings.restrictedTabs];
-    
-    if (restrictedTabs.includes(tabName)) {
-      restrictedTabs = restrictedTabs.filter(tab => tab !== tabName);
-    } else {
-      restrictedTabs.push(tabName);
-    }
-    
-    const updatedSettings = {
-      ...accessSettings,
-      [userId]: {
-        ...userSettings,
-        restrictedTabs
+  const toggleTabRestriction = async (userId: string, tabName: string) => {
+    try {
+      setUpdatingSettings(true);
+      
+      const currentSettings = getUserSettings(userId);
+      if (!currentSettings) return;
+      
+      let restrictedTabs = [...currentSettings.restricted_tabs];
+      
+      if (restrictedTabs.includes(tabName)) {
+        restrictedTabs = restrictedTabs.filter(tab => tab !== tabName);
+      } else {
+        restrictedTabs.push(tabName);
       }
-    };
-    
-    setAccessSettings(updatedSettings);
-    localStorage.setItem("admin_access_settings", JSON.stringify(updatedSettings));
-    toast.success(`Tab access updated for user`);
+      
+      const { error } = await supabase
+        .from('admin_access_settings')
+        .update({ restricted_tabs: restrictedTabs })
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error("Error updating tab restrictions:", error);
+        toast.error("Failed to update tab access");
+        return;
+      }
+      
+      // Update local state
+      setUserSettings(prevSettings => 
+        prevSettings.map(setting => 
+          setting.user_id === userId 
+            ? { ...setting, restricted_tabs } 
+            : setting
+        )
+      );
+      
+      // Refresh context
+      await refreshSettings();
+      
+      toast.success(`Tab access updated for user`);
+    } catch (error) {
+      console.error("Error toggling tab restriction:", error);
+      toast.error("Failed to update tab access");
+    } finally {
+      setUpdatingSettings(false);
+    }
   };
 
   // Available tabs by service
@@ -132,6 +213,15 @@ export function UserAccessControl() {
     netflix: ["credentials", "slots", "transactions", "status", "users"],
     prime: ["credentials", "slots", "transactions", "status", "users"]
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading user data...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -149,27 +239,30 @@ export function UserAccessControl() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          {users.map(user => (
-            <Card 
-              key={user.id} 
-              className={`glass-morphism transition-all cursor-pointer ${selectedUser === user.id ? 'ring-2 ring-primary' : ''}`}
-              onClick={() => setSelectedUser(user.id)}
-            >
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg">{user.user_metadata?.username || user.email.split('@')[0]}</CardTitle>
-                  <div className="text-xs font-medium px-2 py-1 rounded-full bg-primary/20">
-                    {user.user_metadata?.service || "no service"}
+          {users.map(user => {
+            const settings = getUserSettings(user.id);
+            return (
+              <Card 
+                key={user.id} 
+                className={`glass-morphism transition-all cursor-pointer ${selectedUser === user.id ? 'ring-2 ring-primary' : ''}`}
+                onClick={() => setSelectedUser(user.id)}
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg">{user.user_metadata?.username || user.email.split('@')[0]}</CardTitle>
+                    <div className="text-xs font-medium px-2 py-1 rounded-full bg-primary/20">
+                      {user.user_metadata?.service || "no service"}
+                    </div>
                   </div>
-                </div>
-                <CardDescription className="text-xs">{user.email}</CardDescription>
-              </CardHeader>
-            </Card>
-          ))}
+                  <CardDescription className="text-xs">{user.email}</CardDescription>
+                </CardHeader>
+              </Card>
+            );
+          })}
         </div>
       </DataCard>
 
-      {selectedUser && accessSettings[selectedUser] && (
+      {selectedUser && getUserSettings(selectedUser) && (
         <DataCard title="User Access Configuration">
           <div className="space-y-8 py-4">
             <div className="flex items-center justify-between">
@@ -177,11 +270,15 @@ export function UserAccessControl() {
                 <h3 className="text-lg font-medium">Write Access</h3>
                 <p className="text-sm text-muted-foreground">Toggle to restrict user to read-only mode</p>
               </div>
-              <Switch 
-                checked={accessSettings[selectedUser].canModify}
-                onCheckedChange={(value) => toggleUserAccess(selectedUser, value)}
-                className="data-[state=checked]:bg-green-500"
-              />
+              {updatingSettings ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Switch 
+                  checked={getUserSettings(selectedUser)?.can_modify || false}
+                  onCheckedChange={(value) => toggleUserAccess(selectedUser, value)}
+                  className="data-[state=checked]:bg-green-500"
+                />
+              )}
             </div>
 
             <div className="space-y-4">
@@ -189,18 +286,20 @@ export function UserAccessControl() {
               <p className="text-sm text-muted-foreground">Select tabs to restrict access for this user</p>
               
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {serviceTabOptions[accessSettings[selectedUser].service || 'crunchyroll']?.map(tab => (
+                {getUserSettings(selectedUser) && serviceTabOptions[getUserSettings(selectedUser)?.service || 'crunchyroll']?.map(tab => (
                   <div 
                     key={tab}
                     className={`p-3 border rounded-md cursor-pointer flex items-center justify-between transition-all ${
-                      accessSettings[selectedUser].restrictedTabs.includes(tab) 
+                      getUserSettings(selectedUser)?.restricted_tabs.includes(tab) 
                         ? 'bg-red-500/20 border-red-500/50' 
                         : 'bg-transparent border-white/10 hover:bg-white/5'
                     }`}
                     onClick={() => toggleTabRestriction(selectedUser, tab)}
                   >
                     <span className="capitalize">{tab}</span>
-                    {accessSettings[selectedUser].restrictedTabs.includes(tab) ? (
+                    {updatingSettings ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : getUserSettings(selectedUser)?.restricted_tabs.includes(tab) ? (
                       <ShieldOff className="h-4 w-4" />
                     ) : (
                       <Shield className="h-4 w-4" />

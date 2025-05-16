@@ -1,5 +1,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface AccessSettings {
   [userId: string]: {
@@ -22,6 +24,7 @@ interface AccessControlContextType {
   isElementRestricted: (elementId: string, userId: string) => { restricted: boolean, type?: "blur" | "hide" | "disable" };
   isTabRestricted: (tabName: string, userId: string) => boolean;
   canUserModify: (userId: string) => boolean;
+  refreshSettings: () => Promise<void>;
 }
 
 const AccessControlContext = createContext<AccessControlContextType | undefined>(undefined);
@@ -29,50 +32,69 @@ const AccessControlContext = createContext<AccessControlContextType | undefined>
 export function AccessControlProvider({ children }: { children: ReactNode }) {
   const [accessSettings, setAccessSettings] = useState<AccessSettings>({});
   const [uiRestrictions, setUiRestrictions] = useState<UIRestriction[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // Function to fetch data from Supabase
+  const fetchAccessControlData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch access settings
+      const { data: accessData, error: accessError } = await supabase
+        .from('admin_access_settings')
+        .select('*');
+
+      if (accessError) {
+        console.error("Error fetching access settings:", accessError);
+        toast.error("Failed to load access settings");
+        return;
+      }
+
+      // Fetch UI restrictions
+      const { data: restrictionsData, error: restrictionsError } = await supabase
+        .from('ui_restrictions')
+        .select('*');
+
+      if (restrictionsError) {
+        console.error("Error fetching UI restrictions:", restrictionsError);
+        toast.error("Failed to load UI restrictions");
+        return;
+      }
+
+      // Transform access settings data to match our state structure
+      const formattedAccessSettings: AccessSettings = {};
+      accessData?.forEach(setting => {
+        formattedAccessSettings[setting.user_id] = {
+          canModify: setting.can_modify,
+          restrictedTabs: setting.restricted_tabs || [],
+          username: setting.username,
+          service: setting.service
+        };
+      });
+
+      // Transform UI restrictions data
+      const formattedUiRestrictions: UIRestriction[] = restrictionsData?.map(restriction => ({
+        elementId: restriction.element_id,
+        type: restriction.restriction_type as "blur" | "hide" | "disable",
+        userIds: restriction.user_ids || []
+      })) || [];
+
+      setAccessSettings(formattedAccessSettings);
+      setUiRestrictions(formattedUiRestrictions);
+    } catch (error) {
+      console.error("Error loading access control settings:", error);
+      toast.error("Failed to load access control settings");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial data load
   useEffect(() => {
-    // Load settings from localStorage
-    const loadSettings = () => {
-      try {
-        const savedAccessSettings = localStorage.getItem("admin_access_settings");
-        if (savedAccessSettings) {
-          setAccessSettings(JSON.parse(savedAccessSettings));
-        }
-
-        const savedUiRestrictions = localStorage.getItem("ui_restrictions");
-        if (savedUiRestrictions) {
-          setUiRestrictions(JSON.parse(savedUiRestrictions));
-        }
-      } catch (error) {
-        console.error("Error loading access control settings:", error);
-      }
-    };
-
-    loadSettings();
-
-    // Listen for storage changes (for multi-tab support)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "admin_access_settings") {
-        try {
-          const newSettings = e.newValue ? JSON.parse(e.newValue) : {};
-          setAccessSettings(newSettings);
-        } catch (error) {
-          console.error("Error parsing access settings from storage:", error);
-        }
-      }
-
-      if (e.key === "ui_restrictions") {
-        try {
-          const newRestrictions = e.newValue ? JSON.parse(e.newValue) : [];
-          setUiRestrictions(newRestrictions);
-        } catch (error) {
-          console.error("Error parsing UI restrictions from storage:", error);
-        }
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    fetchAccessControlData();
+    
+    // Subscribe to changes (using PostgreSQL changes requires additional setup,
+    // for now we'll just use manual refresh)
   }, []);
 
   const isElementRestricted = (elementId: string, userId: string) => {
@@ -96,6 +118,11 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
     if (!userSettings) return true; // Default to allowing if not configured
     return userSettings.canModify;
   };
+  
+  // Function to manually refresh settings
+  const refreshSettings = async () => {
+    await fetchAccessControlData();
+  };
 
   return (
     <AccessControlContext.Provider value={{
@@ -104,6 +131,7 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
       isElementRestricted,
       isTabRestricted,
       canUserModify,
+      refreshSettings
     }}>
       {children}
     </AccessControlContext.Provider>
