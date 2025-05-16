@@ -93,8 +93,36 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchAccessControlData();
     
-    // Subscribe to changes (using PostgreSQL changes requires additional setup,
-    // for now we'll just use manual refresh)
+    // Set up subscription for real-time updates
+    const accessChannel = supabase
+      .channel('access-control-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'admin_access_settings' },
+        () => {
+          console.log('Access settings changed, refreshing...');
+          fetchAccessControlData();
+        }
+      )
+      .subscribe();
+      
+    const restrictionsChannel = supabase
+      .channel('ui-restrictions-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ui_restrictions' },
+        () => {
+          console.log('UI restrictions changed, refreshing...');
+          fetchAccessControlData();
+        }
+      )
+      .subscribe();
+    
+    // Cleanup function
+    return () => {
+      supabase.removeChannel(accessChannel);
+      supabase.removeChannel(restrictionsChannel);
+    };
   }, []);
 
   const isElementRestricted = (elementId: string, userId: string) => {

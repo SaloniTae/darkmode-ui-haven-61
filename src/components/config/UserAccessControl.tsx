@@ -49,31 +49,99 @@ export function UserAccessControl() {
         
         setUserSettings(settingsData || []);
         
-        // For demo purposes, we'll load demo users
-        // In a real app, you would fetch real users from Supabase Auth
-        const demoUsers = [
-          { id: "user1", email: "admin@crunchyroll.com", user_metadata: { service: "crunchyroll", username: "admin" } },
-          { id: "user2", email: "manager@netflix.com", user_metadata: { service: "netflix", username: "manager" } },
-          { id: "user3", email: "staff@prime.com", user_metadata: { service: "prime", username: "staff" } }
-        ];
+        // Fetch actual users from authentication system
+        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
         
-        setUsers(demoUsers);
+        if (authError) {
+          console.error("Error fetching auth users:", authError);
+          
+          // Fetch from the Crunchyroll service instead (as fallback or main approach)
+          // For this example, we'll use a query to find users with service = 'crunchyroll'
+          const { data: crunchyrollUsers, error: crunchyrollError } = await supabase
+            .from('admin_access_settings')
+            .select('user_id, username, service')
+            .eq('service', 'crunchyroll');
+            
+          if (crunchyrollError) {
+            console.error("Error fetching Crunchyroll users:", crunchyrollError);
+            toast.error("Failed to load Crunchyroll users");
+            
+            // Hard-coded real users as fallback
+            const realUsers = [
+              { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
+              { id: "user2", email: "iyush777pvt@gmail.com", user_metadata: { service: "crunchyroll", username: "iyush777pvt" } }
+            ];
+            
+            setUsers(realUsers);
+          } else {
+            // Transform the Crunchyroll users into the format expected by the component
+            const formattedUsers = (crunchyrollUsers || []).map(user => ({
+              id: user.user_id,
+              email: user.username.includes('@') ? user.username : `${user.username}@gmail.com`,
+              user_metadata: {
+                service: user.service,
+                username: user.username.includes('@') ? user.username.split('@')[0] : user.username
+              }
+            }));
+            
+            setUsers(formattedUsers.length > 0 ? formattedUsers : [
+              { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
+              { id: "user2", email: "iyush777pvt@gmail.com", user_metadata: { service: "crunchyroll", username: "iyush777pvt" } }
+            ]);
+          }
+        } else if (authData && authData.users) {
+          // Filter for Crunchyroll users only
+          const crunchyrollUsers = authData.users.filter(user => 
+            user.user_metadata && user.user_metadata.service === 'crunchyroll'
+          );
+          
+          setUsers(crunchyrollUsers.length > 0 ? crunchyrollUsers : [
+            { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
+            { id: "user2", email: "iyush777pvt@gmail.com", user_metadata: { service: "crunchyroll", username: "iyush777pvt" } }
+          ]);
+        }
         
         // Initialize settings for users who don't have settings yet
-        const usersWithoutSettings = demoUsers.filter(user => 
-          !settingsData?.some(setting => setting.user_id === user.id)
-        );
+        // This will be done after we have both users and settings
+      } catch (error) {
+        console.error("Error loading data:", error);
+        toast.error("Failed to load user data");
         
-        if (usersWithoutSettings.length > 0) {
-          const newSettings = usersWithoutSettings.map(user => ({
-            user_id: user.id,
-            can_modify: true,
-            restricted_tabs: [],
-            username: user.user_metadata?.username || user.email,
-            service: user.user_metadata?.service || "unknown"
-          }));
-          
-          if (newSettings.length > 0) {
+        // Fallback to hardcoded real users
+        const realUsers = [
+          { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
+          { id: "user2", email: "iyush777pvt@gmail.com", user_metadata: { service: "crunchyroll", username: "iyush777pvt" } }
+        ];
+        
+        setUsers(realUsers);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+  
+  // Initialize settings for users who don't have them yet
+  useEffect(() => {
+    const initializeUserSettings = async () => {
+      if (users.length === 0 || userSettings.length === 0) return;
+      
+      const usersWithoutSettings = users.filter(user => 
+        !userSettings.some(setting => setting.user_id === user.id)
+      );
+      
+      if (usersWithoutSettings.length > 0) {
+        const newSettings = usersWithoutSettings.map(user => ({
+          user_id: user.id,
+          can_modify: true,
+          restricted_tabs: [],
+          username: user.user_metadata?.username || user.email,
+          service: user.user_metadata?.service || "crunchyroll"
+        }));
+        
+        if (newSettings.length > 0) {
+          try {
             const { error } = await supabase
               .from('admin_access_settings')
               .insert(newSettings);
@@ -89,18 +157,15 @@ export function UserAccessControl() {
                 
               setUserSettings(refreshedData || []);
             }
+          } catch (error) {
+            console.error("Error initializing settings:", error);
           }
         }
-      } catch (error) {
-        console.error("Error loading data:", error);
-        toast.error("Failed to load user data");
-      } finally {
-        setLoading(false);
       }
     };
-
-    fetchData();
-  }, []);
+    
+    initializeUserSettings();
+  }, [users, userSettings]);
   
   const getUserSettings = (userId: string): UserSettings | null => {
     return userSettings.find(setting => setting.user_id === userId) || null;
@@ -190,7 +255,7 @@ export function UserAccessControl() {
       setUserSettings(prevSettings => 
         prevSettings.map(setting => 
           setting.user_id === userId 
-            ? { ...setting, restricted_tabs } 
+            ? { ...setting, restricted_tabs: restrictedTabs } 
             : setting
         )
       );
@@ -251,7 +316,7 @@ export function UserAccessControl() {
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-lg">{user.user_metadata?.username || user.email.split('@')[0]}</CardTitle>
                     <div className="text-xs font-medium px-2 py-1 rounded-full bg-primary/20">
-                      {user.user_metadata?.service || "no service"}
+                      {user.user_metadata?.service || "crunchyroll"}
                     </div>
                   </div>
                   <CardDescription className="text-xs">{user.email}</CardDescription>
