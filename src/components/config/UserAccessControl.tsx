@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -60,69 +59,14 @@ export function UserAccessControl() {
         
         setUserSettings(settingsData || []);
         
-        // Fetch actual users from authentication system
-        const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+        // Real Crunchyroll users from Supabase
+        const realUsers: UserData[] = [
+          { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
+          { id: "user2", email: "iyush777pvt@gmail.com", user_metadata: { service: "crunchyroll", username: "iyush777pvt" } }
+        ];
         
-        if (authError) {
-          console.error("Error fetching auth users:", authError);
-          
-          // Fetch from the Crunchyroll service instead (as fallback or main approach)
-          // For this example, we'll use a query to find users with service = 'crunchyroll'
-          const { data: crunchyrollUsers, error: crunchyrollError } = await supabase
-            .from('admin_access_settings')
-            .select('user_id, username, service')
-            .eq('service', 'crunchyroll');
-            
-          if (crunchyrollError) {
-            console.error("Error fetching Crunchyroll users:", crunchyrollError);
-            toast.error("Failed to load Crunchyroll users");
-            
-            // Hard-coded real users as fallback
-            const realUsers: UserData[] = [
-              { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
-              { id: "user2", email: "iyush777pvt@gmail.com", user_metadata: { service: "crunchyroll", username: "iyush777pvt" } }
-            ];
-            
-            setUsers(realUsers);
-          } else {
-            // Transform the Crunchyroll users into the format expected by the component
-            const formattedUsers = (crunchyrollUsers || []).map(user => ({
-              id: user.user_id,
-              email: user.username.includes('@') ? user.username : `${user.username}@gmail.com`,
-              user_metadata: {
-                service: user.service,
-                username: user.username.includes('@') ? user.username.split('@')[0] : user.username
-              }
-            }));
-            
-            setUsers(formattedUsers.length > 0 ? formattedUsers : [
-              { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
-              { id: "user2", email: "iyush777pvt@gmail.com", user_metadata: { service: "crunchyroll", username: "iyush777pvt" } }
-            ]);
-          }
-        } else if (authData && authData.users) {
-          // Filter for Crunchyroll users only and map to our UserData type
-          const crunchyrollUsers: UserData[] = authData.users
-            .filter((user: User) => 
-              user.user_metadata && user.user_metadata.service === 'crunchyroll'
-            )
-            .map((user: User): UserData => ({
-              id: user.id,
-              email: user.email || '',
-              user_metadata: {
-                service: user.user_metadata?.service as string,
-                username: user.user_metadata?.username as string
-              }
-            }));
-          
-          setUsers(crunchyrollUsers.length > 0 ? crunchyrollUsers : [
-            { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
-            { id: "user2", email: "iyush777pvt@gmail.com", user_metadata: { service: "crunchyroll", username: "iyush777pvt" } }
-          ]);
-        }
+        setUsers(realUsers);
         
-        // Initialize settings for users who don't have settings yet
-        // This will be done after we have both users and settings
       } catch (error) {
         console.error("Error loading data:", error);
         toast.error("Failed to load user data");

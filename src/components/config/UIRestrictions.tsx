@@ -26,10 +26,19 @@ interface UIRestriction {
   user_ids: string[];
 }
 
+interface UserData {
+  id: string;
+  email: string;
+  user_metadata?: {
+    service?: string;
+    username?: string;
+  };
+}
+
 export function UIRestrictions() {
   const [elements, setElements] = useState<UIElement[]>([]);
   const [restrictions, setRestrictions] = useState<UIRestriction[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const [restrictionType, setRestrictionType] = useState<"blur" | "hide" | "disable">("blur");
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -55,12 +64,13 @@ export function UIRestrictions() {
         
         setRestrictions(restrictionsData || []);
         
-        // Demo data for users and UI elements
-        const demoUsers = [
-          { id: "user1", email: "admin@crunchyroll.com", user_metadata: { service: "crunchyroll", username: "admin" } },
-          { id: "user2", email: "manager@netflix.com", user_metadata: { service: "netflix", username: "manager" } },
-          { id: "user3", email: "staff@prime.com", user_metadata: { service: "prime", username: "staff" } }
+        // Real Crunchyroll users
+        const realUsers: UserData[] = [
+          { id: "user1", email: "shivam1@gmail.com", user_metadata: { service: "crunchyroll", username: "shivam1" } },
+          { id: "user2", email: "iyush777pvt@gmail.com", user_metadata: { service: "crunchyroll", username: "iyush777pvt" } }
         ];
+        
+        setUsers(realUsers);
         
         const demoElements = [
           { id: "email-field", name: "Email Field", path: "credentials/email", type: "field" as const },
@@ -74,7 +84,6 @@ export function UIRestrictions() {
           { id: "user-section", name: "User Management Section", path: "users", type: "section" as const },
         ];
         
-        setUsers(demoUsers);
         setElements(demoElements);
       } catch (error) {
         console.error("Error loading data:", error);
