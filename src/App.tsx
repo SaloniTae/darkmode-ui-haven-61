@@ -51,6 +51,9 @@ const App = memo(() => (
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/password-reset" element={<PasswordResetPage />} />
                 
+                {/* Config route - protected by password, not auth status */}
+                <Route path="/config" element={<ConfigPage />} />
+                
                 {/* Protected routes wrapped with PersistLogin */}
                 <Route element={<PersistLogin />}>
                   <Route path="/crunchyroll" element={
@@ -68,12 +71,6 @@ const App = memo(() => (
                   <Route path="/prime" element={
                     <ProtectedRoute requiredService="prime">
                       <PrimeAdmin />
-                    </ProtectedRoute>
-                  } />
-
-                  <Route path="/config" element={
-                    <ProtectedRoute>
-                      <ConfigPage />
                     </ProtectedRoute>
                   } />
                 </Route>

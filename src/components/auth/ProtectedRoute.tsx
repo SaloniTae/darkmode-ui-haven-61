@@ -14,6 +14,11 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
   const { isTabRestricted } = useAccessControl();
   const location = useLocation();
 
+  // Special case for the config route - we don't redirect
+  if (location.pathname === "/config") {
+    return <>{children}</>;
+  }
+
   // Basic protection - user must be logged in
   if (!user) {
     return <Navigate to="/login" replace />;
