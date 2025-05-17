@@ -165,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: accessSettings, error: settingsError } = await supabase
           .from('admin_access_settings')
           .select('*')
-          .eq('token_id', tokenData.id)
+          .eq('user_id', tokenData.id)  // Here we're using the token ID as the temporary user_id
           .single();
           
         if (!settingsError && accessSettings) {

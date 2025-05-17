@@ -70,15 +70,15 @@ export function TokenGenerator() {
           console.log("Token data retrieved:", tokenData);
           
           // Create access control settings for this token
+          // Use tokenData.id directly instead of token_id field
           const { error: settingsError } = await supabase
             .from('admin_access_settings')
             .insert([{
-              token_id: tokenData.id,
+              user_id: tokenData.id, // Use this as a temporary user ID until registration
               can_modify: canModify,
               restricted_tabs: restrictedTabs,
               service: service,
-              // Temporary user ID until user registers
-              user_id: tokenData.id,
+              // We'll need to update this once the user registers
               username: `${service}_user_${Math.floor(Math.random() * 1000)}`
             }]);
             
