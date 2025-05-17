@@ -1,9 +1,10 @@
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useAccessControl } from "@/context/AccessControlContext";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -14,6 +15,8 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
   const { user, currentService } = useAuth();
   const { isTabRestricted, canUserModify, refreshSettings } = useAccessControl();
   const location = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [accessChecked, setAccessChecked] = useState(false);
 
   // Special case for the config route - we don't redirect
   if (location.pathname === "/config") {
@@ -22,10 +25,37 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
 
   // Refresh access settings when route changes
   useEffect(() => {
-    if (user) {
-      refreshSettings();
-    }
+    const checkAccess = async () => {
+      if (user) {
+        try {
+          setLoading(true);
+          await refreshSettings();
+        } catch (error) {
+          console.error("Failed to refresh access settings:", error);
+        } finally {
+          setLoading(false);
+          setAccessChecked(true);
+        }
+      } else {
+        setLoading(false);
+        setAccessChecked(true);
+      }
+    };
+    
+    checkAccess();
   }, [user, location.pathname, refreshSettings]);
+
+  // Show loading state while checking access
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p className="text-lg">Checking access permissions...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Basic protection - user must be logged in
   if (!user) {
@@ -49,6 +79,13 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
       // If the user doesn't have access to this tab, redirect to the service root
       return <Navigate to={`/${tabMatches[1]}`} replace />;
     }
+  }
+
+  // Additional check for write access on non-config pages
+  if (!location.pathname.includes("/config") && user) {
+    // This is a read-only check that doesn't block navigation but will log for debugging
+    const hasWriteAccess = canUserModify(user.id);
+    console.log(`User ${user.id} write access: ${hasWriteAccess ? 'Granted' : 'Restricted'}`);
   }
 
   return <>{children}</>;

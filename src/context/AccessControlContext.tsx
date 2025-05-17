@@ -34,12 +34,16 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
   const [accessSettings, setAccessSettings] = useState<AccessSettings>({});
   const [uiRestrictions, setUiRestrictions] = useState<UIRestriction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Function to fetch data from Supabase
   const fetchAccessControlData = async () => {
     try {
       setLoading(true);
+      setFetchError(null);
+      
+      console.log("Fetching access control settings...");
       
       // Fetch access settings
       const { data: accessData, error: accessError } = await supabase
@@ -48,6 +52,7 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
 
       if (accessError) {
         console.error("Error fetching access settings:", accessError);
+        setFetchError(`Failed to load access settings: ${accessError.message}`);
         toast.error("Failed to load access settings");
         return;
       }
@@ -62,9 +67,12 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
 
       if (restrictionsError) {
         console.error("Error fetching UI restrictions:", restrictionsError);
+        setFetchError(`Failed to load UI restrictions: ${restrictionsError.message}`);
         toast.error("Failed to load UI restrictions");
         return;
       }
+
+      console.log("Fetched UI restrictions:", restrictionsData);
 
       // Transform access settings data to match our state structure
       const formattedAccessSettings: AccessSettings = {};
@@ -86,8 +94,11 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
 
       setAccessSettings(formattedAccessSettings);
       setUiRestrictions(formattedUiRestrictions);
-    } catch (error) {
-      console.error("Error loading access control settings:", error);
+      setFetchError(null);
+    } catch (error: any) {
+      const errorMessage = `Error loading access control settings: ${error.message || "Unknown error"}`;
+      console.error(errorMessage, error);
+      setFetchError(errorMessage);
       toast.error("Failed to load access control settings");
     } finally {
       setLoading(false);
@@ -98,6 +109,13 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user) {
       fetchAccessControlData();
+      
+      // Check if Supabase client is properly initialized
+      if (!supabase) {
+        console.error("Supabase client is not initialized");
+        toast.error("Database connection error");
+        return;
+      }
     }
     
     // Set up subscription for real-time updates
@@ -111,7 +129,9 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
           fetchAccessControlData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Access settings subscription status:", status);
+      });
       
     const restrictionsChannel = supabase
       .channel('ui-restrictions-changes')
@@ -123,7 +143,9 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
           fetchAccessControlData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("UI restrictions subscription status:", status);
+      });
     
     // Cleanup function
     return () => {
@@ -163,7 +185,7 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
   // Function to manually refresh settings
   const refreshSettings = async () => {
     console.log("Manually refreshing access control settings");
-    await fetchAccessControlData();
+    return fetchAccessControlData();
   };
 
   return (
@@ -175,6 +197,18 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
       canUserModify,
       refreshSettings
     }}>
+      {fetchError && (
+        <div className="bg-red-500/10 border border-red-500 text-red-700 p-4 m-4 rounded-md" role="alert">
+          <div className="font-bold">Access Control Error</div>
+          <div className="text-sm">{fetchError}</div>
+          <button 
+            onClick={() => fetchAccessControlData()}
+            className="mt-2 bg-red-100 hover:bg-red-200 text-red-800 font-semibold py-1 px-2 rounded text-xs"
+          >
+            Retry
+          </button>
+        </div>
+      )}
       {children}
     </AccessControlContext.Provider>
   );
