@@ -15,7 +15,7 @@ export function RestrictedElement({ elementId, children, fallback = null }: Rest
   const { isElementRestricted } = useAccessControl();
   
   // If no user, just render normally - this is important to avoid restricting for non-logged in users
-  if (!user) return <>{children}</>; 
+  if (!user) return <>{children}</>;
   
   const userId = user.id;
   const { restricted, type } = isElementRestricted(elementId, userId);

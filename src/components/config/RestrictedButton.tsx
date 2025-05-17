@@ -23,12 +23,13 @@ export function RestrictedButton({
   const { user } = useAuth();
   const { canUserModify } = useAccessControl();
   
-  // If no user, just render the button normally - this is important for non-logged in users
+  // Check for user - this is important for non-logged in users
   if (!user) return <Button {...props}>{children}</Button>;
   
   const userId = user.id;
   const hasWriteAccess = canUserModify(userId);
   
+  // If user has write access, render the button normally
   if (hasWriteAccess) {
     return <Button {...props}>{children}</Button>;
   }

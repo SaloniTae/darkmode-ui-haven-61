@@ -20,8 +20,6 @@ export function RestrictedTab({ tabName, children }: RestrictedTabProps) {
   const userId = user.id;
   const restricted = isTabRestricted(tabName, userId);
   
-  console.log(`Tab ${tabName} restricted for user ${userId}:`, restricted);
-  
   if (!restricted) {
     return <TabsContent value={tabName}>{children}</TabsContent>;
   }
