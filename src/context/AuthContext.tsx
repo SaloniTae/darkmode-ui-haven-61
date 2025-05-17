@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import { User, Session } from "@supabase/supabase-js";
@@ -160,6 +159,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .update({ used: true })
           .eq('id', tokenData.id);
         
+        console.log("Looking for access control settings for token ID:", tokenData.id);
+        
         // Check if there are any access control settings associated with this token
         const { data: accessSettings, error: settingsError } = await supabase
           .from('admin_access_settings')
@@ -168,6 +169,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .single();
           
         if (!settingsError && accessSettings) {
+          console.log("Found access settings for token:", accessSettings);
+          
           // Update the access settings with the newly created user ID
           await supabase
             .from('admin_access_settings')
@@ -178,7 +181,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .eq('id', accessSettings.id);
             
           console.log(`Access controls applied for user ${username}`);
+          toast.success("Access controls applied successfully");
         } else {
+          console.log("No existing access settings found, creating default settings");
+          
           // Create default access settings for the user
           await supabase
             .from('admin_access_settings')
@@ -237,17 +243,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error("Token generation error:", error);
-        toast.error(`Failed to generate token: ${error.message}`);
-        return null;
+        throw new Error(error.message);
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error("Failed to retrieve token data after creation");
       }
 
       console.log("Token generated successfully:", token);
-      toast.success(`Generated token for ${service}`);
       return token;
     } catch (error: any) {
       console.error("Token generation error:", error);
-      toast.error(error.message || "Failed to generate token");
-      return null;
+      throw error;
     }
   };
 

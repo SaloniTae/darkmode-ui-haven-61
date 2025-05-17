@@ -23,6 +23,7 @@ export function TokenGenerator() {
   const [canModify, setCanModify] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [restrictedTabs, setRestrictedTabs] = useState<string[]>([]);
+  const [tokenError, setTokenError] = useState<string | null>(null);
 
   // Available tabs by service
   const serviceTabOptions: Record<string, string[]> = {
@@ -32,58 +33,75 @@ export function TokenGenerator() {
   };
 
   const handleGenerateToken = async () => {
+    setTokenError(null);
     setIsLoading(true);
+    setToken(null); // Clear previous token
+    
     try {
+      // Generate token
       const newToken = await generateToken(service);
       
       if (!newToken) {
+        setTokenError("Failed to generate token");
         toast.error("Failed to generate token");
         return;
       }
       
+      // Configure access settings if option is selected
       if (newToken && showAccessControls) {
         console.log("Configuring access settings for token:", newToken);
-        // Get token information from the database
-        const { data: tokenData, error: tokenError } = await supabase
-          .from('tokens')
-          .select('*')
-          .eq('token', newToken)
-          .single();
-          
-        if (tokenError) {
-          console.error("Error retrieving token data:", tokenError);
-          toast.error("Failed to configure access settings");
-          return;
-        }
         
-        console.log("Token data retrieved:", tokenData);
-        // Create access control settings for this token
-        const { error: settingsError } = await supabase
-          .from('admin_access_settings')
-          .insert([{
-            token_id: tokenData.id,
-            can_modify: canModify,
-            restricted_tabs: restrictedTabs,
-            service: service,
-            // Temporary values until user registers
-            user_id: tokenData.id,
-            username: `${service}_user_${Math.floor(Math.random() * 1000)}`
-          }]);
+        try {
+          // Get token information from the database
+          const { data: tokenData, error: tokenError } = await supabase
+            .from('tokens')
+            .select('*')
+            .eq('token', newToken)
+            .single();
+            
+          if (tokenError) {
+            throw new Error(`Error retrieving token data: ${tokenError.message}`);
+          }
           
-        if (settingsError) {
-          console.error("Error configuring access settings:", settingsError);
-          toast.error("Failed to configure access settings");
-          return;
+          if (!tokenData) {
+            throw new Error("Token data not found");
+          }
+          
+          console.log("Token data retrieved:", tokenData);
+          
+          // Create access control settings for this token
+          const { error: settingsError } = await supabase
+            .from('admin_access_settings')
+            .insert([{
+              token_id: tokenData.id,
+              can_modify: canModify,
+              restricted_tabs: restrictedTabs,
+              service: service,
+              // Temporary user ID until user registers
+              user_id: tokenData.id,
+              username: `${service}_user_${Math.floor(Math.random() * 1000)}`
+            }]);
+            
+          if (settingsError) {
+            throw new Error(`Error configuring access settings: ${settingsError.message}`);
+          }
+          
+          toast.success("Token generated with access control settings");
+        } catch (err: any) {
+          console.error("Access control configuration error:", err);
+          setTokenError("Failed to configure access settings");
+          toast.error(`Failed to configure access settings: ${err.message}`);
+          // We still display the token even if access controls failed
         }
-        
-        toast.success("Token generated with access control settings");
       } else {
         toast.success("Token generated successfully");
       }
       
+      // Set the token regardless of access control success/failure
       setToken(newToken);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating token:", error);
+      setTokenError(error.message || "Failed to generate token");
       toast.error("Failed to generate token");
     } finally {
       setIsLoading(false);
@@ -193,6 +211,12 @@ export function TokenGenerator() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+            </div>
+          )}
+
+          {tokenError && (
+            <div className="p-2 bg-destructive/20 border border-destructive/50 rounded text-sm text-destructive mt-2">
+              {tokenError}
             </div>
           )}
 
