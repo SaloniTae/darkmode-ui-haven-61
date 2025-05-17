@@ -1,5 +1,5 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useAccessControl } from "@/context/AccessControlContext";
 import { TabsContent } from "@/components/ui/tabs";
@@ -12,12 +12,19 @@ interface RestrictedTabProps {
 
 export function RestrictedTab({ tabName, children }: RestrictedTabProps) {
   const { user } = useAuth();
-  const { isTabRestricted } = useAccessControl();
+  const { isTabRestricted, refreshSettings } = useAccessControl();
+  
+  useEffect(() => {
+    // Refresh settings when component mounts
+    refreshSettings();
+  }, [refreshSettings]);
   
   if (!user) return <TabsContent value={tabName}>{children}</TabsContent>; // If no user, just render normally
   
   const userId = user.id;
   const restricted = isTabRestricted(tabName, userId);
+  
+  console.log(`Tab ${tabName} restricted for user ${userId}:`, restricted);
   
   if (!restricted) {
     return <TabsContent value={tabName}>{children}</TabsContent>;

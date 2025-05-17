@@ -1,8 +1,9 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useAccessControl } from "@/context/AccessControlContext";
+import { toast } from "sonner";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -11,13 +12,20 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProps) => {
   const { user, currentService } = useAuth();
-  const { isTabRestricted } = useAccessControl();
+  const { isTabRestricted, canUserModify, refreshSettings } = useAccessControl();
   const location = useLocation();
 
   // Special case for the config route - we don't redirect
   if (location.pathname === "/config") {
     return <>{children}</>;
   }
+
+  // Refresh access settings when route changes
+  useEffect(() => {
+    if (user) {
+      refreshSettings();
+    }
+  }, [user, location.pathname, refreshSettings]);
 
   // Basic protection - user must be logged in
   if (!user) {
@@ -37,8 +45,9 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
     const currentTab = tabMatches[2];
     
     if (isTabRestricted(currentTab, user.id)) {
+      toast.error(`You don't have access to the ${currentTab} tab`);
       // If the user doesn't have access to this tab, redirect to the service root
-      return <Navigate to={`/${tabMatches[1]}`} replace state={{ message: `You don't have access to this tab` }} />;
+      return <Navigate to={`/${tabMatches[1]}`} replace />;
     }
   }
 

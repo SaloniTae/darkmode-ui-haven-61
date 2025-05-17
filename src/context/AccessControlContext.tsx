@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 
 interface AccessSettings {
   [userId: string]: {
@@ -33,6 +34,7 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
   const [accessSettings, setAccessSettings] = useState<AccessSettings>({});
   const [uiRestrictions, setUiRestrictions] = useState<UIRestriction[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   // Function to fetch data from Supabase
   const fetchAccessControlData = async () => {
@@ -50,6 +52,9 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Debug the access settings
+      console.log("Fetched access settings:", accessData);
+      
       // Fetch UI restrictions
       const { data: restrictionsData, error: restrictionsError } = await supabase
         .from('ui_restrictions')
@@ -91,7 +96,9 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
 
   // Initial data load
   useEffect(() => {
-    fetchAccessControlData();
+    if (user) {
+      fetchAccessControlData();
+    }
     
     // Set up subscription for real-time updates
     const accessChannel = supabase
@@ -123,7 +130,7 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(accessChannel);
       supabase.removeChannel(restrictionsChannel);
     };
-  }, []);
+  }, [user]);
 
   const isElementRestricted = (elementId: string, userId: string) => {
     const restriction = uiRestrictions.find(r => 
@@ -138,17 +145,24 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
   const isTabRestricted = (tabName: string, userId: string) => {
     const userSettings = accessSettings[userId];
     if (!userSettings) return false;
+    
+    console.log(`Checking if tab ${tabName} is restricted for user ${userId}`);
+    console.log(`User restricted tabs:`, userSettings.restrictedTabs);
+    
     return userSettings.restrictedTabs.includes(tabName);
   };
 
   const canUserModify = (userId: string) => {
     const userSettings = accessSettings[userId];
     if (!userSettings) return true; // Default to allowing if not configured
+    
+    console.log(`Checking if user ${userId} can modify. Result:`, userSettings.canModify);
     return userSettings.canModify;
   };
   
   // Function to manually refresh settings
   const refreshSettings = async () => {
+    console.log("Manually refreshing access control settings");
     await fetchAccessControlData();
   };
 

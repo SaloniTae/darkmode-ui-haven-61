@@ -1,5 +1,5 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useAccessControl } from "@/context/AccessControlContext";
 
@@ -11,12 +11,19 @@ interface RestrictedElementProps {
 
 export function RestrictedElement({ elementId, children, fallback = null }: RestrictedElementProps) {
   const { user } = useAuth();
-  const { isElementRestricted } = useAccessControl();
+  const { isElementRestricted, refreshSettings } = useAccessControl();
+  
+  useEffect(() => {
+    // Refresh settings when component mounts
+    refreshSettings();
+  }, [refreshSettings]);
   
   if (!user) return <>{children}</>; // If no user, just render normally
   
   const userId = user.id;
   const { restricted, type } = isElementRestricted(elementId, userId);
+  
+  console.log(`Element ${elementId} restricted for user ${userId}:`, restricted, type);
   
   if (!restricted) {
     return <>{children}</>;

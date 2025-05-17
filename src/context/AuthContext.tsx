@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import { User, Session } from "@supabase/supabase-js";
@@ -172,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log("Found access settings for token:", accessSettings);
           
           // Update the access settings with the newly created user ID
-          await supabase
+          const { error: updateError } = await supabase
             .from('admin_access_settings')
             .update({
               user_id: data.user.id,
@@ -180,8 +181,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             })
             .eq('id', accessSettings.id);
             
-          console.log(`Access controls applied for user ${username}`);
-          toast.success("Access controls applied successfully");
+          if (updateError) {
+            console.error("Error updating access settings with new user ID:", updateError);
+            toast.error("Failed to apply access controls");
+          } else {
+            console.log(`Access controls applied for user ${username}`);
+            toast.success("Access controls applied successfully");
+          }
         } else {
           console.log("No existing access settings found, creating default settings");
           
