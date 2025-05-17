@@ -218,16 +218,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
+      // Generate a random token
       const token = Math.random().toString(36).substring(2, 10).toUpperCase();
       
-      const { error } = await supabase
+      console.log("Generating token for service:", service);
+      console.log("Current user:", user?.id);
+      
+      // Store token in Supabase
+      const { data, error } = await supabase
         .from('tokens')
         .insert([{ 
           token, 
           service,
           used: false,
           created_by: user?.id || null
-        }]);
+        }])
+        .select();
 
       if (error) {
         console.error("Token generation error:", error);
@@ -235,6 +241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
 
+      console.log("Token generated successfully:", token);
       toast.success(`Generated token for ${service}`);
       return token;
     } catch (error: any) {

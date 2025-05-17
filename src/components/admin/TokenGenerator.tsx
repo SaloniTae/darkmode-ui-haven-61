@@ -12,29 +12,38 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 export function TokenGenerator() {
   const { generateToken, user } = useAuth();
-  const [service, setService] = useState<"netflix" | "prime">("netflix");
+  const [service, setService] = useState<"crunchyroll" | "netflix" | "prime">("crunchyroll");
   const [token, setToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showAccessControls, setShowAccessControls] = useState(false);
   const [canModify, setCanModify] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [restrictedTabs, setRestrictedTabs] = useState<string[]>([]);
 
   // Available tabs by service
   const serviceTabOptions: Record<string, string[]> = {
+    crunchyroll: ["tokens", "admin", "credentials", "slots", "referrals", "transactions", "status", "uiconfig", "users"],
     netflix: ["credentials", "slots", "transactions", "status", "users"],
     prime: ["credentials", "slots", "transactions", "status", "users"]
   };
 
   const handleGenerateToken = async () => {
+    setIsLoading(true);
     try {
       const newToken = await generateToken(service);
       
+      if (!newToken) {
+        toast.error("Failed to generate token");
+        return;
+      }
+      
       if (newToken && showAccessControls) {
-        // Get user information from the token
+        console.log("Configuring access settings for token:", newToken);
+        // Get token information from the database
         const { data: tokenData, error: tokenError } = await supabase
           .from('tokens')
           .select('*')
@@ -47,9 +56,8 @@ export function TokenGenerator() {
           return;
         }
         
+        console.log("Token data retrieved:", tokenData);
         // Create access control settings for this token
-        // We'll create placeholder settings with the token ID as user_id
-        // These will be updated with the real user_id when the user registers
         const { error: settingsError } = await supabase
           .from('admin_access_settings')
           .insert([{
@@ -69,12 +77,16 @@ export function TokenGenerator() {
         }
         
         toast.success("Token generated with access control settings");
+      } else {
+        toast.success("Token generated successfully");
       }
       
       setToken(newToken);
     } catch (error) {
       console.error("Error generating token:", error);
       toast.error("Failed to generate token");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -115,12 +127,13 @@ export function TokenGenerator() {
             <label className="text-sm font-medium mb-1 block">Select Service</label>
             <Select
               value={service}
-              onValueChange={(value) => setService(value as "netflix" | "prime")}
+              onValueChange={(value) => setService(value as "crunchyroll" | "netflix" | "prime")}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select service" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="crunchyroll">Crunchyroll</SelectItem>
                 <SelectItem value="netflix">Netflix</SelectItem>
                 <SelectItem value="prime">Prime</SelectItem>
               </SelectContent>
@@ -184,7 +197,7 @@ export function TokenGenerator() {
           )}
 
           {token && (
-            <div>
+            <div className="mt-4">
               <label className="text-sm font-medium mb-1 block">Generated Token</label>
               <div className="flex items-center mt-1">
                 <Input value={token} readOnly className="bg-muted font-mono" />
@@ -208,8 +221,15 @@ export function TokenGenerator() {
           <Button 
             onClick={handleGenerateToken} 
             className="w-full"
+            disabled={isLoading}
           >
-            <KeyRound className="mr-2 h-4 w-4" /> Generate New Token
+            {isLoading ? (
+              <>Loading...</>
+            ) : (
+              <>
+                <KeyRound className="mr-2 h-4 w-4" /> Generate New Token
+              </>
+            )}
           </Button>
         </CardFooter>
       </Card>
