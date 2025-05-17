@@ -13,37 +13,23 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProps) => {
   const { user, currentService } = useAuth();
-  const { isTabRestricted, canUserModify, refreshSettings } = useAccessControl();
+  const { isTabRestricted, canUserModify } = useAccessControl();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
-  const [accessChecked, setAccessChecked] = useState(false);
+
+  useEffect(() => {
+    // Set loading to false after a brief delay to allow auth state to be determined
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Special case for the config route - we don't redirect
   if (location.pathname === "/config") {
     return <>{children}</>;
   }
-
-  // Refresh access settings when route changes
-  useEffect(() => {
-    const checkAccess = async () => {
-      if (user) {
-        try {
-          setLoading(true);
-          await refreshSettings();
-        } catch (error) {
-          console.error("Failed to refresh access settings:", error);
-        } finally {
-          setLoading(false);
-          setAccessChecked(true);
-        }
-      } else {
-        setLoading(false);
-        setAccessChecked(true);
-      }
-    };
-    
-    checkAccess();
-  }, [user, location.pathname, refreshSettings]);
 
   // Show loading state while checking access
   if (loading) {

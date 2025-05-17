@@ -37,7 +37,7 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Function to fetch data from Supabase
+  // Function to fetch data from Supabase with better error handling
   const fetchAccessControlData = async () => {
     try {
       setLoading(true);
@@ -54,11 +54,24 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
         console.error("Error fetching access settings:", accessError);
         setFetchError(`Failed to load access settings: ${accessError.message}`);
         toast.error("Failed to load access settings");
-        return;
+        setAccessSettings({}); // Use empty object as fallback
+      } else {
+        // Debug the access settings
+        console.log("Fetched access settings:", accessData);
+        
+        // Transform access settings data to match our state structure
+        const formattedAccessSettings: AccessSettings = {};
+        accessData?.forEach(setting => {
+          formattedAccessSettings[setting.user_id] = {
+            canModify: setting.can_modify !== false, // Default to true if null
+            restrictedTabs: setting.restricted_tabs || [],
+            username: setting.username,
+            service: setting.service
+          };
+        });
+        
+        setAccessSettings(formattedAccessSettings);
       }
-
-      // Debug the access settings
-      console.log("Fetched access settings:", accessData);
       
       // Fetch UI restrictions
       const { data: restrictionsData, error: restrictionsError } = await supabase
@@ -69,32 +82,19 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
         console.error("Error fetching UI restrictions:", restrictionsError);
         setFetchError(`Failed to load UI restrictions: ${restrictionsError.message}`);
         toast.error("Failed to load UI restrictions");
-        return;
+        setUiRestrictions([]); // Use empty array as fallback
+      } else {
+        console.log("Fetched UI restrictions:", restrictionsData);
+
+        // Transform UI restrictions data
+        const formattedUiRestrictions: UIRestriction[] = restrictionsData?.map(restriction => ({
+          elementId: restriction.element_id,
+          type: restriction.restriction_type as "blur" | "hide" | "disable",
+          userIds: restriction.user_ids || []
+        })) || [];
+
+        setUiRestrictions(formattedUiRestrictions);
       }
-
-      console.log("Fetched UI restrictions:", restrictionsData);
-
-      // Transform access settings data to match our state structure
-      const formattedAccessSettings: AccessSettings = {};
-      accessData?.forEach(setting => {
-        formattedAccessSettings[setting.user_id] = {
-          canModify: setting.can_modify,
-          restrictedTabs: setting.restricted_tabs || [],
-          username: setting.username,
-          service: setting.service
-        };
-      });
-
-      // Transform UI restrictions data
-      const formattedUiRestrictions: UIRestriction[] = restrictionsData?.map(restriction => ({
-        elementId: restriction.element_id,
-        type: restriction.restriction_type as "blur" | "hide" | "disable",
-        userIds: restriction.user_ids || []
-      })) || [];
-
-      setAccessSettings(formattedAccessSettings);
-      setUiRestrictions(formattedUiRestrictions);
-      setFetchError(null);
     } catch (error: any) {
       const errorMessage = `Error loading access control settings: ${error.message || "Unknown error"}`;
       console.error(errorMessage, error);
@@ -155,6 +155,11 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const isElementRestricted = (elementId: string, userId: string) => {
+    // If we're still loading or had an error, default to not restricted
+    if (loading || fetchError) {
+      return { restricted: false };
+    }
+    
     const restriction = uiRestrictions.find(r => 
       r.elementId === elementId && r.userIds.includes(userId)
     );
@@ -165,6 +170,11 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
   };
 
   const isTabRestricted = (tabName: string, userId: string) => {
+    // If we're still loading or had an error, default to not restricted
+    if (loading || fetchError) {
+      return false;
+    }
+    
     const userSettings = accessSettings[userId];
     if (!userSettings) return false;
     
@@ -175,6 +185,11 @@ export function AccessControlProvider({ children }: { children: ReactNode }) {
   };
 
   const canUserModify = (userId: string) => {
+    // If we're still loading or had an error, default to true
+    if (loading || fetchError) {
+      return true;
+    }
+    
     const userSettings = accessSettings[userId];
     if (!userSettings) return true; // Default to allowing if not configured
     

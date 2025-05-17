@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useAccessControl } from "@/context/AccessControlContext";
 import { TabsContent } from "@/components/ui/tabs";
@@ -12,47 +12,10 @@ interface RestrictedTabProps {
 
 export function RestrictedTab({ tabName, children }: RestrictedTabProps) {
   const { user } = useAuth();
-  const { isTabRestricted, refreshSettings } = useAccessControl();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { isTabRestricted } = useAccessControl();
   
-  useEffect(() => {
-    // Refresh settings when component mounts
-    const loadSettings = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        await refreshSettings();
-      } catch (err: any) {
-        console.error("Failed to refresh tab restriction settings:", err);
-        setError("Failed to load tab restriction settings");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadSettings();
-  }, [refreshSettings]);
-  
-  // If no user, just render normally - this is important to avoid restricting for non-logged in users
+  // If no user, just render normally
   if (!user) return <TabsContent value={tabName}>{children}</TabsContent>;
-  
-  if (loading) {
-    return (
-      <TabsContent value={tabName}>
-        <div className="animate-pulse p-8">
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
-          <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded mb-2.5"></div>
-        </div>
-      </TabsContent>
-    );
-  }
-  
-  if (error) {
-    console.warn(`Tab ${tabName} restriction check failed:`, error);
-    // Default to showing the tab content if there's an error checking restrictions
-    return <TabsContent value={tabName}>{children}</TabsContent>;
-  }
   
   const userId = user.id;
   const restricted = isTabRestricted(tabName, userId);

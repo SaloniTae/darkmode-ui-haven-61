@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -13,9 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/lib/supabase";
+import { useAccessControl } from "@/context/AccessControlContext";
 
 export function TokenGenerator() {
   const { generateToken, user } = useAuth();
+  const { canUserModify } = useAccessControl();
   const [service, setService] = useState<"crunchyroll" | "netflix" | "prime">("crunchyroll");
   const [token, setToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -36,6 +37,14 @@ export function TokenGenerator() {
     setTokenError(null);
     setIsLoading(true);
     setToken(null); // Clear previous token
+    
+    // Check if user has write access before proceeding
+    if (user && !canUserModify(user.id)) {
+      setTokenError("You don't have permission to generate tokens");
+      toast.error("You don't have write access to generate tokens");
+      setIsLoading(false);
+      return;
+    }
     
     try {
       // Generate token
