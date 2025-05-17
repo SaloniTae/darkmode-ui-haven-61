@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import { User, Session } from "@supabase/supabase-js";
@@ -120,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signup = async (username: string, password: string, token: string, service: ServiceType) => {
     try {
+      // Check if token is valid and not used
       const { data: tokenData, error: tokenError } = await supabase
         .from('tokens')
         .select('*')
@@ -135,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const email = username.includes('@') ? username : `${username}@gmail.com`;
       
+      // Register the user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -150,10 +153,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
 
-      await supabase
-        .from('tokens')
-        .update({ used: true })
-        .eq('id', tokenData.id);
+      if (data.user) {
+        // Mark token as used
+        await supabase
+          .from('tokens')
+          .update({ used: true })
+          .eq('id', tokenData.id);
+        
+        // Check if there are any access control settings associated with this token
+        const { data: accessSettings, error: settingsError } = await supabase
+          .from('admin_access_settings')
+          .select('*')
+          .eq('token_id', tokenData.id)
+          .single();
+          
+        if (!settingsError && accessSettings) {
+          // Update the access settings with the newly created user ID
+          await supabase
+            .from('admin_access_settings')
+            .update({
+              user_id: data.user.id,
+              username: username
+            })
+            .eq('id', accessSettings.id);
+            
+          console.log(`Access controls applied for user ${username}`);
+        } else {
+          // Create default access settings for the user
+          await supabase
+            .from('admin_access_settings')
+            .insert([{
+              user_id: data.user.id,
+              username: username,
+              can_modify: true,
+              restricted_tabs: [],
+              service: service
+            }]);
+            
+          console.log(`Default access settings created for user ${username}`);
+        }
+      }
 
       toast.success(`Signed up to ${service} dashboard successfully!`);
     } catch (error: any) {

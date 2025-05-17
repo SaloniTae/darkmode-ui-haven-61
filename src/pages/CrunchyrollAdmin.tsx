@@ -16,6 +16,7 @@ import { DatabaseSchema } from "@/types/database";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
+import { RestrictedTab } from "@/components/config/RestrictedTab";
 
 export default function CrunchyrollAdmin() {
   const [loading, setLoading] = useState(false);
@@ -101,15 +102,15 @@ export default function CrunchyrollAdmin() {
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="users">Users</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="tokens" className="mt-0">
+          <RestrictedTab tabName="tokens">
             <TokenGenerator />
-          </TabsContent>
+          </RestrictedTab>
           
-          <TabsContent value="admin" className="mt-0">
+          <RestrictedTab tabName="admin">
             <AdminPanel adminConfig={dbData?.admin_config || { superior_admins: [], inferior_admins: [] }} service="crunchyroll" />
-          </TabsContent>
+          </RestrictedTab>
           
-          <TabsContent value="credentials" className="mt-0">
+          <RestrictedTab tabName="credentials">
             <CredentialsPanel credentials={{
               cred1: dbData?.cred1 || {
                 belongs_to_slot: "",
@@ -153,13 +154,13 @@ export default function CrunchyrollAdmin() {
                   .map(([key, value]) => [key, value])
               )
             }} slots={dbData?.settings?.slots || {}} service="crunchyroll" />
-          </TabsContent>
+          </RestrictedTab>
           
-          <TabsContent value="slots" className="mt-0">
+          <RestrictedTab tabName="slots">
             <SlotsPanel slots={dbData?.settings?.slots || {}} service="crunchyroll" />
-          </TabsContent>
+          </RestrictedTab>
           
-          <TabsContent value="referrals" className="mt-0">
+          <RestrictedTab tabName="referrals">
             <ReferralsPanel 
               referrals={dbData?.referrals || {}} 
               referralSettings={dbData?.referral_settings || {
@@ -171,17 +172,17 @@ export default function CrunchyrollAdmin() {
               freeTrialClaims={dbData?.free_trial_claims || {}}
               service="crunchyroll"
             />
-          </TabsContent>
+          </RestrictedTab>
           
-          <TabsContent value="transactions" className="mt-0">
+          <RestrictedTab tabName="transactions">
             <TransactionsPanel transactions={dbData?.transactions || {}} usedOrderIds={dbData?.used_orderids || {}} service="crunchyroll" />
-          </TabsContent>
+          </RestrictedTab>
           
-          <TabsContent value="status" className="mt-0">
+          <RestrictedTab tabName="status">
             <StatusPanel transactions={dbData?.transactions || {}} service="crunchyroll" />
-          </TabsContent>
+          </RestrictedTab>
           
-          <TabsContent value="uiconfig" className="mt-0">
+          <RestrictedTab tabName="uiconfig">
             <UIConfigPanel uiConfig={dbData?.ui_config || {
               approve_flow: {
                 account_format: "",
@@ -236,11 +237,11 @@ export default function CrunchyrollAdmin() {
                 welcome_text: ""
               }
             }} service="crunchyroll" />
-          </TabsContent>
+          </RestrictedTab>
           
-          <TabsContent value="users" className="mt-0">
+          <RestrictedTab tabName="users">
             <UsersPanel users={dbData?.users || {}} service="crunchyroll" />
-          </TabsContent>
+          </RestrictedTab>
         </Tabs>
       </div>
     </MainLayout>;
