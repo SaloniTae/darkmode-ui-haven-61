@@ -29,3 +29,31 @@ export const isSessionInvalidated = async () => {
     return true; // Assume session is invalid if an error occurs
   }
 };
+
+// Create a function to send notifications to all registered tokens for a user
+export const sendNotificationToUser = async (
+  userId: string,
+  title: string,
+  message: string,
+  options: {
+    target_url?: string;
+    image_url?: string;
+    notification_tag?: string;
+  } = {}
+) => {
+  try {
+    const { data, error } = await supabase
+      .from('notification_tokens')
+      .select('token')
+      .eq('user_id', userId);
+    
+    if (error) throw error;
+    if (!data || data.length === 0) return { success: false, message: "No notification tokens found" };
+    
+    // Will implement server-side notification sending in future
+    return { success: true, message: `Would send to ${data.length} devices` };
+  } catch (e) {
+    console.error("Error sending notification:", e);
+    return { success: false, message: "Error sending notification" };
+  }
+};
