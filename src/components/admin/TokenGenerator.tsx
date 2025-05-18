@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -15,13 +16,12 @@ import { supabase } from "@/lib/supabase";
 import { useAccessControl } from "@/context/AccessControlContext";
 
 export function TokenGenerator() {
-  const { generateToken, user } = useAuth();
-  const { canUserModify } = useAccessControl();
+  const { generateToken, user, isAdmin } = useAuth();
+  const { isTabRestricted } = useAccessControl();
   const [service, setService] = useState<"crunchyroll" | "netflix" | "prime">("crunchyroll");
   const [token, setToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showAccessControls, setShowAccessControls] = useState(false);
-  const [canModify, setCanModify] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [restrictedTabs, setRestrictedTabs] = useState<string[]>([]);
   const [tokenError, setTokenError] = useState<string | null>(null);
@@ -38,10 +38,10 @@ export function TokenGenerator() {
     setIsLoading(true);
     setToken(null); // Clear previous token
     
-    // Check if user has write access before proceeding
-    if (user && !canUserModify(user.id)) {
-      setTokenError("You don't have permission to generate tokens");
-      toast.error("You don't have write access to generate tokens");
+    // Check if user is an admin before proceeding
+    if (!isAdmin) {
+      setTokenError("Only Crunchyroll administrators can generate tokens");
+      toast.error("You don't have permission to generate tokens");
       setIsLoading(false);
       return;
     }
@@ -84,7 +84,6 @@ export function TokenGenerator() {
             .from('admin_access_settings')
             .insert([{
               user_id: tokenData.id, // Use this as a temporary user ID until registration
-              can_modify: canModify,
               restricted_tabs: restrictedTabs,
               service: service,
               // We'll need to update this once the user registers
@@ -147,6 +146,13 @@ export function TokenGenerator() {
           <CardTitle className="text-lg">Token Generator</CardTitle>
           <CardDescription>
             Generate invitation tokens for new users. These tokens are required for signup.
+            <div className="mt-2 p-2 bg-amber-500/20 border border-amber-500/50 rounded-md">
+              <p className="text-sm font-medium">Token Generation Authority</p>
+              <p className="text-xs mt-1">
+                Only Crunchyroll administrators have the authority to generate tokens for any service.
+                Other users cannot generate tokens, even if they have access to this page.
+              </p>
+            </div>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -183,17 +189,6 @@ export function TokenGenerator() {
 
           {showAccessControls && (
             <div className="mt-4 space-y-4 p-4 border border-border rounded-md bg-muted/30">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="can-modify" className="text-sm">
-                  Allow Write Access
-                </Label>
-                <Switch
-                  id="can-modify"
-                  checked={canModify}
-                  onCheckedChange={setCanModify}
-                />
-              </div>
-
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="restricted-tabs">
                   <AccordionTrigger className="text-sm font-medium py-2">

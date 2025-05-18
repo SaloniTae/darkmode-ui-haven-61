@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { DataCard } from "@/components/ui/DataCard";
 import { formatTimeWithAmPm } from "@/utils/dateFormatUtils";
-import { Minus } from "lucide-react";
+import { Minus, Bell } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,13 +34,52 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
   const [selectedTransaction, setSelectedTransaction] = useState<[string, Transaction] | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [notifiedExpiries, setNotifiedExpiries] = useState<Record<string, boolean>>({});
+  const [upcomingExpiryNotices, setUpcomingExpiryNotices] = useState<Record<string, boolean>>({});
   const { fetchData, updateData } = useFirebaseService(service);
+
+  const groupTransactionsByExpiryHour = (transactions: [string, Transaction][]) => {
+    const groupedByHour: Record<string, [string, Transaction][]> = {};
+    
+    transactions.forEach(transaction => {
+      const endTimeDate = new Date(transaction[1].end_time.replace(' ', 'T'));
+      const hourKey = endTimeDate.toISOString().split(':')[0]; // Group by hour
+      
+      if (!groupedByHour[hourKey]) {
+        groupedByHour[hourKey] = [];
+      }
+      
+      groupedByHour[hourKey].push(transaction);
+    });
+    
+    return groupedByHour;
+  };
+
+  const getNextExpiryTime = (transactions: [string, Transaction][]) => {
+    if (transactions.length === 0) return null;
+    
+    const now = new Date();
+    const futureExpirations = transactions.filter(([_, tx]) => 
+      new Date(tx.end_time.replace(' ', 'T')) > now
+    );
+    
+    if (futureExpirations.length === 0) return null;
+    
+    // Sort by end_time (closest first)
+    futureExpirations.sort((a, b) => 
+      new Date(a[1].end_time.replace(' ', 'T')).getTime() - 
+      new Date(b[1].end_time.replace(' ', 'T')).getTime()
+    );
+    
+    return futureExpirations[0];
+  };
 
   // Filter transactions into active and expired
   const filterTransactions = () => {
     const now = new Date();
     const active: [string, Transaction][] = [];
     const expired: [string, Transaction][] = [];
+    let newExpirations = false;
 
     Object.entries(transactions).forEach(([id, data]) => {
       // Skip entries that are just numbers (counters)
@@ -62,6 +101,13 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         if (endTime > twentyFourHoursAgo) {
           expired.push([id, transaction]);
+          
+          // Check if this is a new expiration we haven't notified about yet
+          if (!notifiedExpiries[id]) {
+            newExpirations = true;
+            // Mark as notified
+            setNotifiedExpiries(prev => ({...prev, [id]: true}));
+          }
         }
       }
     });
@@ -77,6 +123,52 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       new Date(a[1].end_time.replace(' ', 'T')).getTime()
     );
 
+    // Check for upcoming expirations in the next hour that we haven't notified about
+    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+    const upcomingExpiries = active.filter(([id, tx]) => {
+      const endTime = new Date(tx.end_time.replace(' ', 'T'));
+      return endTime <= oneHourFromNow && !upcomingExpiryNotices[id];
+    });
+
+    // Group upcoming expirations by hour
+    const groupedUpcoming = groupTransactionsByExpiryHour(upcomingExpiries);
+    
+    // Show notifications for upcoming expirations
+    Object.entries(groupedUpcoming).forEach(([hourKey, txs]) => {
+      if (txs.length > 0 && !upcomingExpiryNotices[hourKey]) {
+        const exampleDate = new Date(txs[0][1].end_time.replace(' ', 'T'));
+        const formattedTime = formatTimeWithAmPm(txs[0][1].end_time);
+        
+        toast({
+          title: "Upcoming Expirations",
+          description: `${txs.length} account${txs.length > 1 ? 's' : ''} will expire at ${formattedTime}`,
+          variant: "default",
+          duration: 10000,
+        });
+        
+        // Mark this hour as notified
+        setUpcomingExpiryNotices(prev => ({...prev, [hourKey]: true}));
+      }
+    });
+
+    // Send notification for newly expired accounts
+    if (newExpirations && expired.length > 0) {
+      const nextExpiry = getNextExpiryTime(active);
+      let nextExpiryInfo = "";
+      
+      if (nextExpiry) {
+        const nextExpiryTime = formatTimeWithAmPm(nextExpiry[1].end_time);
+        nextExpiryInfo = ` Next account expires at ${nextExpiryTime}.`;
+      }
+      
+      toast({
+        title: "Accounts Expired",
+        description: `${expired.length} account${expired.length > 1 ? 's' : ''} have expired.${nextExpiryInfo}`,
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+
     setActiveTransactions(active);
     setExpiredTransactions(expired);
   };
@@ -90,6 +182,11 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       setCurrentTime(new Date());
       filterTransactions();
     }, 60000); // Refresh every minute
+    
+    // Request notification permission
+    if ("Notification" in window) {
+      Notification.requestPermission();
+    }
     
     return () => clearInterval(intervalId);
   }, [transactions]);
@@ -203,21 +300,70 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     }
   };
 
+  // Show push notification when an order expires
+  const showPushNotification = (title: string, body: string) => {
+    if (!("Notification" in window)) {
+      console.log("This browser does not support desktop notification");
+      return;
+    }
+    
+    if (Notification.permission === "granted") {
+      new Notification(title, { body, icon: "/favicon.ico" });
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          new Notification(title, { body, icon: "/favicon.ico" });
+        }
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <DataCard 
         title="Account Status" 
         headerAction={
-          expiredTransactions.length > 0 ? (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setIsConfirmationOpen(true)}
-              className="text-sm"
+          <div className="flex items-center space-x-2">
+            {expiredTransactions.length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setIsConfirmationOpen(true)}
+                className="text-sm"
+              >
+                Clear
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                const nextExpiry = getNextExpiryTime(activeTransactions);
+                if (nextExpiry) {
+                  const expiryTime = formatTimeWithAmPm(nextExpiry[1].end_time);
+                  showPushNotification(
+                    "Next Account Expiry",
+                    `An account will expire at ${expiryTime}`
+                  );
+                  toast({
+                    title: "Notification Sent",
+                    description: `Next account expires at ${expiryTime}`,
+                    variant: "default"
+                  });
+                } else {
+                  toast({
+                    title: "No Upcoming Expirations",
+                    description: "There are no active accounts about to expire",
+                    variant: "default"
+                  });
+                }
+              }}
+              className="text-primary"
+              title="Test notification"
             >
-              Clear
+              <Bell size={18} />
             </Button>
-          ) : null
+          </div>
         }
       >
         <div className="space-y-10 py-4">

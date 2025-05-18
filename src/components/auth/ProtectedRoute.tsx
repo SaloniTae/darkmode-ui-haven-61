@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProps) => {
   const { user, currentService } = useAuth();
-  const { isTabRestricted, canUserModify } = useAccessControl();
+  const { isTabRestricted } = useAccessControl();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
 
@@ -65,13 +65,6 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
       // If the user doesn't have access to this tab, redirect to the service root
       return <Navigate to={`/${tabMatches[1]}`} replace />;
     }
-  }
-
-  // Additional check for write access on non-config pages
-  if (!location.pathname.includes("/config") && user) {
-    // This is a read-only check that doesn't block navigation but will log for debugging
-    const hasWriteAccess = canUserModify(user.id);
-    console.log(`User ${user.id} write access: ${hasWriteAccess ? 'Granted' : 'Restricted'}`);
   }
 
   return <>{children}</>;
