@@ -72,17 +72,6 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
     // This is a read-only check that doesn't block navigation but will log for debugging
     const hasWriteAccess = canUserModify(user.id);
     console.log(`User ${user.id} write access: ${hasWriteAccess ? 'Granted' : 'Restricted'}`);
-    
-    // If on an admin page and write access is restricted, show a toast notification
-    if (currentPath.includes("/admin") && !hasWriteAccess) {
-      // Use setTimeout to avoid showing the toast on every render
-      setTimeout(() => {
-        toast.info("You have read-only access. Some actions will be restricted.", {
-          id: "write-access-notification", // Use an ID to prevent duplicate toasts
-          duration: 5000,
-        });
-      }, 0);
-    }
   }
 
   return <>{children}</>;

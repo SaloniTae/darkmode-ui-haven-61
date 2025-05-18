@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/lib/supabase";
 import { useAccessControl } from "@/context/AccessControlContext";
-import { RestrictedButton } from "@/components/config/RestrictedButton";
 
 export function TokenGenerator() {
   const { generateToken, user } = useAuth();
@@ -253,11 +251,10 @@ export function TokenGenerator() {
           )}
         </CardContent>
         <CardFooter>
-          <RestrictedButton 
+          <Button 
             onClick={handleGenerateToken} 
             className="w-full"
             disabled={isLoading}
-            tooltipContent="You don't have permission to generate tokens"
           >
             {isLoading ? (
               <>Loading...</>
@@ -266,7 +263,7 @@ export function TokenGenerator() {
                 <KeyRound className="mr-2 h-4 w-4" /> Generate New Token
               </>
             )}
-          </RestrictedButton>
+          </Button>
         </CardFooter>
       </Card>
     </DataCard>
