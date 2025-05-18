@@ -4,41 +4,58 @@ import { supabase } from "@/lib/supabase";
 
 interface AccessControlContextType {
   isTabRestricted: (tabName: string, userId: string) => boolean;
+  isElementRestricted: (elementId: string, userId: string) => { restricted: boolean; type: string };
   restrictedTabs: Record<string, string[]>;
+  refreshSettings: () => Promise<void>;
 }
 
 const AccessControlContext = createContext<AccessControlContextType | undefined>(undefined);
 
 export function AccessControlProvider({ children }: { children: React.ReactNode }) {
   const [restrictedTabs, setRestrictedTabs] = useState<Record<string, string[]>>({});
+  const [uiRestrictions, setUIRestrictions] = useState<any[]>([]);
+  
+  const fetchAccessSettings = async () => {
+    try {
+      // Fetch tab restrictions
+      const { data: tabData, error: tabError } = await supabase
+        .from('admin_access_settings')
+        .select('user_id, restricted_tabs');
+      
+      if (tabError) {
+        console.error("Error fetching tab restrictions:", tabError);
+        return;
+      }
+
+      // Build a map of user_id -> restricted_tabs
+      const tabsMap: Record<string, string[]> = {};
+      tabData?.forEach(item => {
+        if (item.user_id && item.restricted_tabs) {
+          tabsMap[item.user_id] = item.restricted_tabs;
+        }
+      });
+      
+      setRestrictedTabs(tabsMap);
+      console.log("Loaded tab restrictions:", tabsMap);
+      
+      // Fetch UI element restrictions
+      const { data: uiData, error: uiError } = await supabase
+        .from('ui_restrictions')
+        .select('*');
+        
+      if (uiError) {
+        console.error("Error fetching UI restrictions:", uiError);
+        return;
+      }
+      
+      setUIRestrictions(uiData || []);
+      console.log("Loaded UI restrictions:", uiData);
+    } catch (err) {
+      console.error("Failed to load access settings:", err);
+    }
+  };
   
   useEffect(() => {
-    const fetchAccessSettings = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('admin_access_settings')
-          .select('user_id, restricted_tabs');
-        
-        if (error) {
-          console.error("Error fetching access settings:", error);
-          return;
-        }
-
-        // Build a map of user_id -> restricted_tabs
-        const tabsMap: Record<string, string[]> = {};
-        data.forEach(item => {
-          if (item.user_id && item.restricted_tabs) {
-            tabsMap[item.user_id] = item.restricted_tabs;
-          }
-        });
-        
-        setRestrictedTabs(tabsMap);
-        console.log("Loaded tab restrictions:", tabsMap);
-      } catch (err) {
-        console.error("Failed to load access settings:", err);
-      }
-    };
-    
     fetchAccessSettings();
   }, []);
 
@@ -54,9 +71,33 @@ export function AccessControlProvider({ children }: { children: React.ReactNode 
     return userRestrictions.includes(tabName);
   };
   
+  // Check if a specific UI element is restricted for a user
+  const isElementRestricted = (elementId: string, userId: string): { restricted: boolean; type: string } => {
+    // Find any restrictions for this element
+    const elementRestriction = uiRestrictions.find(r => 
+      r.element_id === elementId && r.user_ids.includes(userId)
+    );
+    
+    if (!elementRestriction) {
+      return { restricted: false, type: "none" };
+    }
+    
+    return { 
+      restricted: true, 
+      type: elementRestriction.restriction_type || "disable" 
+    };
+  };
+  
+  // Function to refresh access control settings
+  const refreshSettings = async (): Promise<void> => {
+    await fetchAccessSettings();
+  };
+  
   const value = {
     isTabRestricted,
-    restrictedTabs
+    isElementRestricted,
+    restrictedTabs,
+    refreshSettings
   };
 
   return <AccessControlContext.Provider value={value}>{children}</AccessControlContext.Provider>;
