@@ -28,22 +28,10 @@ export function loadWebpushrScript() {
   });
 }
 
-// Initialize Webpushr with configuration
+// Initialize Webpushr with configuration - Removed duplicate initialization
 export function initializeWebpushr() {
-  // Add the Webpushr configuration
-  if (typeof window !== 'undefined') {
-    (window as any).webpushr = (window as any).webpushr || [];
-    (window as any).webpushr.push(['setup', {
-      key: WEBPUSHR_API_KEY,
-    }]);
-    
-    // Load Webpushr script
-    const script = document.createElement('script');
-    script.id = 'webpushr-jssdk';
-    script.async = true;
-    script.src = "https://cdn.webpushr.com/app.min.js";
-    document.body.appendChild(script);
-  }
+  // We don't need to initialize here since it's already done in the HTML
+  console.log("Webpushr already initialized via HTML script tag");
 }
 
 // Check if push notifications are supported
@@ -110,10 +98,10 @@ export function getWebpushrToken(): Promise<string | null> {
     }
 
     // If not initialized yet, wait for the token
-    (window as any).webpushr.push(['getSubscriberToken', (token: string) => {
+    (window as any).webpushr('getSubscriberToken', (token: string) => {
       console.log("Got subscriber token:", token);
       resolve(token || null);
-    }]);
+    });
   });
 }
 

@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  initializeWebpushr,
   getWebpushrToken,
   saveWebpushrToken,
   isPushNotificationsSupported,
@@ -15,7 +14,7 @@ export const useNotifications = (userId?: string) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Initialize Webpushr and check support
+  // Initialize and check support
   useEffect(() => {
     const init = async () => {
       try {
@@ -26,9 +25,6 @@ export const useNotifications = (userId?: string) => {
         setIsSupported(supported);
         
         if (supported) {
-          // Initialize Webpushr
-          initializeWebpushr();
-          
           // Check permission status
           const permissionStatus = await Notification.requestPermission();
           setIsEnabled(permissionStatus === "granted");

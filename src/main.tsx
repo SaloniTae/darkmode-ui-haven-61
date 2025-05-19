@@ -6,10 +6,9 @@ import './index.css'
 
 // Ensure Supabase auth persistence by configuring it here
 import { supabase } from "@/integrations/supabase/client";
-import { initializeWebpushr } from './services/webpushrService';
 
-// Initialize web push notifications early
-initializeWebpushr();
+// Webpushr is initialized via the script tag in index.html
+// We don't need to call initializeWebpushr() here
 
 // Log current auth status to help debug session issues
 supabase.auth.getSession().then(({ data }) => {
