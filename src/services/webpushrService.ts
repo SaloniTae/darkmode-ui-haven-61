@@ -1,7 +1,7 @@
 
 // Webpushr service for web push notifications
-export const WEBPUSHR_API_KEY = "8d278ba866f65131a3a1f7ddfdd40de5";
-export const WEBPUSHR_AUTH_TOKEN = "109107";
+export const WEBPUSHR_API_KEY = "BPG39L-7TmmnyAZMwjZeXu6JD2EOqcgNIhkN5fBXUZ7w6-lO_6W60qjhpzvBJ8xiYYwmCfegohDafyQeBxaqcvE";
+export const WEBPUSHR_AUTH_TOKEN = "109107"; 
 export const WEBPUSHR_SCRIPT_URL = "https://cdn.webpushr.com/sw-server.min.js";
 
 // Function to load the Webpushr script
@@ -33,11 +33,16 @@ export function initializeWebpushr() {
   // Add the Webpushr configuration
   if (typeof window !== 'undefined') {
     (window as any).webpushr = (window as any).webpushr || [];
-    (window as any).webpushr.push(['init', {
+    (window as any).webpushr.push(['setup', {
       key: WEBPUSHR_API_KEY,
     }]);
     
-    loadWebpushrScript();
+    // Load Webpushr script
+    const script = document.createElement('script');
+    script.id = 'webpushr-jssdk';
+    script.async = true;
+    script.src = "https://cdn.webpushr.com/app.min.js";
+    document.body.appendChild(script);
   }
 }
 
