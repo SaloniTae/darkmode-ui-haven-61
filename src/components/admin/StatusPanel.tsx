@@ -364,20 +364,33 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         // Log that we're attempting to send a notification
         console.log("Attempting to send web push notification:", { title, message });
         
-        const success = await sendPushNotification(title, message, {
-          notification_tag: `test-${Date.now()}`
-        });
-        
-        if (success) {
-          toast({
-            title: "Web Push Notification Sent",
-            description: message,
-            variant: "default"
+        try {
+          // First, make sure notifications are enabled
+          await enableNotifications();
+          
+          // Try to send the notification
+          const success = await sendPushNotification(title, message, {
+            notification_tag: `test-${Date.now()}`
           });
-        } else {
+          
+          if (success) {
+            toast({
+              title: "Web Push Notification Sent",
+              description: message,
+              variant: "default"
+            });
+          } else {
+            toast({
+              title: "Failed to Send Notification",
+              description: "There was an issue sending the push notification. Please check console for details.",
+              variant: "destructive"
+            });
+          }
+        } catch (error) {
+          console.error("Error in testPushNotification:", error);
           toast({
-            title: "Failed to Send Notification",
-            description: "There was an issue sending the push notification",
+            title: "Notification Error",
+            description: "An error occurred while sending the notification",
             variant: "destructive"
           });
         }
@@ -391,17 +404,35 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
               variant="outline" 
               size="sm" 
               onClick={async () => {
-                const enabled = await enableNotifications();
-                if (enabled) {
+                try {
+                  const enabled = await enableNotifications();
+                  if (enabled) {
+                    toast({
+                      title: "Notifications Enabled",
+                      description: "You will now receive account expiry notifications",
+                      variant: "default"
+                    });
+                    
+                    // Try to send a test notification
+                    setTimeout(async () => {
+                      await sendPushNotification(
+                        "Notifications Enabled", 
+                        "You will now receive account expiry notifications",
+                        {notification_tag: `test-enabled-${Date.now()}`}
+                      );
+                    }, 1000);
+                  } else {
+                    toast({
+                      title: "Failed to Enable Notifications",
+                      description: "Please check your browser settings",
+                      variant: "destructive"
+                    });
+                  }
+                } catch (error) {
+                  console.error("Error enabling notifications:", error);
                   toast({
-                    title: "Notifications Enabled",
-                    description: "You will now receive account expiry notifications",
-                    variant: "default"
-                  });
-                } else {
-                  toast({
-                    title: "Failed to Enable Notifications",
-                    description: "Please check your browser settings",
+                    title: "Error",
+                    description: "Failed to enable notifications",
                     variant: "destructive"
                   });
                 }
