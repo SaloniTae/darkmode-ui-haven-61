@@ -3,6 +3,16 @@
 export const WEBPUSHR_API_KEY = "BPG39L-7TmmnyAZMwjZeXu6JD2EOqcgNIhkN5fBXUZ7w6-lO_6W60qjhpzvBJ8xiYYwmCfegohDafyQeBxaqcvE";
 export const WEBPUSHR_SCRIPT_URL = "https://cdn.webpushr.com/app.min.js";
 
+// Register service worker for Webpushr
+export function registerWebpushrServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register('/webpushr-sw.js')
+      .then(() => console.log('Webpushr SW registered successfully'))
+      .catch(err => console.error('Webpushr SW registration failed:', err));
+  }
+}
+
 // Check if push notifications are supported by the browser
 export function isPushNotificationsSupported() {
   return 'serviceWorker' in navigator && 'PushManager' in window;

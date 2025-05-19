@@ -7,8 +7,12 @@ import './index.css'
 // Ensure Supabase auth persistence by configuring it here
 import { supabase } from "@/integrations/supabase/client";
 
+// Register Webpushr service worker
+import { registerWebpushrServiceWorker } from '@/services/webpushrService';
+
 // Webpushr is initialized via the script tag in index.html
-// We don't need additional initialization here
+// We register the service worker here
+registerWebpushrServiceWorker();
 
 // Log current auth status to help debug session issues
 supabase.auth.getSession().then(({ data }) => {
