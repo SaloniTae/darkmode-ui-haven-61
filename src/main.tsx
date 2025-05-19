@@ -8,7 +8,7 @@ import './index.css'
 import { supabase } from "@/integrations/supabase/client";
 
 // Webpushr is initialized via the script tag in index.html
-// We don't need to call initializeWebpushr() here
+// We don't need additional initialization here
 
 // Log current auth status to help debug session issues
 supabase.auth.getSession().then(({ data }) => {

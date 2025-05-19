@@ -1,86 +1,11 @@
 
 // Webpushr service for web push notifications
 export const WEBPUSHR_API_KEY = "BPG39L-7TmmnyAZMwjZeXu6JD2EOqcgNIhkN5fBXUZ7w6-lO_6W60qjhpzvBJ8xiYYwmCfegohDafyQeBxaqcvE";
-export const WEBPUSHR_AUTH_TOKEN = "109107"; 
-export const WEBPUSHR_SCRIPT_URL = "https://cdn.webpushr.com/sw-server.min.js";
+export const WEBPUSHR_SCRIPT_URL = "https://cdn.webpushr.com/app.min.js";
 
-// Function to load the Webpushr script
-export function loadWebpushrScript() {
-  return new Promise<void>((resolve, reject) => {
-    if (document.querySelector('script[src="' + WEBPUSHR_SCRIPT_URL + '"]')) {
-      console.log("Webpushr script already loaded");
-      resolve();
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = WEBPUSHR_SCRIPT_URL;
-    script.async = true;
-    script.onload = () => {
-      console.log("Webpushr script loaded");
-      resolve();
-    };
-    script.onerror = (error) => {
-      console.error("Error loading Webpushr script:", error);
-      reject(error);
-    };
-    document.head.appendChild(script);
-  });
-}
-
-// Initialize Webpushr with configuration - Removed duplicate initialization
-export function initializeWebpushr() {
-  // We don't need to initialize here since it's already done in the HTML
-  console.log("Webpushr already initialized via HTML script tag");
-}
-
-// Check if push notifications are supported
+// Check if push notifications are supported by the browser
 export function isPushNotificationsSupported() {
   return 'serviceWorker' in navigator && 'PushManager' in window;
-}
-
-// Send a notification using the Webpushr API
-export async function sendNotification({
-  title,
-  message,
-  target_url = window.location.origin,
-  expiry = Math.floor(Date.now() / 1000) + 86400, // 24 hours from now
-  image_url = '',
-  notification_tag = ''
-}: {
-  title: string;
-  message: string;
-  target_url?: string;
-  expiry?: number;
-  image_url?: string;
-  notification_tag?: string;
-}) {
-  try {
-    const response = await fetch('https://api.webpushr.com/v1/notification/send/all', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'webpushrKey': WEBPUSHR_API_KEY,
-        'webpushrAuthToken': WEBPUSHR_AUTH_TOKEN
-      },
-      body: JSON.stringify({
-        title,
-        message,
-        target_url,
-        expiry,
-        image_url,
-        auto_hide: 1,
-        notification_tag
-      })
-    });
-
-    const data = await response.json();
-    console.log("Webpushr API response:", data);
-    return data;
-  } catch (error) {
-    console.error("Error sending notification:", error);
-    throw error;
-  }
 }
 
 // Get the current Webpushr subscriber token
@@ -91,13 +16,13 @@ export function getWebpushrToken(): Promise<string | null> {
       return;
     }
 
-    // Check if webpushr is already initialized
+    // Check if webpushr is already initialized and has a sid
     if ((window as any).webpushr.sid) {
       resolve((window as any).webpushr.sid);
       return;
     }
 
-    // If not initialized yet, wait for the token
+    // Use the correct Webpushr API call to get the subscriber token
     (window as any).webpushr('getSubscriberToken', (token: string) => {
       console.log("Got subscriber token:", token);
       resolve(token || null);
@@ -105,7 +30,7 @@ export function getWebpushrToken(): Promise<string | null> {
   });
 }
 
-// Create a hook for using Webpushr token
+// Save the Webpushr token to Supabase
 export async function saveWebpushrToken(userId: string, token: string) {
   const { supabase } = await import('@/integrations/supabase/client');
   
@@ -135,6 +60,42 @@ export async function saveWebpushrToken(userId: string, token: string) {
     return true;
   } catch (error) {
     console.error("Error saving token to Supabase:", error);
+    return false;
+  }
+}
+
+// Use the native Webpushr API to send a notification
+export function sendNotification({
+  title,
+  message,
+  target_url = window.location.origin,
+  image_url = '',
+  notification_tag = ''
+}: {
+  title: string;
+  message: string;
+  target_url?: string;
+  image_url?: string;
+  notification_tag?: string;
+}): boolean {
+  try {
+    if (typeof window === 'undefined' || !(window as any).webpushr) {
+      console.error("Webpushr not available");
+      return false;
+    }
+
+    // Use the Webpushr JavaScript API instead of REST API
+    (window as any).webpushr('localNotification', {
+      title,
+      message,
+      target_url,
+      image: image_url,
+      tag: notification_tag || undefined
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Error sending notification:", error);
     return false;
   }
 }

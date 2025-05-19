@@ -77,7 +77,7 @@ export const useNotifications = (userId?: string) => {
     }
   }, [isSupported, userId]);
   
-  // Send a notification
+  // Send a notification using the updated method
   const sendPushNotification = useCallback(async (
     title: string,
     message: string,
@@ -90,13 +90,13 @@ export const useNotifications = (userId?: string) => {
     try {
       if (!isEnabled) return false;
       
-      await sendNotification({
+      const result = sendNotification({
         title,
         message,
         ...options
       });
       
-      return true;
+      return result;
     } catch (error) {
       console.error("Error sending notification:", error);
       return false;
