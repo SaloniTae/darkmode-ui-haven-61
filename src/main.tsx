@@ -8,11 +8,11 @@ import './index.css'
 import { supabase } from "@/integrations/supabase/client";
 
 // Register Webpushr service worker
-import { registerWebpushrServiceWorker } from '@/services/webpushrService';
+import { registerWebpushrServiceWorker, initializeWebpushr } from '@/services/webpushrService';
 
-// Webpushr is initialized via the script tag in index.html
-// We register the service worker here
+// Register service worker and initialize Webpushr
 registerWebpushrServiceWorker();
+initializeWebpushr();
 
 // Log current auth status to help debug session issues
 supabase.auth.getSession().then(({ data }) => {

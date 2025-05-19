@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { DataCard } from "@/components/ui/DataCard";
 import { formatTimeWithAmPm } from "@/utils/dateFormatUtils";
@@ -353,7 +352,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
   };
 
   // Test push notification
-  const testPushNotification = () => {
+  const testPushNotification = async () => {
     const nextExpiry = getNextExpiryTime(activeTransactions);
     
     if (nextExpiry) {
@@ -362,15 +361,26 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       const message = `An account will expire ${expiryTime}`;
       
       if (isEnabled) {
-        sendPushNotification(title, message, {
+        // Log that we're attempting to send a notification
+        console.log("Attempting to send web push notification:", { title, message });
+        
+        const success = await sendPushNotification(title, message, {
           notification_tag: `test-${Date.now()}`
         });
         
-        toast({
-          title: "Web Push Notification Sent",
-          description: message,
-          variant: "default"
-        });
+        if (success) {
+          toast({
+            title: "Web Push Notification Sent",
+            description: message,
+            variant: "default"
+          });
+        } else {
+          toast({
+            title: "Failed to Send Notification",
+            description: "There was an issue sending the push notification",
+            variant: "destructive"
+          });
+        }
       } else if (isSupported) {
         toast({
           title: "Notifications Not Enabled",
@@ -380,7 +390,22 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => enableNotifications()}
+              onClick={async () => {
+                const enabled = await enableNotifications();
+                if (enabled) {
+                  toast({
+                    title: "Notifications Enabled",
+                    description: "You will now receive account expiry notifications",
+                    variant: "default"
+                  });
+                } else {
+                  toast({
+                    title: "Failed to Enable Notifications",
+                    description: "Please check your browser settings",
+                    variant: "destructive"
+                  });
+                }
+              }}
               className="ml-2"
             >
               Enable
@@ -598,4 +623,3 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     </div>
   );
 }
-

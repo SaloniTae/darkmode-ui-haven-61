@@ -3,6 +3,39 @@
 export const WEBPUSHR_API_KEY = "BPG39L-7TmmnyAZMwjZeXu6JD2EOqcgNIhkN5fBXUZ7w6-lO_6W60qjhpzvBJ8xiYYwmCfegohDafyQeBxaqcvE";
 export const WEBPUSHR_SCRIPT_URL = "https://cdn.webpushr.com/app.min.js";
 
+// Initialize Webpushr
+export function initializeWebpushr() {
+  // Only run in browser environment
+  if (typeof window === 'undefined') return;
+
+  // Add Webpushr script to head if not already present
+  if (!document.getElementById('webpushr-script')) {
+    const webpushrScript = document.createElement('script');
+    webpushrScript.id = 'webpushr-script';
+    webpushrScript.src = WEBPUSHR_SCRIPT_URL;
+    webpushrScript.async = true;
+    
+    webpushrScript.onload = () => {
+      if ((window as any).webpushr) {
+        (window as any).webpushr('setup', { 
+          key: WEBPUSHR_API_KEY 
+        });
+        console.log('Webpushr initialized successfully');
+      }
+    };
+    
+    document.head.appendChild(webpushrScript);
+  } else {
+    // If script is already loaded but not initialized
+    if ((window as any).webpushr && !(window as any).webpushr.initialized) {
+      (window as any).webpushr('setup', { 
+        key: WEBPUSHR_API_KEY 
+      });
+      console.log('Webpushr initialized successfully');
+    }
+  }
+}
+
 // Register service worker for Webpushr
 export function registerWebpushrServiceWorker() {
   if ('serviceWorker' in navigator) {
@@ -28,6 +61,7 @@ export function getWebpushrToken(): Promise<string | null> {
 
     // Check if webpushr is already initialized and has a sid
     if ((window as any).webpushr.sid) {
+      console.log("Got subscriber token from sid:", (window as any).webpushr.sid);
       resolve((window as any).webpushr.sid);
       return;
     }
