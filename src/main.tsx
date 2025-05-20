@@ -13,20 +13,27 @@ import { registerWebpushrServiceWorker, initializeWebpushr } from '@/services/we
 // Initialize Webpushr and register service worker asynchronously
 const setupWebpushr = async () => {
   try {
-    // First register service worker
-    await registerWebpushrServiceWorker();
+    console.log("Starting Webpushr setup process...");
     
-    // Then initialize Webpushr (with a slight delay to ensure SW is registered)
+    // First register service worker
+    const swRegistered = await registerWebpushrServiceWorker();
+    console.log("Service worker registration result:", swRegistered);
+    
+    // Then initialize Webpushr (with a delay to ensure SW is registered)
     setTimeout(async () => {
-      const success = await initializeWebpushr();
-      if (success) {
-        console.log("Webpushr fully initialized");
-      } else {
-        console.warn("Webpushr initialization may have issues");
+      try {
+        const success = await initializeWebpushr();
+        if (success) {
+          console.log("Webpushr fully initialized");
+        } else {
+          console.warn("Webpushr initialization may have issues");
+        }
+      } catch (err) {
+        console.error("Error during Webpushr initialization:", err);
       }
-    }, 500);
+    }, 1000);
   } catch (err) {
-    console.error("Error setting up Webpushr:", err);
+    console.error("Error in setupWebpushr:", err);
   }
 };
 

@@ -19,53 +19,66 @@ export const useNotifications = (userId?: string) => {
   
   // Initialize and check support
   useEffect(() => {
+    let isMounted = true;
+    
     const init = async () => {
       try {
+        if (!isMounted) return;
         setIsLoading(true);
         
         // Check if notifications are supported
         const supported = isPushNotificationsSupported();
-        setIsSupported(supported);
+        if (isMounted) setIsSupported(supported);
         
         if (supported) {
           // Check if notifications are enabled
           const enabled = await areNotificationsEnabled();
-          setIsEnabled(enabled);
+          if (isMounted) setIsEnabled(enabled);
           
           if (enabled) {
+            console.log("Notifications are enabled, initializing Webpushr");
             // Initialize Webpushr first
             await initializeWebpushr();
             
-            // Add a small delay to ensure Webpushr is fully initialized
+            // Add a delay to ensure Webpushr is fully initialized
             setTimeout(async () => {
+              if (!isMounted) return;
+              
               try {
                 const subscriberToken = await getWebpushrToken();
                 console.log("Token retrieved in useNotifications:", subscriberToken);
-                setToken(subscriberToken);
                 
-                // Save token to Supabase if we have userId and token
-                if (subscriberToken && userId) {
-                  await saveWebpushrToken(userId, subscriberToken);
+                if (isMounted) {
+                  setToken(subscriberToken);
+                  
+                  // Save token to Supabase if we have userId and token
+                  if (subscriberToken && userId) {
+                    await saveWebpushrToken(userId, subscriberToken);
+                  }
                 }
               } catch (error) {
                 console.error("Error getting token:", error);
               } finally {
-                setIsLoading(false);
+                if (isMounted) setIsLoading(false);
               }
-            }, 1500);
+            }, 2000); // Increased delay to ensure proper initialization
           } else {
-            setIsLoading(false);
+            if (isMounted) setIsLoading(false);
           }
         } else {
-          setIsLoading(false);
+          if (isMounted) setIsLoading(false);
         }
       } catch (error) {
         console.error("Error initializing notifications:", error);
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
     
     init();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [userId]);
   
   // Request permission and enable notifications
@@ -73,20 +86,22 @@ export const useNotifications = (userId?: string) => {
     try {
       if (!isSupported) return false;
       
+      console.log("Requesting notification permission");
       // Request notification permission
       const granted = await requestNotificationPermission();
       setIsEnabled(granted);
       
       if (granted) {
+        console.log("Permission granted, initializing Webpushr");
         // Ensure Webpushr is initialized
         await initializeWebpushr();
         
-        // Add a small delay to ensure Webpushr is fully initialized
+        // Add a delay to ensure Webpushr is fully initialized
         return new Promise<boolean>((resolve) => {
           setTimeout(async () => {
             try {
               const subscriberToken = await getWebpushrToken();
-              console.log("Token retrieved in enableNotifications:", subscriberToken);
+              console.log("Token retrieved after enabling:", subscriberToken);
               setToken(subscriberToken);
               
               // Save token to Supabase if we have userId and token
@@ -99,7 +114,7 @@ export const useNotifications = (userId?: string) => {
               console.error("Error enabling notifications:", error);
               resolve(false);
             }
-          }, 1500);
+          }, 2000); // Increased delay for more reliable initialization
         });
       }
       
@@ -126,17 +141,35 @@ export const useNotifications = (userId?: string) => {
         return false;
       }
       
-      // Ensure we have a token before sending
-      if (!token) {
+      // Re-check token before sending
+      let notificationToken = token;
+      if (!notificationToken) {
         console.log("No token available, attempting to get one");
-        const newToken = await getWebpushrToken();
-        if (!newToken) {
+        
+        // Force re-initialization of Webpushr
+        await initializeWebpushr();
+        
+        // Try to get the token after a delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        notificationToken = await getWebpushrToken();
+        if (notificationToken) {
+          setToken(notificationToken);
+          
+          // Save new token if user id exists
+          if (userId) {
+            await saveWebpushrToken(userId, notificationToken);
+          }
+        }
+        
+        if (!notificationToken) {
           console.error("Failed to get notification token");
           return false;
         }
       }
       
-      console.log("Sending notification:", { title, message, options });
+      console.log("Sending notification with token:", notificationToken);
+      console.log("Notification details:", { title, message, options });
       
       // Use the updated sendNotification that returns a Promise
       const result = await sendNotification({
@@ -150,7 +183,7 @@ export const useNotifications = (userId?: string) => {
       console.error("Error sending notification:", error);
       return false;
     }
-  }, [isEnabled, token]);
+  }, [isEnabled, token, userId]);
   
   return {
     isSupported,

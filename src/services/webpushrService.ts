@@ -5,6 +5,7 @@ export const WEBPUSHR_SCRIPT_URL = "https://cdn.webpushr.com/app.min.js";
 
 // Track initialization status
 let isInitialized = false;
+let webpushrLoaded = false;
 let initializationPromise: Promise<boolean> | null = null;
 
 // Initialize Webpushr with proper promise handling
@@ -16,65 +17,108 @@ export function initializeWebpushr(): Promise<boolean> {
   if (initializationPromise) return initializationPromise;
   
   // Return immediately if already initialized
-  if (isInitialized && (window as any).webpushr) {
-    console.log('Webpushr already initialized');
+  if (isInitialized && (window as any).webpushr && webpushrLoaded) {
+    console.log('Webpushr already initialized and loaded');
     return Promise.resolve(true);
   }
   
   // Create initialization promise
   initializationPromise = new Promise<boolean>((resolve) => {
-    // Add Webpushr script to head if not already present
-    if (!document.getElementById('webpushr-script')) {
-      const webpushrScript = document.createElement('script');
-      webpushrScript.id = 'webpushr-script';
-      webpushrScript.src = WEBPUSHR_SCRIPT_URL;
-      webpushrScript.async = true;
-      
-      // Setup onload handler
-      webpushrScript.onload = () => {
-        // Wait a moment for the script to fully initialize
-        setTimeout(() => {
+    // Check if script already exists
+    if (document.getElementById('webpushr-script')) {
+      // Script exists, check if API is loaded
+      if ((window as any).webpushr) {
+        console.log('Webpushr script already exists and API is available');
+        setupWebpushr(resolve);
+      } else {
+        console.log('Webpushr script exists but API not loaded yet, waiting...');
+        // Wait for script to load
+        const checkInterval = setInterval(() => {
           if ((window as any).webpushr) {
-            (window as any).webpushr('setup', { 
-              key: WEBPUSHR_API_KEY 
-            });
-            console.log('Webpushr initialized successfully');
-            isInitialized = true;
-            resolve(true);
-          } else {
-            console.error('Webpushr loaded but API not available');
-            resolve(false);
+            clearInterval(checkInterval);
+            setupWebpushr(resolve);
           }
-        }, 500);
-      };
+        }, 100);
+        
+        // Set timeout to prevent infinite waiting
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          console.error('Timed out waiting for Webpushr API');
+          initializationPromise = null;
+          resolve(false);
+        }, 10000);
+      }
+      return;
+    }
+    
+    // Add Webpushr script to head
+    const webpushrScript = document.createElement('script');
+    webpushrScript.id = 'webpushr-script';
+    webpushrScript.src = WEBPUSHR_SCRIPT_URL;
+    webpushrScript.async = true;
+    
+    // Setup onload handler
+    webpushrScript.onload = () => {
+      console.log('Webpushr script loaded');
+      // Wait for the API to become available
+      const checkInterval = setInterval(() => {
+        if ((window as any).webpushr) {
+          clearInterval(checkInterval);
+          setupWebpushr(resolve);
+        }
+      }, 100);
       
-      // Handle errors
-      webpushrScript.onerror = () => {
-        console.error('Failed to load Webpushr script');
+      // Set timeout to prevent infinite waiting
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        console.error('Timed out waiting for Webpushr API after script load');
         initializationPromise = null;
         resolve(false);
-      };
-      
-      document.head.appendChild(webpushrScript);
-    } else {
-      // If script is already loaded but not initialized
-      if ((window as any).webpushr) {
-        if (!(window as any).webpushr.initialized) {
-          (window as any).webpushr('setup', { 
-            key: WEBPUSHR_API_KEY 
-          });
-          console.log('Webpushr initialized successfully');
-        }
-        isInitialized = true;
-        resolve(true);
-      } else {
-        console.error('Webpushr script exists but API not available');
-        resolve(false);
-      }
-    }
+      }, 10000);
+    };
+    
+    // Handle errors
+    webpushrScript.onerror = () => {
+      console.error('Failed to load Webpushr script');
+      initializationPromise = null;
+      resolve(false);
+    };
+    
+    document.head.appendChild(webpushrScript);
   });
   
   return initializationPromise;
+}
+
+// Helper function to setup Webpushr
+function setupWebpushr(resolve: (success: boolean) => void): void {
+  try {
+    if ((window as any).webpushr && !(window as any).webpushr.initialized) {
+      console.log('Setting up Webpushr with API key');
+      (window as any).webpushr('setup', { 
+        key: WEBPUSHR_API_KEY 
+      });
+      
+      // Add a small delay to ensure setup completes
+      setTimeout(() => {
+        console.log('Webpushr initialization complete');
+        isInitialized = true;
+        webpushrLoaded = true;
+        resolve(true);
+      }, 500);
+    } else if ((window as any).webpushr) {
+      console.log('Webpushr already setup');
+      isInitialized = true;
+      webpushrLoaded = true;
+      resolve(true);
+    } else {
+      console.error('Webpushr API not available for setup');
+      resolve(false);
+    }
+  } catch (error) {
+    console.error('Error during Webpushr setup:', error);
+    resolve(false);
+  }
 }
 
 // Register service worker for Webpushr
@@ -83,8 +127,8 @@ export function registerWebpushrServiceWorker(): Promise<boolean> {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/webpushr-sw.js')
-        .then(() => {
-          console.log('Webpushr SW registered successfully');
+        .then((registration) => {
+          console.log('Webpushr SW registered successfully:', registration.scope);
           resolve(true);
         })
         .catch(err => {
@@ -117,7 +161,7 @@ export function getWebpushrToken(): Promise<string | null> {
     // Give some time for the Webpushr SDK to fully initialize
     setTimeout(() => {
       if (typeof window === 'undefined' || !(window as any).webpushr) {
-        console.error("Webpushr not available");
+        console.error("Webpushr not available for getToken");
         resolve(null);
         return;
       }
@@ -132,8 +176,13 @@ export function getWebpushrToken(): Promise<string | null> {
       try {
         // Use the correct Webpushr API call to get the subscriber token
         (window as any).webpushr('getSubscriberToken', (token: string) => {
-          console.log("Got subscriber token:", token);
-          resolve(token || null);
+          if (token) {
+            console.log("Got subscriber token:", token);
+            resolve(token);
+          } else {
+            console.log("No subscriber token available, user may not be subscribed yet");
+            resolve(null);
+          }
         });
       } catch (e) {
         console.error("Error getting Webpushr token:", e);
@@ -177,7 +226,7 @@ export async function saveWebpushrToken(userId: string, token: string) {
   }
 }
 
-// Use the native Webpushr API to send a notification
+// Use the native Webpushr API to send a notification with proper error handling
 export function sendNotification({
   title,
   message,
@@ -202,26 +251,40 @@ export function sendNotification({
       }
       
       if (typeof window === 'undefined' || !(window as any).webpushr) {
-        console.error("Webpushr not available");
+        console.error("Webpushr not available for sending notification");
         resolve(false);
         return;
       }
 
-      console.log("Sending notification:", { title, message });
+      console.log("Preparing to send notification:", { title, message });
       
-      // Use the Webpushr JavaScript API instead of REST API
-      (window as any).webpushr('localNotification', {
-        title,
-        message,
-        target_url,
-        image: image_url,
-        tag: notification_tag || undefined
-      });
-      
-      console.log("Notification sent successfully");
-      resolve(true);
+      // Ensure webpushr.localNotification is a function
+      if (typeof (window as any).webpushr !== 'function') {
+        console.error("webpushr is not a function");
+        resolve(false);
+        return;
+      }
+
+      // Use a try-catch block specifically around the API call
+      try {
+        // Use the Webpushr JavaScript API for sending notification
+        console.log("Calling webpushr localNotification");
+        (window as any).webpushr('localNotification', {
+          title,
+          message,
+          target_url,
+          image: image_url || undefined,
+          tag: notification_tag || undefined
+        });
+        
+        console.log("Notification sent successfully");
+        resolve(true);
+      } catch (callError) {
+        console.error("Error calling webpushr localNotification:", callError);
+        resolve(false);
+      }
     } catch (error) {
-      console.error("Error sending notification:", error);
+      console.error("Error in sendNotification:", error);
       resolve(false);
     }
   });
@@ -234,8 +297,7 @@ export async function areNotificationsEnabled(): Promise<boolean> {
   }
   
   // Check permission status
-  const permission = await Notification.requestPermission();
-  return permission === 'granted';
+  return Notification.permission === 'granted';
 }
 
 // Request notification permission directly

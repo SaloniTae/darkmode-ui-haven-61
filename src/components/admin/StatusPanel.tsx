@@ -351,7 +351,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     }
   };
 
-  // Test push notification
+  // Test push notification with improved error handling and feedback
   const testPushNotification = async () => {
     const nextExpiry = getNextExpiryTime(activeTransactions);
     
@@ -368,10 +368,18 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           // First, make sure notifications are enabled
           await enableNotifications();
           
-          // Try to send the notification
+          // Generate a unique tag for this notification
+          const uniqueTag = `test-${Date.now()}`;
+          console.log("Using notification tag:", uniqueTag);
+          
+          // Try to send the notification with detailed console logging
+          console.log("About to call sendPushNotification");
           const success = await sendPushNotification(title, message, {
-            notification_tag: `test-${Date.now()}`
+            notification_tag: uniqueTag,
+            target_url: window.location.href
           });
+          
+          console.log("sendPushNotification result:", success);
           
           if (success) {
             toast({
@@ -382,15 +390,33 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           } else {
             toast({
               title: "Failed to Send Notification",
-              description: "There was an issue sending the push notification. Please check console for details.",
+              description: "There was an issue sending the push notification. Please check browser console for details.",
               variant: "destructive"
             });
+            
+            // Try to send a notification using the native Notification API as fallback
+            if ('Notification' in window && Notification.permission === 'granted') {
+              try {
+                console.log("Trying native Notification API as fallback");
+                new Notification(title, {
+                  body: message,
+                  tag: uniqueTag
+                });
+                toast({
+                  title: "Fallback Notification Sent",
+                  description: "Used native browser notifications instead",
+                  variant: "default"
+                });
+              } catch (nativeError) {
+                console.error("Native notification failed too:", nativeError);
+              }
+            }
           }
         } catch (error) {
           console.error("Error in testPushNotification:", error);
           toast({
             title: "Notification Error",
-            description: "An error occurred while sending the notification",
+            description: "An error occurred while sending the notification. See console for details.",
             variant: "destructive"
           });
         }
@@ -405,7 +431,10 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
               size="sm" 
               onClick={async () => {
                 try {
+                  console.log("User clicked to enable notifications");
                   const enabled = await enableNotifications();
+                  console.log("Enable notifications result:", enabled);
+                  
                   if (enabled) {
                     toast({
                       title: "Notifications Enabled",
@@ -424,7 +453,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   } else {
                     toast({
                       title: "Failed to Enable Notifications",
-                      description: "Please check your browser settings",
+                      description: "Please check your browser settings and permissions",
                       variant: "destructive"
                     });
                   }
