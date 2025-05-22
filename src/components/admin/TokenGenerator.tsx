@@ -146,13 +146,6 @@ export function TokenGenerator() {
           <CardTitle className="text-lg">Token Generator</CardTitle>
           <CardDescription>
             Generate invitation tokens for new users. These tokens are required for signup.
-            <div className="mt-2 p-2 bg-amber-500/20 border border-amber-500/50 rounded-md">
-              <p className="text-sm font-medium">Token Generation Authority</p>
-              <p className="text-xs mt-1">
-                Only Crunchyroll administrators have the authority to generate tokens for any service.
-                Other users cannot generate tokens, even if they have access to this page.
-              </p>
-            </div>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

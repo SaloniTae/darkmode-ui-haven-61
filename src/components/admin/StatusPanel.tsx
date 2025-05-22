@@ -2,14 +2,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { DataCard } from "@/components/ui/DataCard";
 import { formatTimeWithAmPm } from "@/utils/dateFormatUtils";
-import { Minus, Bell, BellRing } from "lucide-react";
+import { Minus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { ConfirmationDialog } from "@/components/admin/ConfirmationDialog";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
-import { useNotifications } from "@/hooks/useNotifications";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
 
@@ -41,12 +40,6 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
   const [upcomingExpiryNotices, setUpcomingExpiryNotices] = useState<Record<string, boolean>>({});
   const { fetchData, updateData } = useFirebaseService(service);
   const { user } = useAuth();
-  const { 
-    isSupported, 
-    isEnabled, 
-    enableNotifications, 
-    sendPushNotification 
-  } = useNotifications(user?.id);
 
   const groupTransactionsByExpiryHour = (transactions: [string, Transaction][]) => {
     const groupedByHour: Record<string, [string, Transaction][]> = {};
@@ -179,17 +172,6 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           duration: 10000,
         });
         
-        // Send web push notification
-        if (isEnabled) {
-          sendPushNotification(
-            "Upcoming Account Expirations",
-            `${txs.length} account${txs.length > 1 ? 's' : ''} will expire ${formattedTime}`,
-            {
-              notification_tag: `upcoming-${hourKey}`
-            }
-          );
-        }
-        
         // Mark this hour as notified
         setUpcomingExpiryNotices(prev => ({...prev, [hourKey]: true}));
       }
@@ -213,22 +195,11 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         variant: "destructive",
         duration: 5000,
       });
-
-      // Send web push notification
-      if (isEnabled) {
-        sendPushNotification(
-          "Accounts Expired",
-          toastMessage,
-          {
-            notification_tag: `expired-${new Date().toISOString().split('T')[0]}`
-          }
-        );
-      }
     }
 
     setActiveTransactions(active);
     setExpiredTransactions(expired);
-  }, [transactions, notifiedExpiries, upcomingExpiryNotices, isEnabled, sendPushNotification]);
+  }, [transactions, notifiedExpiries, upcomingExpiryNotices]);
 
   // Initialize and set up auto-refresh
   useEffect(() => {
@@ -352,57 +323,6 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     }
   };
 
-  // Test push notification
-  const testPushNotification = () => {
-    const nextExpiry = getNextExpiryTime(activeTransactions);
-    
-    if (nextExpiry) {
-      const expiryTime = formatDateWithTime(nextExpiry[1].end_time);
-      const title = "Next Account Expiry";
-      const message = `An account will expire ${expiryTime}`;
-      
-      if (isEnabled) {
-        sendPushNotification(title, message, {
-          notification_tag: `test-${Date.now()}`
-        });
-        
-        toast({
-          title: "Web Push Notification Sent",
-          description: message,
-          variant: "default"
-        });
-      } else if (isSupported) {
-        toast({
-          title: "Notifications Not Enabled",
-          description: "Please enable notifications to receive alerts.",
-          variant: "default",
-          action: (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => enableNotifications()}
-              className="ml-2"
-            >
-              Enable
-            </Button>
-          )
-        });
-      } else {
-        toast({
-          title: "Notifications Not Supported",
-          description: "Your browser doesn't support push notifications.",
-          variant: "destructive"
-        });
-      }
-    } else {
-      toast({
-        title: "No Upcoming Expirations",
-        description: "There are no active accounts about to expire",
-        variant: "default"
-      });
-    }
-  };
-
   return (
     <div className="space-y-6">
       <DataCard 
@@ -419,27 +339,6 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                 Clear
               </Button>
             )}
-            {!isEnabled && isSupported && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={enableNotifications}
-                className="text-sm flex items-center"
-                title="Enable notifications"
-              >
-                <BellRing size={16} className="mr-1" />
-                Enable Alerts
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={testPushNotification}
-              className="text-primary"
-              title="Test notification"
-            >
-              <Bell size={18} />
-            </Button>
           </div>
         }
       >
@@ -598,4 +497,3 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     </div>
   );
 }
-
