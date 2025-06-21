@@ -26,11 +26,11 @@ export function TokenGenerator() {
   const [restrictedTabs, setRestrictedTabs] = useState<string[]>([]);
   const [tokenError, setTokenError] = useState<string | null>(null);
 
-  // Available tabs by service
+  // Available tabs by service - updated to include admin and uiconfig for netflix and prime
   const serviceTabOptions: Record<string, string[]> = {
     crunchyroll: ["tokens", "admin", "credentials", "slots", "referrals", "transactions", "status", "uiconfig", "users"],
-    netflix: ["credentials", "slots", "transactions", "status", "users"],
-    prime: ["credentials", "slots", "transactions", "status", "users"]
+    netflix: ["admin", "credentials", "slots", "referrals", "transactions", "status", "uiconfig", "users"],
+    prime: ["admin", "credentials", "slots", "referrals", "transactions", "status", "uiconfig", "users"]
   };
 
   const handleGenerateToken = async () => {

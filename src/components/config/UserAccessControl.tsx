@@ -236,11 +236,11 @@ export function UserAccessControl() {
     }
   };
 
-  // Available tabs by service
+  // Available tabs by service - updated to include admin and uiconfig for netflix and prime
   const serviceTabOptions: Record<string, string[]> = {
     crunchyroll: ["tokens", "admin", "credentials", "slots", "referrals", "transactions", "status", "uiconfig", "users"],
-    netflix: ["credentials", "slots", "transactions", "status", "users"],
-    prime: ["credentials", "slots", "transactions", "status", "users"]
+    netflix: ["admin", "credentials", "slots", "referrals", "transactions", "status", "uiconfig", "users"],
+    prime: ["admin", "credentials", "slots", "refer rals", "transactions", "status", "uiconfig", "users"]
   };
 
   if (loading) {

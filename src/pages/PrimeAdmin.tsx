@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef, useCallback } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,11 +13,15 @@ import { StatusPanel } from "@/components/admin/StatusPanel";
 import { Loader2 } from "lucide-react";
 import { DatabaseSchema } from "@/types/database";
 import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
+import { RestrictedTab } from "@/components/config/RestrictedTab";
 
 export default function PrimeAdmin() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [dbData, setDbData] = useState<DatabaseSchema | null>(null);
+  const { isAuthenticated } = useAuth();
+  const dataFetchedRef = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const { fetchData, subscribeToData } = useFirebaseService('prime');
 
@@ -27,6 +32,7 @@ export default function PrimeAdmin() {
       const data = await fetchData("/");
       setDbData(data);
       toast.success("Prime database loaded successfully");
+      dataFetchedRef.current = true;
       
       // Set up real-time listener
       unsubscribeRef.current = subscribeToData("/", (realtimeData) => {
@@ -43,7 +49,10 @@ export default function PrimeAdmin() {
   }, [fetchData, subscribeToData]);
 
   useEffect(() => {
-    loadData();
+    // Only fetch data if authenticated and not already fetched
+    if (isAuthenticated && !dataFetchedRef.current) {
+      loadData();
+    }
     
     // Cleanup function
     return () => {
@@ -51,7 +60,13 @@ export default function PrimeAdmin() {
         unsubscribeRef.current();
       }
     };
-  }, [loadData]);
+  }, [isAuthenticated, loadData]);
+
+  // If not authenticated, don't show anything as the ProtectedRoute component
+  // will handle the redirect to login page
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (loading) {
     return <MainLayout className="flex items-center justify-center min-h-screen">
@@ -85,47 +100,142 @@ export default function PrimeAdmin() {
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="users">Users</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="admin" className="mt-0">
-            <AdminPanel adminConfig={dbData.admin_config} service="prime" />
-          </TabsContent>
+          <RestrictedTab tabName="admin">
+            <AdminPanel adminConfig={dbData?.admin_config || { superior_admins: [], inferior_admins: [] }} service="prime" />
+          </RestrictedTab>
           
-          <TabsContent value="credentials" className="mt-0">
+          <RestrictedTab tabName="credentials">
             <CredentialsPanel credentials={{
-              cred1: dbData.cred1,
-              cred2: dbData.cred2,
-              cred3: dbData.cred3,
-              cred4: dbData.cred4,
+              cred1: dbData?.cred1 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
+              cred2: dbData?.cred2 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
+              cred3: dbData?.cred3 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
+              cred4: dbData?.cred4 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
               ...Object.fromEntries(
-                Object.entries(dbData)
+                Object.entries(dbData || {})
                   .filter(([key]) => key.startsWith('cred') && !['cred1', 'cred2', 'cred3', 'cred4'].includes(key))
                   .map(([key, value]) => [key, value])
               )
-            }} slots={dbData.settings.slots} service="prime" />
-          </TabsContent>
+            }} slots={dbData?.settings?.slots || {}} service="prime" />
+          </RestrictedTab>
           
-          <TabsContent value="slots" className="mt-0">
-            <SlotsPanel slots={dbData.settings.slots} service="prime" />
-          </TabsContent>
+          <RestrictedTab tabName="slots">
+            <SlotsPanel slots={dbData?.settings?.slots || {}} service="prime" />
+          </RestrictedTab>
           
-          <TabsContent value="referrals" className="mt-0">
-            <ReferralsPanel referrals={dbData.referrals} referralSettings={dbData.referral_settings} freeTrialClaims={dbData.free_trial_claims} service="prime" />
-          </TabsContent>
+          <RestrictedTab tabName="referrals">
+            <ReferralsPanel 
+              referrals={dbData?.referrals || {}} 
+              referralSettings={dbData?.referral_settings || {
+                buy_with_points_enabled: false,
+                free_trial_enabled: false,
+                points_per_referral: 0,
+                required_point: 0
+              }} 
+              freeTrialClaims={dbData?.free_trial_claims || {}}
+              service="prime"
+            />
+          </RestrictedTab>
           
-          <TabsContent value="transactions" className="mt-0">
-            <TransactionsPanel transactions={dbData.transactions} usedOrderIds={dbData.used_orderids} service="prime" />
-          </TabsContent>
+          <RestrictedTab tabName="transactions">
+            <TransactionsPanel transactions={dbData?.transactions || {}} usedOrderIds={dbData?.used_orderids || {}} service="prime" />
+          </RestrictedTab>
           
-          <TabsContent value="status" className="mt-0">
-            <StatusPanel transactions={dbData.transactions} service="prime" />
-          </TabsContent>
+          <RestrictedTab tabName="status">
+            <StatusPanel transactions={dbData?.transactions || {}} service="prime" />
+          </RestrictedTab>
           
-          <TabsContent value="uiconfig" className="mt-0">
-            <UIConfigPanel uiConfig={dbData.ui_config} service="prime" />
-          </TabsContent>
+          <RestrictedTab tabName="uiconfig">
+            <UIConfigPanel uiConfig={dbData?.ui_config || {
+              approve_flow: {
+                account_format: "",
+                gif_url: "",
+                success_text: ""
+              },
+              confirmation_flow: {
+                button_text: "",
+                callback_data: "",
+                caption: "",
+                gif_url: "",
+                photo_url: ""
+              },
+              crunchyroll_screen: {
+                button_text: "",
+                callback_data: "",
+                caption: "",
+                photo_url: ""
+              },
+              freetrial_info: {
+                photo_url: ""
+              },
+              locked_flow: {
+                locked_text: ""
+              },
+              out_of_stock: {
+                gif_url: "",
+                messages: []
+              },
+              phonepe_screen: {
+                caption: "",
+                followup_text: "",
+                photo_url: ""
+              },
+              referral_info: {
+                photo_url: ""
+              },
+              reject_flow: {
+                error_text: "",
+                gif_url: ""
+              },
+              slot_booking: {
+                button_format: "",
+                callback_data: "",
+                caption: "",
+                gif_url: "",
+                photo_url: ""
+              },
+              start_command: {
+                buttons: [],
+                welcome_photo: "",
+                welcome_text: ""
+              }
+            }} service="prime" />
+          </RestrictedTab>
           
-          <TabsContent value="users" className="mt-0">
-            <UsersPanel users={dbData.users} service="prime" />
-          </TabsContent>
+          <RestrictedTab tabName="users">
+            <UsersPanel users={dbData?.users || {}} service="prime" />
+          </RestrictedTab>
         </Tabs>
       </div>
     </MainLayout>;
