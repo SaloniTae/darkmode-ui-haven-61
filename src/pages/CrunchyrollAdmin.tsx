@@ -185,14 +185,13 @@ export default function CrunchyrollAdmin() {
             <UIConfigPanel uiConfig={dbData?.ui_config || {
               approve_flow: {
                 account_format: "",
-                gif_url: "",
+                photo_url: "",
                 success_text: ""
               },
               confirmation_flow: {
                 button_text: "",
                 callback_data: "",
                 caption: "",
-                gif_url: "",
                 photo_url: ""
               },
               crunchyroll_screen: {
@@ -208,7 +207,7 @@ export default function CrunchyrollAdmin() {
                 locked_text: ""
               },
               out_of_stock: {
-                gif_url: "",
+                photo_url: "",
                 messages: []
               },
               phonepe_screen: {
@@ -221,13 +220,12 @@ export default function CrunchyrollAdmin() {
               },
               reject_flow: {
                 error_text: "",
-                gif_url: ""
+                photo_url: ""
               },
               slot_booking: {
                 button_format: "",
                 callback_data: "",
                 caption: "",
-                gif_url: "",
                 photo_url: ""
               },
               start_command: {

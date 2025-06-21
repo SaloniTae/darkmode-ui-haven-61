@@ -1,4 +1,3 @@
-
 // Admin Config Types
 export interface AdminConfig {
   inferior_admins: string[];
@@ -75,28 +74,25 @@ export interface CrunchyrollScreen {
   callback_data: string;
   caption: string;
   photo_url: string;
-  gif_url?: string;
 }
 
 export interface NetflixPrimeScreen {
   button_text: string;
   callback_data: string;
   caption: string;
-  gif_url: string;
-  photo_url?: string;
+  photo_url: string;
 }
 
 export interface UIConfig {
   approve_flow: {
     account_format: string;
-    gif_url: string;
+    photo_url: string;
     success_text: string;
   };
   confirmation_flow: {
     button_text: string;
     callback_data: string;
     caption: string;
-    gif_url: string;
     photo_url: string;
   };
   crunchyroll_screen: CrunchyrollScreen | NetflixPrimeScreen;
@@ -107,7 +103,7 @@ export interface UIConfig {
     locked_text: string;
   };
   out_of_stock: {
-    gif_url: string;
+    photo_url: string;
     messages: string[];
   };
   phonepe_screen: {
@@ -120,13 +116,12 @@ export interface UIConfig {
   };
   reject_flow: {
     error_text: string;
-    gif_url: string;
+    photo_url: string;
   };
   slot_booking: {
     button_format: string;
     callback_data: string;
     caption: string;
-    gif_url: string;
     photo_url: string;
   };
   start_command: {

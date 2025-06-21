@@ -24,8 +24,6 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
   const [isEditing, setIsEditing] = useState(false);
   const location = useLocation();
 
-  const isNetflixOrPrime = location.pathname.includes("netflix") || location.pathname.includes("prime");
-
   // Update edited config when uiConfig prop changes
   useEffect(() => {
     setEditedConfig({ ...uiConfig });
@@ -151,15 +149,6 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     });
   };
 
-  // Function to get the correct media URL based on service type
-  const getMediaUrl = (screen: CrunchyrollScreen | NetflixPrimeScreen): string => {
-    if (isNetflixOrPrime) {
-      return (screen as NetflixPrimeScreen).gif_url || "";
-    } else {
-      return (screen as CrunchyrollScreen).photo_url || "";
-    }
-  };
-
   // This key helps force re-render of images when URLs change
   const [imageKey, setImageKey] = useState(Date.now());
   
@@ -188,7 +177,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
         <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 h-auto p-1 glass-morphism">
           <TabsTrigger value="start_command">Start</TabsTrigger>
-          <TabsTrigger value="crunchyroll_screen">Crunchyroll</TabsTrigger>
+          <TabsTrigger value="crunchyroll_screen">Screen</TabsTrigger>
           <TabsTrigger value="slot_booking">Slot Booking</TabsTrigger>
           <TabsTrigger value="confirmation_flow">Confirmation</TabsTrigger>
           <TabsTrigger value="phonepe_screen">PhonePe</TabsTrigger>
@@ -302,7 +291,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
         </TabsContent>
         
         <TabsContent value="crunchyroll_screen" className="mt-0">
-          <DataCard title="Crunchyroll Screen Configuration">
+          <DataCard title="Service Screen Configuration">
             <div className="space-y-6">
               {isEditing ? (
                 <div className="space-y-4">
@@ -317,25 +306,12 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                   </div>
                   
                   <div className="space-y-2">
-                    {isNetflixOrPrime ? (
-                      <>
-                        <Label htmlFor="cr-gif">GIF URL</Label>
-                        <Input
-                          id="cr-gif"
-                          value={(editedConfig.crunchyroll_screen as NetflixPrimeScreen).gif_url || ""}
-                          onChange={(e) => handleInputChange('crunchyroll_screen', 'gif_url', e.target.value)}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <Label htmlFor="cr-photo">Photo URL</Label>
-                        <Input
-                          id="cr-photo"
-                          value={(editedConfig.crunchyroll_screen as CrunchyrollScreen).photo_url || ""}
-                          onChange={(e) => handleInputChange('crunchyroll_screen', 'photo_url', e.target.value)}
-                        />
-                      </>
-                    )}
+                    <Label htmlFor="cr-photo">Photo URL</Label>
+                    <Input
+                      id="cr-photo"
+                      value={editedConfig.crunchyroll_screen.photo_url}
+                      onChange={(e) => handleInputChange('crunchyroll_screen', 'photo_url', e.target.value)}
+                    />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -366,15 +342,13 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                   </div>
                   
                   <div>
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">
-                      {isNetflixOrPrime ? "GIF" : "Photo"}
-                    </h3>
+                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img 
-                          key={`crunchyroll-media-${imageKey}`}
-                          src={getMediaUrl(editedConfig.crunchyroll_screen)}
-                          alt="Crunchyroll Screen"
+                          key={`crunchyroll-photo-${imageKey}`}
+                          src={editedConfig.crunchyroll_screen.photo_url}
+                          alt="Service Screen"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Image+Not+Found';
@@ -412,24 +386,13 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="slot-photo">Photo URL</Label>
-                      <Input
-                        id="slot-photo"
-                        value={editedConfig.slot_booking.photo_url}
-                        onChange={(e) => handleInputChange('slot_booking', 'photo_url', e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="slot-gif">GIF URL</Label>
-                      <Input
-                        id="slot-gif"
-                        value={editedConfig.slot_booking.gif_url}
-                        onChange={(e) => handleInputChange('slot_booking', 'gif_url', e.target.value)}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="slot-photo">Photo URL</Label>
+                    <Input
+                      id="slot-photo"
+                      value={editedConfig.slot_booking.photo_url}
+                      onChange={(e) => handleInputChange('slot_booking', 'photo_url', e.target.value)}
+                    />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -459,36 +422,18 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <p className="whitespace-pre-line">{editedConfig.slot_booking.caption}</p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
-                      <div className="glass-morphism p-2 rounded-md overflow-hidden">
-                        <div className="relative aspect-square bg-black/20 rounded overflow-hidden">
-                          <img 
-                            src={editedConfig.slot_booking.photo_url}
-                            alt="Slot Booking"
-                            className="absolute inset-0 w-full h-full object-cover object-center"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://placehold.co/300x300?text=Image+Not+Found';
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">GIF</h3>
-                      <div className="glass-morphism p-2 rounded-md overflow-hidden">
-                        <div className="relative aspect-square bg-black/20 rounded overflow-hidden">
-                          <img 
-                            src={editedConfig.slot_booking.gif_url}
-                            alt="Slot Booking GIF"
-                            className="absolute inset-0 w-full h-full object-cover object-center"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://placehold.co/300x300?text=GIF+Not+Found';
-                            }}
-                          />
-                        </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
+                    <div className="glass-morphism p-2 rounded-md overflow-hidden">
+                      <div className="relative aspect-square bg-black/20 rounded overflow-hidden">
+                        <img 
+                          src={editedConfig.slot_booking.photo_url}
+                          alt="Slot Booking"
+                          className="absolute inset-0 w-full h-full object-cover object-center"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/300x300?text=Image+Not+Found';
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -527,24 +472,13 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmation-photo">Photo URL</Label>
-                      <Input
-                        id="confirmation-photo"
-                        value={editedConfig.confirmation_flow.photo_url}
-                        onChange={(e) => handleInputChange('confirmation_flow', 'photo_url', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmation-gif">GIF URL</Label>
-                      <Input
-                        id="confirmation-gif"
-                        value={editedConfig.confirmation_flow.gif_url}
-                        onChange={(e) => handleInputChange('confirmation_flow', 'gif_url', e.target.value)}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmation-photo">Photo URL</Label>
+                    <Input
+                      id="confirmation-photo"
+                      value={editedConfig.confirmation_flow.photo_url}
+                      onChange={(e) => handleInputChange('confirmation_flow', 'photo_url', e.target.value)}
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -574,36 +508,18 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <p className="whitespace-pre-line">{editedConfig.confirmation_flow.caption}</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
-                      <div className="glass-morphism p-2 rounded-md overflow-hidden">
-                        <div className="relative aspect-square bg-black/20 rounded overflow-hidden">
-                          <img
-                            src={editedConfig.confirmation_flow.photo_url}
-                            alt="Confirmation Photo"
-                            className="absolute inset-0 w-full h-full object-cover object-center"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://placehold.co/300x300?text=Image+Not+Found';
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">GIF</h3>
-                      <div className="glass-morphism p-2 rounded-md overflow-hidden">
-                        <div className="relative aspect-square bg-black/20 rounded overflow-hidden">
-                          <img
-                            src={editedConfig.confirmation_flow.gif_url}
-                            alt="Confirmation GIF"
-                            className="absolute inset-0 w-full h-full object-cover object-center"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://placehold.co/300x300?text=GIF+Not+Found';
-                            }}
-                          />
-                        </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
+                    <div className="glass-morphism p-2 rounded-md overflow-hidden">
+                      <div className="relative aspect-square bg-black/20 rounded overflow-hidden">
+                        <img
+                          src={editedConfig.confirmation_flow.photo_url}
+                          alt="Confirmation Photo"
+                          className="absolute inset-0 w-full h-full object-cover object-center"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/300x300?text=Image+Not+Found';
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -720,11 +636,11 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="approve-gif">GIF URL</Label>
+                    <Label htmlFor="approve-photo">Photo URL</Label>
                     <Input
-                      id="approve-gif"
-                      value={editedConfig.approve_flow.gif_url}
-                      onChange={(e) => handleInputChange('approve_flow', 'gif_url', e.target.value)}
+                      id="approve-photo"
+                      value={editedConfig.approve_flow.photo_url}
+                      onChange={(e) => handleInputChange('approve_flow', 'photo_url', e.target.value)}
                     />
                   </div>
                 </div>
@@ -741,15 +657,15 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">GIF</h3>
+                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img
-                          src={editedConfig.approve_flow.gif_url}
-                          alt="Approve Flow GIF"
+                          src={editedConfig.approve_flow.photo_url}
+                          alt="Approve Flow Photo"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=GIF+Not+Found';
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Image+Not+Found';
                           }}
                         />
                       </div>
@@ -777,11 +693,11 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="reject-gif">GIF URL</Label>
+                    <Label htmlFor="reject-photo">Photo URL</Label>
                     <Input
-                      id="reject-gif"
-                      value={editedConfig.reject_flow.gif_url}
-                      onChange={(e) => handleInputChange('reject_flow', 'gif_url', e.target.value)}
+                      id="reject-photo"
+                      value={editedConfig.reject_flow.photo_url}
+                      onChange={(e) => handleInputChange('reject_flow', 'photo_url', e.target.value)}
                     />
                   </div>
                 </div>
@@ -793,15 +709,15 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">GIF</h3>
+                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img
-                          src={editedConfig.reject_flow.gif_url}
-                          alt="Reject Flow GIF"
+                          src={editedConfig.reject_flow.photo_url}
+                          alt="Reject Flow Photo"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=GIF+Not+Found';
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Image+Not+Found';
                           }}
                         />
                       </div>
@@ -886,11 +802,11 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                 {isEditing ? (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="stock-gif">GIF URL</Label>
+                      <Label htmlFor="stock-photo">Photo URL</Label>
                       <Input
-                        id="stock-gif"
-                        value={editedConfig.out_of_stock.gif_url}
-                        onChange={(e) => handleInputChange('out_of_stock', 'gif_url', e.target.value)}
+                        id="stock-photo"
+                        value={editedConfig.out_of_stock.photo_url}
+                        onChange={(e) => handleInputChange('out_of_stock', 'photo_url', e.target.value)}
                       />
                     </div>
                     
@@ -926,15 +842,15 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">GIF</h3>
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
                       <div className="glass-morphism p-2 rounded-md overflow-hidden">
                         <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                           <img 
-                            src={editedConfig.out_of_stock.gif_url}
-                            alt="Out of Stock GIF"
+                            src={editedConfig.out_of_stock.photo_url}
+                            alt="Out of Stock Photo"
                             className="absolute inset-0 w-full h-full object-cover object-center"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=GIF+Not+Found';
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Image+Not+Found';
                             }}
                           />
                         </div>
