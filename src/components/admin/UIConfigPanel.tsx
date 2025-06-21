@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -175,10 +176,9 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
       </div>
 
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 h-auto p-1 glass-morphism">
+        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto p-1 glass-morphism">
           <TabsTrigger value="start_command">Start</TabsTrigger>
-          <TabsTrigger value="crunchyroll_screen">Screen</TabsTrigger>
-          <TabsTrigger value="slot_booking">Slot Booking</TabsTrigger>
+          <TabsTrigger value="slot_booking">Select Plan</TabsTrigger>
           <TabsTrigger value="confirmation_flow">Confirmation</TabsTrigger>
           <TabsTrigger value="phonepe_screen">PhonePe</TabsTrigger>
           <TabsTrigger value="approve_flow">Approve</TabsTrigger>
@@ -290,89 +290,8 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
           </DataCard>
         </TabsContent>
         
-        <TabsContent value="crunchyroll_screen" className="mt-0">
-          <DataCard title="Service Screen Configuration">
-            <div className="space-y-6">
-              {isEditing ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="cr-caption">Caption</Label>
-                    <Textarea
-                      id="cr-caption"
-                      value={editedConfig.crunchyroll_screen.caption}
-                      onChange={(e) => handleInputChange('crunchyroll_screen', 'caption', e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="cr-photo">Photo URL</Label>
-                    <Input
-                      id="cr-photo"
-                      value={editedConfig.crunchyroll_screen.photo_url}
-                      onChange={(e) => handleInputChange('crunchyroll_screen', 'photo_url', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="cr-button-text">Button Text</Label>
-                      <Input
-                        id="cr-button-text"
-                        value={editedConfig.crunchyroll_screen.button_text}
-                        onChange={(e) => handleInputChange('crunchyroll_screen', 'button_text', e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="cr-callback">Callback Data</Label>
-                      <Input
-                        id="cr-callback"
-                        value={editedConfig.crunchyroll_screen.callback_data}
-                        onChange={(e) => handleInputChange('crunchyroll_screen', 'callback_data', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="glass-morphism p-4 rounded-md">
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Caption</h3>
-                    <p className="whitespace-pre-line">{editedConfig.crunchyroll_screen.caption}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
-                    <div className="glass-morphism p-2 rounded-md overflow-hidden">
-                      <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
-                        <img 
-                          key={`crunchyroll-photo-${imageKey}`}
-                          src={editedConfig.crunchyroll_screen.photo_url}
-                          alt="Service Screen"
-                          className="absolute inset-0 w-full h-full object-cover object-center"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Image+Not+Found';
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="glass-morphism p-4 rounded-md">
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Button</h3>
-                    <div className="flex justify-between">
-                      <div>{editedConfig.crunchyroll_screen.button_text}</div>
-                      <div className="text-sm text-muted-foreground">{editedConfig.crunchyroll_screen.callback_data}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </DataCard>
-        </TabsContent>
-        
         <TabsContent value="slot_booking" className="mt-0">
-          <DataCard title="Slot Booking Configuration">
+          <DataCard title="Select Plan Configuration">
             <div className="space-y-6">
               {isEditing ? (
                 <div className="space-y-4">
@@ -428,7 +347,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       <div className="relative aspect-square bg-black/20 rounded overflow-hidden">
                         <img 
                           src={editedConfig.slot_booking.photo_url}
-                          alt="Slot Booking"
+                          alt="Select Plan"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = 'https://placehold.co/300x300?text=Image+Not+Found';
@@ -779,7 +698,9 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img 
-                          src={editedConfig.freetrial_info.photo_url}
+                          src={editedConfig.freet
+
+rial_info.photo_url}
                           alt="Free Trial Information"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
