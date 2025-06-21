@@ -4,14 +4,13 @@ import { getDatabase, ref, get, set, remove, update, onValue, off } from "fireba
 
 // Firebase configuration for Netflix
 const firebaseConfig = {
-  apiKey: "AIzaSyBfN12Ig49lgQ4XoadRrJCn6FMMJ_PfTfI",
-  authDomain: "get-accounts-netflix-prime.firebaseapp.com",
-  databaseURL: "https://get-accounts-netflix-prime-default-rtdb.firebaseio.com",
-  projectId: "get-accounts-netflix-prime",
-  storageBucket: "get-accounts-netflix-prime.firebasestorage.app",
-  messagingSenderId: "823566869236",
-  appId: "1:823566869236:web:cb64bc9ff7a0e0a73734a1",
-  measurementId: "G-MWPBL89RR7"
+  apiKey: "AIzaSyA02dPt8yMTSmhzyj9PIrm4UlWr1a1waD4",
+  authDomain: "testing-6de54.firebaseapp.com",
+  databaseURL: "https://testing-6de54-default-rtdb.firebaseio.com",
+  projectId: "testing-6de54",
+  storageBucket: "testing-6de54.firebasestorage.app",
+  messagingSenderId: "159795986690",
+  appId: "1:159795986690:web:2e4de44d725826dc01821b"
 };
 
 // Initialize Firebase for Netflix
