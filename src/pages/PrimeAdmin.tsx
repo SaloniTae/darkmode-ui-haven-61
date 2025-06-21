@@ -9,6 +9,7 @@ import { ReferralsPanel } from "@/components/admin/ReferralsPanel";
 import { TransactionsPanel } from "@/components/admin/TransactionsPanel";
 import { UIConfigPanel } from "@/components/admin/UIConfigPanel";
 import { UsersPanel } from "@/components/admin/UsersPanel";
+import { StatusPanel } from "@/components/admin/StatusPanel";
 import { Loader2 } from "lucide-react";
 import { DatabaseSchema } from "@/types/database";
 import { toast } from "sonner";
@@ -40,7 +41,7 @@ export default function PrimeAdmin() {
     } finally {
       setLoading(false);
     }
-  }, [fetchData, subscribeToData]);
+  }, [loadData]);
 
   useEffect(() => {
     loadData();
@@ -74,12 +75,13 @@ export default function PrimeAdmin() {
   return <MainLayout>
       <div className="space-y-8">
         <Tabs defaultValue="admin" className="w-full">
-          <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-7 h-auto p-1 glass-morphism shadow-lg">
+          <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-8 h-auto p-1 glass-morphism shadow-lg">
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="admin">Admins</TabsTrigger>
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="credentials">Credentials</TabsTrigger>
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="slots">Slots</TabsTrigger>
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="referrals">Referrals</TabsTrigger>
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="status">Status</TabsTrigger>
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="uiconfig">UI Config</TabsTrigger>
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="users">Users</TabsTrigger>
           </TabsList>
@@ -112,6 +114,10 @@ export default function PrimeAdmin() {
           
           <TabsContent value="transactions" className="mt-0">
             <TransactionsPanel transactions={dbData.transactions} usedOrderIds={dbData.used_orderids} service="prime" />
+          </TabsContent>
+          
+          <TabsContent value="status" className="mt-0">
+            <StatusPanel transactions={dbData.transactions} service="prime" />
           </TabsContent>
           
           <TabsContent value="uiconfig" className="mt-0">
