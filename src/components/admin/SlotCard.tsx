@@ -2,8 +2,7 @@
 import { Slot } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
-import { Edit, Clock, Calendar, DollarSign, Trash2 } from "lucide-react";
-import { formatDateTimeForDisplay } from "@/utils/dateFormatUtils";
+import { Edit, Clock, DollarSign, Trash2, User } from "lucide-react";
 import { SlotForm } from "./SlotForm";
 
 interface SlotCardProps {
@@ -55,12 +54,20 @@ export function SlotCard({
                 <span className="text-sm font-medium">{editedSlot.enabled ? "Enabled" : "Disabled"}</span>
               </div>
               
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-1 gap-3">
+                <div className="flex items-center">
+                  <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Plan Name</p>
+                    <p className="font-medium text-base">{editedSlot.name}</p>
+                  </div>
+                </div>
+                
                 <div className="flex items-center">
                   <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Frequency</p>
-                    <p className="font-medium text-base">{editedSlot.frequency}</p>
+                    <p className="text-sm text-muted-foreground">Duration</p>
+                    <p className="font-medium text-base">{editedSlot.duration_hours} hours</p>
                   </div>
                 </div>
                 
@@ -70,22 +77,6 @@ export function SlotCard({
                     <p className="text-sm text-muted-foreground">Required Amount</p>
                     <p className="font-medium text-base">₹{editedSlot.required_amount}</p>
                   </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <Calendar className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Time Period</p>
-                    <p className="font-medium text-sm">
-                      {formatDateTimeForDisplay(editedSlot.slot_start)} - 
-                      {formatDateTimeForDisplay(editedSlot.slot_end)}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="mt-2 pt-2 border-t border-gray-700/30">
-                  <p className="text-xs text-muted-foreground">Last Updated</p>
-                  <p className="font-medium text-xs">{formatDateTimeForDisplay(editedSlot.last_update)}</p>
                 </div>
               </div>
             </div>

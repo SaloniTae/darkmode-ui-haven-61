@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { format } from "date-fns";
 import { SlotForm } from "./SlotForm";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -23,12 +22,10 @@ interface NewSlotDialogProps {
 export function NewSlotDialog({ open, onOpenChange, onCreateSlot }: NewSlotDialogProps) {
   const [newSlotKey, setNewSlotKey] = useState("");
   const [newSlot, setNewSlot] = useState<Slot>({
+    duration_hours: 6,
     enabled: true,
-    frequency: "daily",
-    last_update: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
-    required_amount: 12,
-    slot_end: format(new Date(new Date().getTime() + 24 * 60 * 60 * 1000), "yyyy-MM-dd HH:mm:ss"),
-    slot_start: format(new Date(), "yyyy-MM-dd HH:mm:ss")
+    name: "Standard Plan",
+    required_amount: 1
   });
 
   const handleNewSlotChange = (field: keyof Slot, value: any) => {
@@ -46,12 +43,10 @@ export function NewSlotDialog({ open, onOpenChange, onCreateSlot }: NewSlotDialo
   const resetForm = () => {
     setNewSlotKey("");
     setNewSlot({
+      duration_hours: 6,
       enabled: true,
-      frequency: "daily",
-      last_update: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
-      required_amount: 12,
-      slot_end: format(new Date(new Date().getTime() + 24 * 60 * 60 * 1000), "yyyy-MM-dd HH:mm:ss"),
-      slot_start: format(new Date(), "yyyy-MM-dd HH:mm:ss")
+      name: "Standard Plan",
+      required_amount: 1
     });
   };
 

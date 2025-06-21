@@ -32,14 +32,12 @@ export interface Referral {
   points_per_referral?: number;
 }
 
-// Slot Types
+// Slot Types - Updated schema
 export interface Slot {
+  duration_hours: number;
   enabled: boolean;
-  frequency: string;
-  last_update: string;
+  name: string;
   required_amount: number;
-  slot_end: string;
-  slot_start: string;
 }
 
 export interface Slots {
