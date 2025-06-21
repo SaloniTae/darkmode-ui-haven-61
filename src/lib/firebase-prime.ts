@@ -4,14 +4,13 @@ import { getDatabase, ref, get, set, remove, update, onValue, off } from "fireba
 
 // Firebase configuration for Prime
 const firebaseConfig = {
-  apiKey: "AIzaSyD6GfoJEpYsh0GVUW0Dt4SxkRmYkJL1z1Y",
-  authDomain: "get-prime-credentials.firebaseapp.com",
-  databaseURL: "https://get-prime-credentials-default-rtdb.firebaseio.com",
-  projectId: "get-prime-credentials",
-  storageBucket: "get-prime-credentials.firebasestorage.app",
-  messagingSenderId: "165662987948",
-  appId: "1:165662987948:web:9692e1ae0bb03697657109",
-  measurementId: "G-K3607PSZXG"
+  apiKey: "AIzaSyA02dPt8yMTSmhzyj9PIrm4UlWr1a1waD4",
+  authDomain: "testing-6de54.firebaseapp.com",
+  databaseURL: "https://testing-6de54-default-rtdb.firebaseio.com",
+  projectId: "testing-6de54",
+  storageBucket: "testing-6de54.firebasestorage.app",
+  messagingSenderId: "159795986690",
+  appId: "1:159795986690:web:2e4de44d725826dc01821b"
 };
 
 // Initialize Firebase for Prime
