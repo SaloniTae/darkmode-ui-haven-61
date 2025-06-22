@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -176,7 +175,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
       </div>
 
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto p-1 glass-morphism">
+        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 h-auto p-1 glass-morphism">
           <TabsTrigger value="start_command">Start</TabsTrigger>
           <TabsTrigger value="slot_booking">Select Plan</TabsTrigger>
           <TabsTrigger value="confirmation_flow">Confirmation</TabsTrigger>
@@ -698,9 +697,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img 
-                          src={editedConfig.freet
-
-rial_info.photo_url}
+                          src={editedConfig.freetrial_info.photo_url}
                           alt="Free Trial Information"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
