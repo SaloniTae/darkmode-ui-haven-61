@@ -202,7 +202,7 @@ export default function NetflixAdmin() {
               },
               out_of_stock: {
                 photo_url: "",
-                stock_text: []
+                messages: []
               },
               phonepe_screen: {
                 caption: "",

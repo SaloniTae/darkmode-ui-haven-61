@@ -104,7 +104,7 @@ export interface UIConfig {
   };
   out_of_stock: {
     photo_url: string;
-    stock_text: string[];
+    messages: string[];
   };
   phonepe_screen: {
     caption: string;
