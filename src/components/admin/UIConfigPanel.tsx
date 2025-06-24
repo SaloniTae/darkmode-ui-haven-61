@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -344,13 +343,13 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                   <div>
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
-                      <div className="relative aspect-square bg-black/20 rounded overflow-hidden">
+                      <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img 
                           src={editedConfig.slot_booking?.photo_url || ""}
                           alt="Select Plan"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://placehold.co/300x300?text=Image+Not+Found';
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Image+Not+Found';
                           }}
                         />
                       </div>
@@ -430,13 +429,13 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                   <div>
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
-                      <div className="relative aspect-square bg-black/20 rounded overflow-hidden">
+                      <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img
                           src={editedConfig.confirmation_flow?.photo_url || ""}
                           alt="Confirmation Photo"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://placehold.co/300x300?text=Image+Not+Found';
+                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Image+Not+Found';
                           }}
                         />
                       </div>
