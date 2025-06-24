@@ -73,6 +73,15 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   
   const { updateData, setData, removeData } = useFirebaseService(service);
 
+  // Get available slots with "all" as default option
+  const getAvailableSlots = () => {
+    const availableSlots = ["all"];
+    if (slots) {
+      availableSlots.push(...Object.keys(slots));
+    }
+    return availableSlots;
+  };
+
   const handleEditCredential = (credKey: string) => {
     setEditingCredential(credKey);
     
@@ -335,7 +344,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                         <SelectValue placeholder="Select slot" />
                       </SelectTrigger>
                       <SelectContent className="bg-background border border-input">
-                        {Object.keys(slots || {}).map((slotKey) => (
+                        {getAvailableSlots().map((slotKey) => (
                           <SelectItem key={slotKey} value={slotKey}>{slotKey}</SelectItem>
                         ))}
                       </SelectContent>
@@ -482,7 +491,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                             <SelectValue placeholder="Select slot" />
                           </SelectTrigger>
                           <SelectContent className="bg-background border border-input">
-                            {Object.keys(slots || {}).map((slotKey) => (
+                            {getAvailableSlots().map((slotKey) => (
                               <SelectItem key={slotKey} value={slotKey}>{slotKey}</SelectItem>
                             ))}
                           </SelectContent>
@@ -725,7 +734,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                       <SelectValue placeholder="Select slot" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border border-input">
-                      {Object.keys(slots || {}).map((slotKey) => (
+                      {getAvailableSlots().map((slotKey) => (
                         <SelectItem key={slotKey} value={slotKey}>{slotKey}</SelectItem>
                       ))}
                     </SelectContent>

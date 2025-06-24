@@ -120,35 +120,6 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     });
   };
 
-  const addMessage = (section: string) => {
-    const sectionData = editedConfig[section as keyof UIConfig] as any;
-    const updatedMessages = [
-      ...(sectionData.messages || []),
-      "New message"
-    ];
-    
-    setEditedConfig({
-      ...editedConfig,
-      [section]: {
-        ...sectionData,
-        messages: updatedMessages
-      }
-    });
-  };
-
-  const removeMessage = (section: string, index: number) => {
-    const sectionData = editedConfig[section as keyof UIConfig] as any;
-    const updatedMessages = (sectionData.messages || []).filter((_: any, i: number) => i !== index);
-    
-    setEditedConfig({
-      ...editedConfig,
-      [section]: {
-        ...sectionData,
-        messages: updatedMessages
-      }
-    });
-  };
-
   // This key helps force re-render of images when URLs change
   const [imageKey, setImageKey] = useState(Date.now());
   
@@ -715,7 +686,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
         
         <TabsContent value="other" className="mt-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <DataCard title="Out of Stock Messages">
+            <DataCard title="Out of Stock">
               <div className="space-y-4">
                 {isEditing ? (
                   <div className="space-y-4">
@@ -729,32 +700,13 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     </div>
                     
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label>Messages</Label>
-                        <Button size="sm" variant="outline" onClick={() => addMessage('out_of_stock')}>
-                          <Plus className="h-4 w-4 mr-1" /> Add Message
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        {(editedConfig.out_of_stock?.messages || []).map((message, index) => (
-                          <div key={index} className="flex gap-2">
-                            <Textarea
-                              value={message}
-                              onChange={(e) => handleArrayChange('out_of_stock', 'messages', index, e.target.value)}
-                              className="flex-1"
-                            />
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => removeMessage('out_of_stock', index)}
-                              className="h-10"
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
+                      <Label htmlFor="stock-text">Stock Text</Label>
+                      <Textarea
+                        id="stock-text"
+                        value={editedConfig.out_of_stock?.stock_text || ""}
+                        onChange={(e) => handleInputChange('out_of_stock', 'stock_text', e.target.value)}
+                        rows={5}
+                      />
                     </div>
                   </div>
                 ) : (
@@ -775,15 +727,9 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       </div>
                     </div>
                     
-                    <div>
-                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Messages</h3>
-                      <div className="space-y-2">
-                        {(editedConfig.out_of_stock?.messages || []).map((message, index) => (
-                          <div key={index} className="glass-morphism p-3 rounded-md">
-                            <p className="whitespace-pre-line">{message}</p>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="glass-morphism p-4 rounded-md">
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Stock Text</h3>
+                      <p className="whitespace-pre-line">{editedConfig.out_of_stock?.stock_text || ""}</p>
                     </div>
                   </div>
                 )}
