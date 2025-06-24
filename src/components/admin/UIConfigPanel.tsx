@@ -120,10 +120,10 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     });
   };
 
-  const addStockText = (section: string) => {
+  const addMessage = (section: string) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
-    const updatedStockText = [
-      ...(sectionData.stock_text || []),
+    const updatedMessages = [
+      ...(sectionData.messages || []),
       "New message"
     ];
     
@@ -131,20 +131,20 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
       ...editedConfig,
       [section]: {
         ...sectionData,
-        stock_text: updatedStockText
+        messages: updatedMessages
       }
     });
   };
 
-  const removeStockText = (section: string, index: number) => {
+  const removeMessage = (section: string, index: number) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
-    const updatedStockText = (sectionData.stock_text || []).filter((_: any, i: number) => i !== index);
+    const updatedMessages = (sectionData.messages || []).filter((_: any, i: number) => i !== index);
     
     setEditedConfig({
       ...editedConfig,
       [section]: {
         ...sectionData,
-        stock_text: updatedStockText
+        messages: updatedMessages
       }
     });
   };
@@ -729,14 +729,32 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="stock-text">Stock Text</Label>
-                      <Textarea
-                        id="stock-text"
-                        value={editedConfig.out_of_stock?.stock_text || ""}
-                        onChange={(e) => handleInputChange('out_of_stock', 'stock_text', e.target.value)}
-                        rows={5}
-                        placeholder="Enter the out of stock message..."
-                      />
+                      <div className="flex items-center justify-between">
+                        <Label>Messages</Label>
+                        <Button size="sm" variant="outline" onClick={() => addMessage('out_of_stock')}>
+                          <Plus className="h-4 w-4 mr-1" /> Add Message
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {(editedConfig.out_of_stock?.messages || []).map((message, index) => (
+                          <div key={index} className="flex gap-2">
+                            <Textarea
+                              value={message}
+                              onChange={(e) => handleArrayChange('out_of_stock', 'messages', index, e.target.value)}
+                              className="flex-1"
+                            />
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => removeMessage('out_of_stock', index)}
+                              className="h-10"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -758,9 +776,13 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     </div>
                     
                     <div>
-                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Stock Text</h3>
-                      <div className="glass-morphism p-4 rounded-md">
-                        <p className="whitespace-pre-line">{editedConfig.out_of_stock?.stock_text || ""}</p>
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Messages</h3>
+                      <div className="space-y-2">
+                        {(editedConfig.out_of_stock?.messages || []).map((message, index) => (
+                          <div key={index} className="glass-morphism p-3 rounded-md">
+                            <p className="whitespace-pre-line">{message}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>

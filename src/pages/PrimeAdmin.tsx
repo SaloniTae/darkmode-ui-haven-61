@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef, useCallback } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -203,7 +202,7 @@ export default function PrimeAdmin() {
               },
               out_of_stock: {
                 photo_url: "",
-                stock_text: []
+                messages: []
               },
               phonepe_screen: {
                 caption: "",

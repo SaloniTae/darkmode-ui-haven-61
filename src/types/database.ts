@@ -1,4 +1,3 @@
-
 // Admin Config Types
 export interface AdminConfig {
   inferior_admins: string[];
@@ -105,7 +104,7 @@ export interface UIConfig {
   };
   out_of_stock: {
     photo_url: string;
-    stock_text: string; // Changed from string[] to string to match actual database schema
+    messages: string[];
   };
   phonepe_screen: {
     caption: string;
