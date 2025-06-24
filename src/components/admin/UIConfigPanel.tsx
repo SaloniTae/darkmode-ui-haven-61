@@ -1,4 +1,5 @@
 
+
 import { useState } from "react";
 import { UIConfig } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -33,7 +34,8 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
 
   const handleArrayChange = (section: keyof UIConfig, field: string, index: number, value: string) => {
     const sectionData = editedConfig[section] as any;
-    const updatedArray = [...(sectionData[field] || [])];
+    const currentArray = Array.isArray(sectionData[field]) ? sectionData[field] : [];
+    const updatedArray = [...currentArray];
     updatedArray[index] = value;
     
     setEditedConfig({
@@ -47,7 +49,8 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
 
   const handleObjectArrayChange = (section: keyof UIConfig, field: string, index: number, objField: string, value: any) => {
     const sectionData = editedConfig[section] as any;
-    const updatedArray = [...(sectionData[field] || [])];
+    const currentArray = Array.isArray(sectionData[field]) ? sectionData[field] : [];
+    const updatedArray = [...currentArray];
     updatedArray[index] = {
       ...updatedArray[index],
       [objField]: value
@@ -63,8 +66,9 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
   };
 
   const addButton = () => {
+    const currentButtons = Array.isArray(editedConfig.start_command?.buttons) ? editedConfig.start_command.buttons : [];
     const updatedButtons = [
-      ...(editedConfig.start_command?.buttons || []),
+      ...currentButtons,
       { text: "New Button", callback_data: "new_callback" }
     ];
     
@@ -78,7 +82,8 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
   };
 
   const removeButton = (index: number) => {
-    const updatedButtons = (editedConfig.start_command?.buttons || []).filter((_, i) => i !== index);
+    const currentButtons = Array.isArray(editedConfig.start_command?.buttons) ? editedConfig.start_command.buttons : [];
+    const updatedButtons = currentButtons.filter((_, i) => i !== index);
     
     setEditedConfig({
       ...editedConfig,
@@ -91,8 +96,9 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
 
   const addStockText = (section: string) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
+    const currentStockText = Array.isArray(sectionData?.stock_text) ? sectionData.stock_text : [];
     const updatedStockText = [
-      ...(sectionData.stock_text || []),
+      ...currentStockText,
       "New stock text"
     ];
     
@@ -107,7 +113,8 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
 
   const removeStockText = (section: string, index: number) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
-    const updatedStockText = (sectionData.stock_text || []).filter((_: any, i: number) => i !== index);
+    const currentStockText = Array.isArray(sectionData?.stock_text) ? sectionData.stock_text : [];
+    const updatedStockText = currentStockText.filter((_: any, i: number) => i !== index);
     
     setEditedConfig({
       ...editedConfig,
@@ -132,6 +139,11 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
   const handleCancel = () => {
     setEditedConfig(uiConfig);
     setIsEditing(false);
+  };
+
+  // Helper function to safely get array data
+  const getSafeArray = (data: any): any[] => {
+    return Array.isArray(data) ? data : [];
   };
 
   return (
@@ -195,7 +207,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     </div>
                     
                     <div className="space-y-2">
-                      {(editedConfig.start_command?.buttons || []).map((button, index) => (
+                      {getSafeArray(editedConfig.start_command?.buttons).map((button, index) => (
                         <div key={index} className="flex gap-2">
                           <Input
                             value={button.text}
@@ -249,7 +261,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                   <div>
                     <h4 className="text-sm font-medium mb-2 text-muted-foreground">Buttons</h4>
                     <div className="grid gap-2">
-                      {(editedConfig.start_command?.buttons || []).map((button, index) => (
+                      {getSafeArray(editedConfig.start_command?.buttons).map((button, index) => (
                         <div key={index} className="glass-morphism p-3 rounded-md">
                           <div className="flex justify-between items-center">
                             <span className="font-medium">{button.text}</span>
@@ -763,7 +775,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                         </div>
                         
                         <div className="space-y-2">
-                          {(editedConfig.out_of_stock?.stock_text || []).map((text: string, index: number) => (
+                          {getSafeArray(editedConfig.out_of_stock?.stock_text).map((text: string, index: number) => (
                             <div key={index} className="flex gap-2">
                               <Input
                                 value={text}
@@ -804,7 +816,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       <div>
                         <h4 className="text-sm font-medium mb-2 text-muted-foreground">Stock Text</h4>
                         <div className="space-y-2">
-                          {(editedConfig.out_of_stock?.stock_text || []).map((text: string, index: number) => (
+                          {getSafeArray(editedConfig.out_of_stock?.stock_text).map((text: string, index: number) => (
                             <div key={index} className="glass-morphism p-2 rounded-md">
                               <p className="text-sm">{text}</p>
                             </div>
@@ -917,3 +929,4 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     </div>
   );
 }
+
