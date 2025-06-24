@@ -25,19 +25,6 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     setEditedConfig(uiConfig);
   }, [uiConfig]);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      // No need to fetch data, it's passed as a prop
-      toast.success("UI Config loaded successfully");
-    } catch (error) {
-      console.error("Error loading UI Config:", error);
-      toast.error("Failed to load UI Config");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const saveData = async () => {
     setIsLoading(true);
     try {
@@ -58,7 +45,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">UI Configuration</h2>
-        <Button variant="primary" onClick={saveData} disabled={isLoading}>
+        <Button variant="default" onClick={saveData} disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -71,13 +58,12 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
       </div>
 
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 h-auto p-1 glass-morphism">
+        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 h-auto p-1 glass-morphism">
           <TabsTrigger value="start_command">Start</TabsTrigger>
           <TabsTrigger value="slot_booking">Select Plan</TabsTrigger>
           <TabsTrigger value="confirmation_flow">Confirmation</TabsTrigger>
           <TabsTrigger value="approve_flow">Approve</TabsTrigger>
           <TabsTrigger value="reject_flow">Reject</TabsTrigger>
-          <TabsTrigger value="phonepe_screen">PhonePe</TabsTrigger>
           <TabsTrigger value="out_of_stock">Out of Stock</TabsTrigger>
         </TabsList>
 
