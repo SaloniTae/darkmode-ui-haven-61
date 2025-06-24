@@ -120,10 +120,10 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     });
   };
 
-  const addMessage = (section: string) => {
+  const addStockText = (section: string) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
-    const updatedMessages = [
-      ...(sectionData.messages || []),
+    const updatedStockText = [
+      ...(sectionData.stock_text || []),
       "New message"
     ];
     
@@ -131,20 +131,20 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
       ...editedConfig,
       [section]: {
         ...sectionData,
-        messages: updatedMessages
+        stock_text: updatedStockText
       }
     });
   };
 
-  const removeMessage = (section: string, index: number) => {
+  const removeStockText = (section: string, index: number) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
-    const updatedMessages = (sectionData.messages || []).filter((_: any, i: number) => i !== index);
+    const updatedStockText = (sectionData.stock_text || []).filter((_: any, i: number) => i !== index);
     
     setEditedConfig({
       ...editedConfig,
       [section]: {
         ...sectionData,
-        messages: updatedMessages
+        stock_text: updatedStockText
       }
     });
   };
@@ -730,24 +730,24 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label>Messages</Label>
-                        <Button size="sm" variant="outline" onClick={() => addMessage('out_of_stock')}>
-                          <Plus className="h-4 w-4 mr-1" /> Add Message
+                        <Label>Stock Text</Label>
+                        <Button size="sm" variant="outline" onClick={() => addStockText('out_of_stock')}>
+                          <Plus className="h-4 w-4 mr-1" /> Add Text
                         </Button>
                       </div>
                       
                       <div className="space-y-2">
-                        {(editedConfig.out_of_stock?.messages || []).map((message, index) => (
+                        {(editedConfig.out_of_stock?.stock_text || []).map((text, index) => (
                           <div key={index} className="flex gap-2">
                             <Textarea
-                              value={message}
-                              onChange={(e) => handleArrayChange('out_of_stock', 'messages', index, e.target.value)}
+                              value={text}
+                              onChange={(e) => handleArrayChange('out_of_stock', 'stock_text', index, e.target.value)}
                               className="flex-1"
                             />
                             <Button 
                               variant="destructive" 
                               size="sm"
-                              onClick={() => removeMessage('out_of_stock', index)}
+                              onClick={() => removeStockText('out_of_stock', index)}
                               className="h-10"
                             >
                               <Trash className="h-4 w-4" />
@@ -776,11 +776,11 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     </div>
                     
                     <div>
-                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Messages</h3>
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Stock Text</h3>
                       <div className="space-y-2">
-                        {(editedConfig.out_of_stock?.messages || []).map((message, index) => (
+                        {(editedConfig.out_of_stock?.stock_text || []).map((text, index) => (
                           <div key={index} className="glass-morphism p-3 rounded-md">
-                            <p className="whitespace-pre-line">{message}</p>
+                            <p className="whitespace-pre-line">{text}</p>
                           </div>
                         ))}
                       </div>
