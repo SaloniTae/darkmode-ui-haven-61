@@ -211,10 +211,12 @@ export default function CrunchyrollAdmin() {
                 photo_url: "",
                 stock_text: ""
               },
-              phonepe_screen: {
-                caption: "",
-                followup_text: "",
-                photo_url: ""
+              oor_pay_screen: {
+                UPI_ID: "",
+                MERCHANT_NAME: "",
+                MID: "",
+                TEMPLATE_URL: "",
+                LOGO_URL: ""
               },
               referral_info: {
                 photo_url: ""
@@ -243,4 +245,3 @@ export default function CrunchyrollAdmin() {
         </Tabs>
       </div>
     </MainLayout>;
-}

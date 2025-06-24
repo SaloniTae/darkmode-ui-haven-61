@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Edit, Save, Image, Plus, Trash } from "lucide-react";
 import { updateData } from "@/lib/firebaseService";
 import { updatePrimeData } from "@/lib/firebaseService";
@@ -150,7 +151,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
           <TabsTrigger value="start_command">Start</TabsTrigger>
           <TabsTrigger value="slot_booking">Select Plan</TabsTrigger>
           <TabsTrigger value="confirmation_flow">Confirmation</TabsTrigger>
-          <TabsTrigger value="phonepe_screen">PhonePe</TabsTrigger>
+          <TabsTrigger value="oor_pay_screen">OOR Pay</TabsTrigger>
           <TabsTrigger value="approve_flow">Approve</TabsTrigger>
           <TabsTrigger value="reject_flow">Reject</TabsTrigger>
           <TabsTrigger value="posters">Posters</TabsTrigger>
@@ -432,64 +433,114 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
           </DataCard>
         </TabsContent>
 
-        <TabsContent value="phonepe_screen" className="mt-0">
-          <DataCard title="PhonePe Screen Configuration">
+        <TabsContent value="oor_pay_screen" className="mt-0">
+          <DataCard title="OOR Pay Configuration">
             <div className="space-y-6">
               {isEditing ? (
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="phonepe-caption">Caption</Label>
-                    <Textarea
-                      id="phonepe-caption"
-                      value={editedConfig.phonepe_screen?.caption || ""}
-                      onChange={(e) => handleInputChange('phonepe_screen', 'caption', e.target.value)}
-                      rows={3}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="upi-id">UPI ID</Label>
+                      <Input
+                        id="upi-id"
+                        value={editedConfig.oor_pay_screen?.UPI_ID || ""}
+                        onChange={(e) => handleInputChange('oor_pay_screen', 'UPI_ID', e.target.value)}
+                        placeholder="Enter UPI ID"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="merchant-name">Merchant Name</Label>
+                      <Input
+                        id="merchant-name"
+                        value={editedConfig.oor_pay_screen?.MERCHANT_NAME || ""}
+                        onChange={(e) => handleInputChange('oor_pay_screen', 'MERCHANT_NAME', e.target.value)}
+                        placeholder="Enter Merchant Name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="mid">MID</Label>
+                      <Input
+                        id="mid"
+                        value={editedConfig.oor_pay_screen?.MID || ""}
+                        onChange={(e) => handleInputChange('oor_pay_screen', 'MID', e.target.value)}
+                        placeholder="Enter MID"
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phonepe-followup">Follow-up Text</Label>
-                    <Textarea
-                      id="phonepe-followup"
-                      value={editedConfig.phonepe_screen?.followup_text || ""}
-                      onChange={(e) => handleInputChange('phonepe_screen', 'followup_text', e.target.value)}
-                      rows={3}
-                    />
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="template-url">Template URL</Label>
+                      <Input
+                        id="template-url"
+                        value={editedConfig.oor_pay_screen?.TEMPLATE_URL || ""}
+                        onChange={(e) => handleInputChange('oor_pay_screen', 'TEMPLATE_URL', e.target.value)}
+                        placeholder="Enter Template URL"
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phonepe-photo">Photo URL</Label>
-                    <Input
-                      id="phonepe-photo"
-                      value={editedConfig.phonepe_screen?.photo_url || ""}
-                      onChange={(e) => handleInputChange('phonepe_screen', 'photo_url', e.target.value)}
-                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="logo-url">Logo URL</Label>
+                      <Input
+                        id="logo-url"
+                        value={editedConfig.oor_pay_screen?.LOGO_URL || ""}
+                        onChange={(e) => handleInputChange('oor_pay_screen', 'LOGO_URL', e.target.value)}
+                        placeholder="Enter Logo URL"
+                      />
+                    </div>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="glass-morphism p-4 rounded-md">
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Caption</h3>
-                    <p className="whitespace-pre-line">{editedConfig.phonepe_screen?.caption || ""}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="glass-morphism p-4 rounded-md">
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">UPI ID</h3>
+                      <p>{editedConfig.oor_pay_screen?.UPI_ID || "Not configured"}</p>
+                    </div>
+
+                    <div className="glass-morphism p-4 rounded-md">
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Merchant Name</h3>
+                      <p>{editedConfig.oor_pay_screen?.MERCHANT_NAME || "Not configured"}</p>
+                    </div>
+
+                    <div className="glass-morphism p-4 rounded-md">
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">MID</h3>
+                      <p>{editedConfig.oor_pay_screen?.MID || "Not configured"}</p>
+                    </div>
                   </div>
 
-                  <div className="glass-morphism p-4 rounded-md">
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Follow-up Text</h3>
-                    <p className="whitespace-pre-line">{editedConfig.phonepe_screen?.followup_text || ""}</p>
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Template Photo</h3>
+                      <div className="glass-morphism p-2 rounded-md overflow-hidden">
+                        <AspectRatio ratio={16/9}>
+                          <img
+                            src={editedConfig.oor_pay_screen?.TEMPLATE_URL || ""}
+                            alt="Template Photo"
+                            className="w-full h-full object-cover object-center rounded"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Template+Not+Found';
+                            }}
+                          />
+                        </AspectRatio>
+                      </div>
+                    </div>
 
-                  <div>
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
-                    <div className="glass-morphism p-2 rounded-md overflow-hidden">
-                      <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
-                        <img
-                          src={editedConfig.phonepe_screen?.photo_url || ""}
-                          alt="PhonePe Screen"
-                          className="absolute inset-0 w-full h-full object-cover object-center"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Image+Not+Found';
-                          }}
-                        />
+                    <div>
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Logo Photo</h3>
+                      <div className="glass-morphism p-2 rounded-md overflow-hidden">
+                        <AspectRatio ratio={16/9}>
+                          <img
+                            src={editedConfig.oor_pay_screen?.LOGO_URL || ""}
+                            alt="Logo Photo"
+                            className="w-full h-full object-cover object-center rounded"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Logo+Not+Found';
+                            }}
+                          />
+                        </AspectRatio>
                       </div>
                     </div>
                   </div>

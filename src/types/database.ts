@@ -84,6 +84,14 @@ export interface NetflixPrimeScreen {
   photo_url: string;
 }
 
+export interface OORPayScreen {
+  UPI_ID: string;
+  MERCHANT_NAME: string;
+  MID: string;
+  TEMPLATE_URL: string;
+  LOGO_URL: string;
+}
+
 export interface UIConfig {
   approve_flow: {
     account_format: string;
@@ -107,11 +115,7 @@ export interface UIConfig {
     photo_url: string;
     stock_text: string;
   };
-  phonepe_screen: {
-    caption: string;
-    followup_text: string;
-    photo_url: string;
-  };
+  oor_pay_screen: OORPayScreen;
   referral_info: {
     photo_url: string;
   };
