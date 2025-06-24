@@ -208,7 +208,7 @@ export default function CrunchyrollAdmin() {
               },
               out_of_stock: {
                 photo_url: "",
-                messages: []
+                stock_text: []
               },
               phonepe_screen: {
                 caption: "",

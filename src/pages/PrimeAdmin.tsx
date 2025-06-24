@@ -202,7 +202,7 @@ export default function PrimeAdmin() {
               },
               out_of_stock: {
                 photo_url: "",
-                messages: []
+                stock_text: []
               },
               phonepe_screen: {
                 caption: "",

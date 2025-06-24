@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { UIConfig } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -34,6 +35,23 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     const sectionData = editedConfig[section] as any;
     const updatedArray = [...(sectionData[field] || [])];
     updatedArray[index] = value;
+    
+    setEditedConfig({
+      ...editedConfig,
+      [section]: {
+        ...sectionData,
+        [field]: updatedArray
+      }
+    });
+  };
+
+  const handleObjectArrayChange = (section: keyof UIConfig, field: string, index: number, objField: string, value: any) => {
+    const sectionData = editedConfig[section] as any;
+    const updatedArray = [...(sectionData[field] || [])];
+    updatedArray[index] = {
+      ...updatedArray[index],
+      [objField]: value
+    };
     
     setEditedConfig({
       ...editedConfig,
@@ -181,13 +199,13 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                         <div key={index} className="flex gap-2">
                           <Input
                             value={button.text}
-                            onChange={(e) => handleArrayChange('start_command', 'buttons', index, { ...button, text: e.target.value })}
+                            onChange={(e) => handleObjectArrayChange('start_command', 'buttons', index, 'text', e.target.value)}
                             placeholder="Button text"
                             className="flex-1"
                           />
                           <Input
                             value={button.callback_data}
-                            onChange={(e) => handleArrayChange('start_command', 'buttons', index, { ...button, callback_data: e.target.value })}
+                            onChange={(e) => handleObjectArrayChange('start_command', 'buttons', index, 'callback_data', e.target.value)}
                             placeholder="Callback data"
                             className="flex-1"
                           />
