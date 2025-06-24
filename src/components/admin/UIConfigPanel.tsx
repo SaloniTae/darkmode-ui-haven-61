@@ -729,32 +729,14 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     </div>
                     
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label>Stock Text</Label>
-                        <Button size="sm" variant="outline" onClick={() => addStockText('out_of_stock')}>
-                          <Plus className="h-4 w-4 mr-1" /> Add Text
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        {(editedConfig.out_of_stock?.stock_text || []).map((text, index) => (
-                          <div key={index} className="flex gap-2">
-                            <Textarea
-                              value={text}
-                              onChange={(e) => handleArrayChange('out_of_stock', 'stock_text', index, e.target.value)}
-                              className="flex-1"
-                            />
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => removeStockText('out_of_stock', index)}
-                              className="h-10"
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
+                      <Label htmlFor="stock-text">Stock Text</Label>
+                      <Textarea
+                        id="stock-text"
+                        value={editedConfig.out_of_stock?.stock_text || ""}
+                        onChange={(e) => handleInputChange('out_of_stock', 'stock_text', e.target.value)}
+                        rows={5}
+                        placeholder="Enter the out of stock message..."
+                      />
                     </div>
                   </div>
                 ) : (
@@ -777,12 +759,8 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     
                     <div>
                       <h3 className="text-sm font-medium mb-2 text-muted-foreground">Stock Text</h3>
-                      <div className="space-y-2">
-                        {(editedConfig.out_of_stock?.stock_text || []).map((text, index) => (
-                          <div key={index} className="glass-morphism p-3 rounded-md">
-                            <p className="whitespace-pre-line">{text}</p>
-                          </div>
-                        ))}
+                      <div className="glass-morphism p-4 rounded-md">
+                        <p className="whitespace-pre-line">{editedConfig.out_of_stock?.stock_text || ""}</p>
                       </div>
                     </div>
                   </div>

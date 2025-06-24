@@ -105,7 +105,7 @@ export interface UIConfig {
   };
   out_of_stock: {
     photo_url: string;
-    stock_text: string[];
+    stock_text: string; // Changed from string[] to string to match actual database schema
   };
   phonepe_screen: {
     caption: string;
