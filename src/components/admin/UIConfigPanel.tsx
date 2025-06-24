@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -62,7 +63,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
 
   const handleArrayChange = (section: string, field: string, index: number, value: any) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
-    const updatedArray = [...sectionData[field]];
+    const updatedArray = [...(sectionData[field] || [])];
     updatedArray[index] = value;
     
     setEditedConfig({
@@ -76,7 +77,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
 
   const handleObjectArrayChange = (section: string, field: string, index: number, objField: string, value: any) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
-    const updatedArray = [...sectionData[field]];
+    const updatedArray = [...(sectionData[field] || [])];
     updatedArray[index] = {
       ...updatedArray[index],
       [objField]: value
@@ -94,7 +95,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
   const addButton = (section: string) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
     const updatedButtons = [
-      ...sectionData.buttons,
+      ...(sectionData.buttons || []),
       { text: "New Button", callback_data: "new_button" }
     ];
     
@@ -109,7 +110,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
 
   const removeButton = (section: string, index: number) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
-    const updatedButtons = sectionData.buttons.filter((_: any, i: number) => i !== index);
+    const updatedButtons = (sectionData.buttons || []).filter((_: any, i: number) => i !== index);
     
     setEditedConfig({
       ...editedConfig,
@@ -123,7 +124,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
   const addMessage = (section: string) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
     const updatedMessages = [
-      ...sectionData.messages,
+      ...(sectionData.messages || []),
       "New message"
     ];
     
@@ -138,7 +139,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
 
   const removeMessage = (section: string, index: number) => {
     const sectionData = editedConfig[section as keyof UIConfig] as any;
-    const updatedMessages = sectionData.messages.filter((_: any, i: number) => i !== index);
+    const updatedMessages = (sectionData.messages || []).filter((_: any, i: number) => i !== index);
     
     setEditedConfig({
       ...editedConfig,
@@ -175,10 +176,9 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
       </div>
 
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 h-auto p-1 glass-morphism">
+        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto p-1 glass-morphism">
           <TabsTrigger value="start_command">Start</TabsTrigger>
-          <TabsTrigger value="crunchyroll_screen">Screen</TabsTrigger>
-          <TabsTrigger value="slot_booking">Slot Booking</TabsTrigger>
+          <TabsTrigger value="slot_booking">Select Plan</TabsTrigger>
           <TabsTrigger value="confirmation_flow">Confirmation</TabsTrigger>
           <TabsTrigger value="phonepe_screen">PhonePe</TabsTrigger>
           <TabsTrigger value="approve_flow">Approve</TabsTrigger>
@@ -196,7 +196,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="welcome-text">Welcome Text</Label>
                     <Textarea
                       id="welcome-text"
-                      value={editedConfig.start_command.welcome_text}
+                      value={editedConfig.start_command?.welcome_text || ""}
                       onChange={(e) => handleInputChange('start_command', 'welcome_text', e.target.value)}
                       rows={3}
                     />
@@ -206,7 +206,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="welcome-photo">Welcome Photo URL</Label>
                     <Input
                       id="welcome-photo"
-                      value={editedConfig.start_command.welcome_photo}
+                      value={editedConfig.start_command?.welcome_photo || ""}
                       onChange={(e) => handleInputChange('start_command', 'welcome_photo', e.target.value)}
                     />
                   </div>
@@ -220,7 +220,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     </div>
                     
                     <div className="space-y-3">
-                      {editedConfig.start_command.buttons.map((button, index) => (
+                      {(editedConfig.start_command?.buttons || []).map((button, index) => (
                         <div key={index} className="grid grid-cols-3 gap-2 items-start">
                           <div className="col-span-1">
                             <Input
@@ -253,7 +253,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                 <div className="space-y-4">
                   <div className="glass-morphism p-4 rounded-md">
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Welcome Text</h3>
-                    <p className="whitespace-pre-line">{editedConfig.start_command.welcome_text}</p>
+                    <p className="whitespace-pre-line">{editedConfig.start_command?.welcome_text || ""}</p>
                   </div>
                   
                   <div>
@@ -262,7 +262,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img 
                           key={`welcome-photo-${imageKey}`}
-                          src={editedConfig.start_command.welcome_photo}
+                          src={editedConfig.start_command?.welcome_photo || ""}
                           alt="Welcome"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
@@ -276,7 +276,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                   <div>
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Buttons</h3>
                     <div className="flex flex-wrap gap-2">
-                      {editedConfig.start_command.buttons.map((button, index) => (
+                      {(editedConfig.start_command?.buttons || []).map((button, index) => (
                         <div key={index} className="glass-morphism p-2 rounded-md">
                           <div className="font-medium">{button.text}</div>
                           <div className="text-xs text-muted-foreground">{button.callback_data}</div>
@@ -290,89 +290,8 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
           </DataCard>
         </TabsContent>
         
-        <TabsContent value="crunchyroll_screen" className="mt-0">
-          <DataCard title="Service Screen Configuration">
-            <div className="space-y-6">
-              {isEditing ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="cr-caption">Caption</Label>
-                    <Textarea
-                      id="cr-caption"
-                      value={editedConfig.crunchyroll_screen.caption}
-                      onChange={(e) => handleInputChange('crunchyroll_screen', 'caption', e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="cr-photo">Photo URL</Label>
-                    <Input
-                      id="cr-photo"
-                      value={editedConfig.crunchyroll_screen.photo_url}
-                      onChange={(e) => handleInputChange('crunchyroll_screen', 'photo_url', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="cr-button-text">Button Text</Label>
-                      <Input
-                        id="cr-button-text"
-                        value={editedConfig.crunchyroll_screen.button_text}
-                        onChange={(e) => handleInputChange('crunchyroll_screen', 'button_text', e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="cr-callback">Callback Data</Label>
-                      <Input
-                        id="cr-callback"
-                        value={editedConfig.crunchyroll_screen.callback_data}
-                        onChange={(e) => handleInputChange('crunchyroll_screen', 'callback_data', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="glass-morphism p-4 rounded-md">
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Caption</h3>
-                    <p className="whitespace-pre-line">{editedConfig.crunchyroll_screen.caption}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
-                    <div className="glass-morphism p-2 rounded-md overflow-hidden">
-                      <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
-                        <img 
-                          key={`crunchyroll-photo-${imageKey}`}
-                          src={editedConfig.crunchyroll_screen.photo_url}
-                          alt="Service Screen"
-                          className="absolute inset-0 w-full h-full object-cover object-center"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Image+Not+Found';
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="glass-morphism p-4 rounded-md">
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Button</h3>
-                    <div className="flex justify-between">
-                      <div>{editedConfig.crunchyroll_screen.button_text}</div>
-                      <div className="text-sm text-muted-foreground">{editedConfig.crunchyroll_screen.callback_data}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </DataCard>
-        </TabsContent>
-        
         <TabsContent value="slot_booking" className="mt-0">
-          <DataCard title="Slot Booking Configuration">
+          <DataCard title="Select Plan Configuration">
             <div className="space-y-6">
               {isEditing ? (
                 <div className="space-y-4">
@@ -380,7 +299,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="slot-caption">Caption</Label>
                     <Textarea
                       id="slot-caption"
-                      value={editedConfig.slot_booking.caption}
+                      value={editedConfig.slot_booking?.caption || ""}
                       onChange={(e) => handleInputChange('slot_booking', 'caption', e.target.value)}
                       rows={3}
                     />
@@ -390,7 +309,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="slot-photo">Photo URL</Label>
                     <Input
                       id="slot-photo"
-                      value={editedConfig.slot_booking.photo_url}
+                      value={editedConfig.slot_booking?.photo_url || ""}
                       onChange={(e) => handleInputChange('slot_booking', 'photo_url', e.target.value)}
                     />
                   </div>
@@ -400,7 +319,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       <Label htmlFor="slot-format">Button Format</Label>
                       <Input
                         id="slot-format"
-                        value={editedConfig.slot_booking.button_format}
+                        value={editedConfig.slot_booking?.button_format || ""}
                         onChange={(e) => handleInputChange('slot_booking', 'button_format', e.target.value)}
                       />
                     </div>
@@ -409,7 +328,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       <Label htmlFor="slot-callback">Callback Data</Label>
                       <Input
                         id="slot-callback"
-                        value={editedConfig.slot_booking.callback_data}
+                        value={editedConfig.slot_booking?.callback_data || ""}
                         onChange={(e) => handleInputChange('slot_booking', 'callback_data', e.target.value)}
                       />
                     </div>
@@ -419,7 +338,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                 <div className="space-y-4">
                   <div className="glass-morphism p-4 rounded-md">
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Caption</h3>
-                    <p className="whitespace-pre-line">{editedConfig.slot_booking.caption}</p>
+                    <p className="whitespace-pre-line">{editedConfig.slot_booking?.caption || ""}</p>
                   </div>
                   
                   <div>
@@ -427,8 +346,8 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-square bg-black/20 rounded overflow-hidden">
                         <img 
-                          src={editedConfig.slot_booking.photo_url}
-                          alt="Slot Booking"
+                          src={editedConfig.slot_booking?.photo_url || ""}
+                          alt="Select Plan"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = 'https://placehold.co/300x300?text=Image+Not+Found';
@@ -443,11 +362,11 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <span className="text-sm text-muted-foreground">Format:</span>
-                        <p>{editedConfig.slot_booking.button_format}</p>
+                        <p>{editedConfig.slot_booking?.button_format || ""}</p>
                       </div>
                       <div>
                         <span className="text-sm text-muted-foreground">Callback:</span>
-                        <p>{editedConfig.slot_booking.callback_data}</p>
+                        <p>{editedConfig.slot_booking?.callback_data || ""}</p>
                       </div>
                     </div>
                   </div>
@@ -466,7 +385,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="confirmation-caption">Caption</Label>
                     <Textarea
                       id="confirmation-caption"
-                      value={editedConfig.confirmation_flow.caption}
+                      value={editedConfig.confirmation_flow?.caption || ""}
                       onChange={(e) => handleInputChange('confirmation_flow', 'caption', e.target.value)}
                       rows={3}
                     />
@@ -476,7 +395,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="confirmation-photo">Photo URL</Label>
                     <Input
                       id="confirmation-photo"
-                      value={editedConfig.confirmation_flow.photo_url}
+                      value={editedConfig.confirmation_flow?.photo_url || ""}
                       onChange={(e) => handleInputChange('confirmation_flow', 'photo_url', e.target.value)}
                     />
                   </div>
@@ -486,7 +405,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       <Label htmlFor="confirmation-button-text">Button Text</Label>
                       <Input
                         id="confirmation-button-text"
-                        value={editedConfig.confirmation_flow.button_text}
+                        value={editedConfig.confirmation_flow?.button_text || ""}
                         onChange={(e) => handleInputChange('confirmation_flow', 'button_text', e.target.value)}
                       />
                     </div>
@@ -495,7 +414,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       <Label htmlFor="confirmation-callback">Callback Data</Label>
                       <Input
                         id="confirmation-callback"
-                        value={editedConfig.confirmation_flow.callback_data}
+                        value={editedConfig.confirmation_flow?.callback_data || ""}
                         onChange={(e) => handleInputChange('confirmation_flow', 'callback_data', e.target.value)}
                       />
                     </div>
@@ -505,7 +424,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                 <div className="space-y-4">
                   <div className="glass-morphism p-4 rounded-md">
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Caption</h3>
-                    <p className="whitespace-pre-line">{editedConfig.confirmation_flow.caption}</p>
+                    <p className="whitespace-pre-line">{editedConfig.confirmation_flow?.caption || ""}</p>
                   </div>
 
                   <div>
@@ -513,7 +432,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-square bg-black/20 rounded overflow-hidden">
                         <img
-                          src={editedConfig.confirmation_flow.photo_url}
+                          src={editedConfig.confirmation_flow?.photo_url || ""}
                           alt="Confirmation Photo"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
@@ -529,11 +448,11 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <span className="text-sm text-muted-foreground">Text:</span>
-                        <p>{editedConfig.confirmation_flow.button_text}</p>
+                        <p>{editedConfig.confirmation_flow?.button_text || ""}</p>
                       </div>
                       <div>
                         <span className="text-sm text-muted-foreground">Callback:</span>
-                        <p>{editedConfig.confirmation_flow.callback_data}</p>
+                        <p>{editedConfig.confirmation_flow?.callback_data || ""}</p>
                       </div>
                     </div>
                   </div>
@@ -552,7 +471,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="phonepe-caption">Caption</Label>
                     <Textarea
                       id="phonepe-caption"
-                      value={editedConfig.phonepe_screen.caption}
+                      value={editedConfig.phonepe_screen?.caption || ""}
                       onChange={(e) => handleInputChange('phonepe_screen', 'caption', e.target.value)}
                       rows={3}
                     />
@@ -562,7 +481,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="phonepe-followup">Follow-up Text</Label>
                     <Textarea
                       id="phonepe-followup"
-                      value={editedConfig.phonepe_screen.followup_text}
+                      value={editedConfig.phonepe_screen?.followup_text || ""}
                       onChange={(e) => handleInputChange('phonepe_screen', 'followup_text', e.target.value)}
                       rows={3}
                     />
@@ -572,7 +491,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="phonepe-photo">Photo URL</Label>
                     <Input
                       id="phonepe-photo"
-                      value={editedConfig.phonepe_screen.photo_url}
+                      value={editedConfig.phonepe_screen?.photo_url || ""}
                       onChange={(e) => handleInputChange('phonepe_screen', 'photo_url', e.target.value)}
                     />
                   </div>
@@ -581,12 +500,12 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                 <div className="space-y-4">
                   <div className="glass-morphism p-4 rounded-md">
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Caption</h3>
-                    <p className="whitespace-pre-line">{editedConfig.phonepe_screen.caption}</p>
+                    <p className="whitespace-pre-line">{editedConfig.phonepe_screen?.caption || ""}</p>
                   </div>
 
                   <div className="glass-morphism p-4 rounded-md">
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Follow-up Text</h3>
-                    <p className="whitespace-pre-line">{editedConfig.phonepe_screen.followup_text}</p>
+                    <p className="whitespace-pre-line">{editedConfig.phonepe_screen?.followup_text || ""}</p>
                   </div>
 
                   <div>
@@ -594,7 +513,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img
-                          src={editedConfig.phonepe_screen.photo_url}
+                          src={editedConfig.phonepe_screen?.photo_url || ""}
                           alt="PhonePe Screen"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
@@ -619,7 +538,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="approve-success-text">Success Text</Label>
                     <Textarea
                       id="approve-success-text"
-                      value={editedConfig.approve_flow.success_text}
+                      value={editedConfig.approve_flow?.success_text || ""}
                       onChange={(e) => handleInputChange('approve_flow', 'success_text', e.target.value)}
                       rows={3}
                     />
@@ -629,7 +548,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="approve-account-format">Account Format</Label>
                     <Textarea
                       id="approve-account-format"
-                      value={editedConfig.approve_flow.account_format}
+                      value={editedConfig.approve_flow?.account_format || ""}
                       onChange={(e) => handleInputChange('approve_flow', 'account_format', e.target.value)}
                       rows={3}
                     />
@@ -639,7 +558,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="approve-photo">Photo URL</Label>
                     <Input
                       id="approve-photo"
-                      value={editedConfig.approve_flow.photo_url}
+                      value={editedConfig.approve_flow?.photo_url || ""}
                       onChange={(e) => handleInputChange('approve_flow', 'photo_url', e.target.value)}
                     />
                   </div>
@@ -648,12 +567,12 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                 <div className="space-y-4">
                   <div className="glass-morphism p-4 rounded-md">
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Success Text</h3>
-                    <p className="whitespace-pre-line">{editedConfig.approve_flow.success_text}</p>
+                    <p className="whitespace-pre-line">{editedConfig.approve_flow?.success_text || ""}</p>
                   </div>
 
                   <div className="glass-morphism p-4 rounded-md">
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Account Format</h3>
-                    <p className="whitespace-pre-line">{editedConfig.approve_flow.account_format}</p>
+                    <p className="whitespace-pre-line">{editedConfig.approve_flow?.account_format || ""}</p>
                   </div>
 
                   <div>
@@ -661,7 +580,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img
-                          src={editedConfig.approve_flow.photo_url}
+                          src={editedConfig.approve_flow?.photo_url || ""}
                           alt="Approve Flow Photo"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
@@ -686,7 +605,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="reject-error-text">Error Text</Label>
                     <Textarea
                       id="reject-error-text"
-                      value={editedConfig.reject_flow.error_text}
+                      value={editedConfig.reject_flow?.error_text || ""}
                       onChange={(e) => handleInputChange('reject_flow', 'error_text', e.target.value)}
                       rows={3}
                     />
@@ -696,7 +615,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="reject-photo">Photo URL</Label>
                     <Input
                       id="reject-photo"
-                      value={editedConfig.reject_flow.photo_url}
+                      value={editedConfig.reject_flow?.photo_url || ""}
                       onChange={(e) => handleInputChange('reject_flow', 'photo_url', e.target.value)}
                     />
                   </div>
@@ -705,7 +624,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                 <div className="space-y-4">
                   <div className="glass-morphism p-4 rounded-md">
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Error Text</h3>
-                    <p className="whitespace-pre-line">{editedConfig.reject_flow.error_text}</p>
+                    <p className="whitespace-pre-line">{editedConfig.reject_flow?.error_text || ""}</p>
                   </div>
 
                   <div>
@@ -713,7 +632,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img
-                          src={editedConfig.reject_flow.photo_url}
+                          src={editedConfig.reject_flow?.photo_url || ""}
                           alt="Reject Flow Photo"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
@@ -738,7 +657,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="referral-photo">Referral Photo URL</Label>
                     <Input
                       id="referral-photo"
-                      value={editedConfig.referral_info.photo_url}
+                      value={editedConfig.referral_info?.photo_url || ""}
                       onChange={(e) => handleInputChange('referral_info', 'photo_url', e.target.value)}
                     />
                   </div>
@@ -748,7 +667,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img 
-                          src={editedConfig.referral_info.photo_url}
+                          src={editedConfig.referral_info?.photo_url || ""}
                           alt="Referral Information"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
@@ -769,7 +688,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="freetrial-photo">Free Trial Photo URL</Label>
                     <Input
                       id="freetrial-photo"
-                      value={editedConfig.freetrial_info.photo_url}
+                      value={editedConfig.freetrial_info?.photo_url || ""}
                       onChange={(e) => handleInputChange('freetrial_info', 'photo_url', e.target.value)}
                     />
                   </div>
@@ -779,7 +698,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div className="glass-morphism p-2 rounded-md overflow-hidden">
                       <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                         <img 
-                          src={editedConfig.freetrial_info.photo_url}
+                          src={editedConfig.freetrial_info?.photo_url || ""}
                           alt="Free Trial Information"
                           className="absolute inset-0 w-full h-full object-cover object-center"
                           onError={(e) => {
@@ -805,7 +724,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       <Label htmlFor="stock-photo">Photo URL</Label>
                       <Input
                         id="stock-photo"
-                        value={editedConfig.out_of_stock.photo_url}
+                        value={editedConfig.out_of_stock?.photo_url || ""}
                         onChange={(e) => handleInputChange('out_of_stock', 'photo_url', e.target.value)}
                       />
                     </div>
@@ -819,7 +738,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       </div>
                       
                       <div className="space-y-2">
-                        {editedConfig.out_of_stock.messages.map((message, index) => (
+                        {(editedConfig.out_of_stock?.messages || []).map((message, index) => (
                           <div key={index} className="flex gap-2">
                             <Textarea
                               value={message}
@@ -846,7 +765,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                       <div className="glass-morphism p-2 rounded-md overflow-hidden">
                         <div className="relative aspect-video bg-black/20 rounded overflow-hidden">
                           <img 
-                            src={editedConfig.out_of_stock.photo_url}
+                            src={editedConfig.out_of_stock?.photo_url || ""}
                             alt="Out of Stock Photo"
                             className="absolute inset-0 w-full h-full object-cover object-center"
                             onError={(e) => {
@@ -860,7 +779,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <div>
                       <h3 className="text-sm font-medium mb-2 text-muted-foreground">Messages</h3>
                       <div className="space-y-2">
-                        {editedConfig.out_of_stock.messages.map((message, index) => (
+                        {(editedConfig.out_of_stock?.messages || []).map((message, index) => (
                           <div key={index} className="glass-morphism p-3 rounded-md">
                             <p className="whitespace-pre-line">{message}</p>
                           </div>
@@ -879,7 +798,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                     <Label htmlFor="locked-text">Locked Text</Label>
                     <Textarea
                       id="locked-text"
-                      value={editedConfig.locked_flow.locked_text}
+                      value={editedConfig.locked_flow?.locked_text || ""}
                       onChange={(e) => handleInputChange('locked_flow', 'locked_text', e.target.value)}
                       rows={5}
                     />
@@ -887,7 +806,7 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                 ) : (
                   <div className="glass-morphism p-4 rounded-md">
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Locked Text</h3>
-                    <p className="whitespace-pre-line">{editedConfig.locked_flow.locked_text}</p>
+                    <p className="whitespace-pre-line">{editedConfig.locked_flow?.locked_text || ""}</p>
                   </div>
                 )}
               </div>
