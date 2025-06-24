@@ -1,3 +1,4 @@
+
 // Admin Config Types
 export interface AdminConfig {
   inferior_admins: string[];
@@ -104,7 +105,7 @@ export interface UIConfig {
   };
   out_of_stock: {
     photo_url: string;
-    messages: string[];
+    stock_text: string[];
   };
   phonepe_screen: {
     caption: string;
