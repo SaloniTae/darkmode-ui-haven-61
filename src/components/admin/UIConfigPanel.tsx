@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen } from "@/types/database";
+import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen, MaintenanceStatus } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Edit, Save, Image, Plus, Trash } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Edit, Save, Image, Plus, Trash, Settings } from "lucide-react";
 import { updateData } from "@/lib/firebaseService";
 import { updatePrimeData } from "@/lib/firebaseService";
 import { updateNetflixData } from "@/lib/firebaseService";
@@ -18,9 +18,10 @@ import { useLocation } from "react-router-dom";
 interface UIConfigPanelProps {
   uiConfig: UIConfig;
   service: string;
+  maintenance?: MaintenanceStatus;
 }
 
-export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
+export function UIConfigPanel({ uiConfig, service, maintenance }: UIConfigPanelProps) {
   const [activeSection, setActiveSection] = useState("start_command");
   const [editedConfig, setEditedConfig] = useState<UIConfig>({ ...uiConfig });
   const [isEditing, setIsEditing] = useState(false);
@@ -49,6 +50,17 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     } catch (error) {
       console.error("Error updating UI config:", error);
       toast.error("Failed to update UI configuration");
+    }
+  };
+
+  const handleMaintenanceToggle = async (enabled: boolean) => {
+    try {
+      const updateFn = getUpdateFunction();
+      await updateFn("/maintenance", { enabled });
+      toast.success(`Bot ${enabled ? 'maintenance mode enabled' : 'activated'}`);
+    } catch (error) {
+      console.error("Error updating maintenance status:", error);
+      toast.error("Failed to update maintenance status");
     }
   };
 
@@ -695,163 +707,141 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
         </TabsContent>
         
         <TabsContent value="maintenance" className="mt-0">
-          <DataCard title="Maintenance Configuration">
-            <div className="space-y-6">
-              {/* Mode Toggle - Always visible and functional */}
-              <div className="space-y-3">
-                <Label className="text-base font-medium">Display Mode</Label>
-                <div className="flex items-center bg-muted/50 p-1 rounded-lg w-fit">
-                  <button
-                    onClick={() => handleMaintenanceModeToggle("photo")}
-                    className={`px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
-                      editedConfig.maintenance?.mode === "photo"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Photo + Caption
-                  </button>
-                  <button
-                    onClick={() => handleMaintenanceModeToggle("text")}
-                    className={`px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
-                      editedConfig.maintenance?.mode === "text"
-                        ? "bg-background text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Text
-                  </button>
-                </div>
-              </div>
-
-              {isEditing ? (
-                <div className="space-y-6">
-                  {/* Photo + Caption Mode Fields */}
-                  {editedConfig.maintenance?.mode === "photo" && (
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="maintenance-photo">Photo URL</Label>
-                        <Input
-                          id="maintenance-photo"
-                          value={editedConfig.maintenance?.photo_url || ""}
-                          onChange={(e) => handleInputChange('maintenance', 'photo_url', e.target.value)}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="maintenance-caption">Caption</Label>
-                        <Textarea
-                          id="maintenance-caption"
-                          value={editedConfig.maintenance?.caption || ""}
-                          onChange={(e) => handleInputChange('maintenance', 'caption', e.target.value)}
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Text Mode Fields */}
-                  {editedConfig.maintenance?.mode === "text" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="maintenance-message">Message</Label>
-                      <Textarea
-                        id="maintenance-message"
-                        value={editedConfig.maintenance?.message || ""}
-                        onChange={(e) => handleInputChange('maintenance', 'message', e.target.value)}
-                        rows={4}
-                      />
-                    </div>
-                  )}
-
-                  {/* Alert Fields */}
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="maintenance-alert">Callback Alert</Label>
-                      <Textarea
-                        id="maintenance-alert"
-                        value={editedConfig.maintenance?.alert || ""}
-                        onChange={(e) => handleInputChange('maintenance', 'alert', e.target.value)}
-                        rows={2}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="maintenance-alert-notify">Notification Alert</Label>
-                      <Textarea
-                        id="maintenance-alert-notify"
-                        value={editedConfig.maintenance?.alert_notify || ""}
-                        onChange={(e) => handleInputChange('maintenance', 'alert_notify', e.target.value)}
-                        rows={2}
-                      />
+          <div className="space-y-6">
+            {/* Bot Status Section */}
+            <DataCard title="Bot Status">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 glass-morphism rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Settings className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <h3 className="font-medium">Maintenance Mode</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {maintenance?.enabled 
+                          ? "Bot is under maintenance - users will see maintenance message" 
+                          : "Bot is active and operational - users can access all features"
+                        }
+                      </p>
                     </div>
                   </div>
-
-                  {/* Back Message - Fixed at bottom */}
-                  <div className="space-y-2 border-t pt-4">
-                    <Label htmlFor="maintenance-back-message">Back Message</Label>
-                    <Textarea
-                      id="maintenance-back-message"
-                      value={editedConfig.maintenance?.back_message || ""}
-                      onChange={(e) => handleInputChange('maintenance', 'back_message', e.target.value)}
-                      rows={3}
+                  <div className="flex items-center space-x-3">
+                    <span className={`text-sm font-medium ${
+                      maintenance?.enabled ? 'text-orange-500' : 'text-green-500'
+                    }`}>
+                      {maintenance?.enabled ? 'Under Maintenance' : 'Active'}
+                    </span>
+                    <Switch
+                      checked={maintenance?.enabled || false}
+                      onCheckedChange={handleMaintenanceToggle}
                     />
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Content Preview */}
-                  {editedConfig.maintenance?.mode === "photo" ? (
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
-                        <div className="glass-morphism p-2 rounded-md overflow-hidden">
-                          <AspectRatio ratio={16/9}>
-                            <img
-                              src={editedConfig.maintenance?.photo_url || ""}
-                              alt="Maintenance Photo"
-                              className="w-full h-full object-cover object-center rounded"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Image+Not+Found';
-                              }}
-                            />
-                          </AspectRatio>
-                        </div>
-                      </div>
-                      
-                      <div className="glass-morphism p-4 rounded-md">
-                        <h3 className="text-sm font-medium mb-2 text-muted-foreground">Caption</h3>
-                        <p className="whitespace-pre-line">{editedConfig.maintenance?.caption || ""}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="glass-morphism p-4 rounded-md">
-                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Message</h3>
-                      <p className="whitespace-pre-line">{editedConfig.maintenance?.message || ""}</p>
-                    </div>
-                  )}
+              </div>
+            </DataCard>
 
-                  {/* Alert Messages */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="glass-morphism p-4 rounded-md">
-                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Callback Alert</h3>
-                      <p className="whitespace-pre-line">{editedConfig.maintenance?.alert || ""}</p>
-                    </div>
-                    
-                    <div className="glass-morphism p-4 rounded-md">
-                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Notification Alert</h3>
-                      <p className="whitespace-pre-line">{editedConfig.maintenance?.alert_notify || ""}</p>
-                    </div>
-                  </div>
-
-                  {/* Back Message - Fixed at bottom */}
-                  <div className="glass-morphism p-4 rounded-md border-t bg-muted/20">
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Back Message</h3>
-                    <p className="whitespace-pre-line">{editedConfig.maintenance?.back_message || ""}</p>
+            {/* Maintenance Configuration */}
+            <DataCard title="Maintenance Configuration">
+              <div className="space-y-6">
+                {/* Mode Toggle - Always visible and functional */}
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Display Mode</Label>
+                  <div className="flex items-center bg-muted/50 p-1 rounded-lg w-fit">
+                    <button
+                      onClick={() => handleMaintenanceModeToggle("photo")}
+                      className={`px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
+                        editedConfig.maintenance?.mode === "photo"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Photo + Caption
+                    </button>
+                    <button
+                      onClick={() => handleMaintenanceModeToggle("text")}
+                      className={`px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
+                        editedConfig.maintenance?.mode === "text"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Text
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
-          </DataCard>
+
+                {/* Photo + Caption Mode Fields */}
+                {editedConfig.maintenance?.mode === "photo" && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="maintenance-photo">Photo URL</Label>
+                      <Input
+                        id="maintenance-photo"
+                        value={editedConfig.maintenance?.photo_url || ""}
+                        onChange={(e) => handleInputChange('maintenance', 'photo_url', e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="maintenance-caption">Caption</Label>
+                      <Textarea
+                        id="maintenance-caption"
+                        value={editedConfig.maintenance?.caption || ""}
+                        onChange={(e) => handleInputChange('maintenance', 'caption', e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Text Mode Fields */}
+                {editedConfig.maintenance?.mode === "text" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="maintenance-message">Message</Label>
+                    <Textarea
+                      id="maintenance-message"
+                      value={editedConfig.maintenance?.message || ""}
+                      onChange={(e) => handleInputChange('maintenance', 'message', e.target.value)}
+                      rows={4}
+                    />
+                  </div>
+                )}
+
+                {/* Alert Fields */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="maintenance-alert">Callback Alert</Label>
+                    <Textarea
+                      id="maintenance-alert"
+                      value={editedConfig.maintenance?.alert || ""}
+                      onChange={(e) => handleInputChange('maintenance', 'alert', e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="maintenance-alert-notify">Notification Alert</Label>
+                    <Textarea
+                      id="maintenance-alert-notify"
+                      value={editedConfig.maintenance?.alert_notify || ""}
+                      onChange={(e) => handleInputChange('maintenance', 'alert_notify', e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                </div>
+
+                {/* Back Message - Fixed at bottom */}
+                <div className="space-y-2 border-t pt-4">
+                  <Label htmlFor="maintenance-back-message">Back Message</Label>
+                  <Textarea
+                    id="maintenance-back-message"
+                    value={editedConfig.maintenance?.back_message || ""}
+                    onChange={(e) => handleInputChange('maintenance', 'back_message', e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </DataCard>
+          </div>
         </TabsContent>
         
         <TabsContent value="posters" className="mt-0">
