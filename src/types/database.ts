@@ -1,3 +1,4 @@
+
 // Admin Config Types
 export interface AdminConfig {
   inferior_admins: string[];
@@ -149,11 +150,6 @@ export interface UIConfig {
   };
 }
 
-// Maintenance Types
-export interface MaintenanceStatus {
-  enabled: boolean;
-}
-
 // Database Schema
 export interface DatabaseSchema {
   admin_config: AdminConfig;
@@ -164,7 +160,6 @@ export interface DatabaseSchema {
   free_trial_claims: {
     [key: string]: boolean;
   };
-  maintenance: MaintenanceStatus;
   referral_settings: ReferralSettings;
   referrals: {
     [key: string]: Referral;
