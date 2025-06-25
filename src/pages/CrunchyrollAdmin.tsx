@@ -70,24 +70,29 @@ export default function CrunchyrollAdmin() {
   }
 
   if (loading) {
-    return <MainLayout className="flex items-center justify-center min-h-screen">
+    return (
+      <MainLayout className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
           <h2 className="text-xl font-medium">Loading Crunchyroll database...</h2>
         </div>
-      </MainLayout>;
+      </MainLayout>
+    );
   }
 
   if (!dbData) {
-    return <MainLayout>
+    return (
+      <MainLayout>
         <div className="glass-morphism p-8 text-center">
           <h2 className="text-2xl font-bold mb-4">Database Error</h2>
           <p className="text-red-400">Failed to load Crunchyroll database. Please check your connection and try again.</p>
         </div>
-      </MainLayout>;
+      </MainLayout>
+    );
   }
 
-  return <MainLayout>
+  return (
+    <MainLayout>
       <div className="space-y-8">
         <Tabs defaultValue="tokens" className="w-full">
           <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-9 h-auto p-1 glass-morphism shadow-lg">
@@ -244,4 +249,6 @@ export default function CrunchyrollAdmin() {
           </RestrictedTab>
         </Tabs>
       </div>
-    </MainLayout>;
+    </MainLayout>
+  );
+}
