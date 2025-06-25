@@ -1,9 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -120,6 +120,29 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
         buttons: updatedButtons
       }
     });
+  };
+
+  // Handle maintenance mode toggle
+  const handleMaintenanceModeToggle = async (newMode: "photo" | "text") => {
+    const updatedConfig = {
+      ...editedConfig,
+      maintenance: {
+        ...editedConfig.maintenance,
+        mode: newMode
+      }
+    };
+    
+    setEditedConfig(updatedConfig);
+    
+    // Auto-save the mode change
+    try {
+      const updateFn = getUpdateFunction();
+      await updateFn("/ui_config", updatedConfig);
+      toast.success("Maintenance mode updated successfully");
+    } catch (error) {
+      console.error("Error updating maintenance mode:", error);
+      toast.error("Failed to update maintenance mode");
+    }
   };
 
   // This key helps force re-render of images when URLs change
@@ -674,26 +697,35 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
         <TabsContent value="maintenance" className="mt-0">
           <DataCard title="Maintenance Configuration">
             <div className="space-y-6">
+              {/* Mode Toggle - Always visible and functional */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Display Mode</Label>
+                <div className="flex items-center bg-muted/50 p-1 rounded-lg w-fit">
+                  <button
+                    onClick={() => handleMaintenanceModeToggle("photo")}
+                    className={`px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
+                      editedConfig.maintenance?.mode === "photo"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Photo + Caption
+                  </button>
+                  <button
+                    onClick={() => handleMaintenanceModeToggle("text")}
+                    className={`px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
+                      editedConfig.maintenance?.mode === "text"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Text
+                  </button>
+                </div>
+              </div>
+
               {isEditing ? (
                 <div className="space-y-6">
-                  {/* Mode Toggle */}
-                  <div className="space-y-2">
-                    <Label>Display Mode</Label>
-                    <ToggleGroup
-                      type="single"
-                      value={editedConfig.maintenance?.mode || "photo"}
-                      onValueChange={(value) => value && handleInputChange('maintenance', 'mode', value)}
-                      className="justify-start"
-                    >
-                      <ToggleGroupItem value="photo" aria-label="Photo + Caption Mode">
-                        Photo + Caption
-                      </ToggleGroupItem>
-                      <ToggleGroupItem value="text" aria-label="Text Mode">
-                        Text
-                      </ToggleGroupItem>
-                    </ToggleGroup>
-                  </div>
-
                   {/* Photo + Caption Mode Fields */}
                   {editedConfig.maintenance?.mode === "photo" && (
                     <div className="space-y-4">
@@ -767,14 +799,6 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {/* Mode Display */}
-                  <div className="glass-morphism p-4 rounded-md">
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Current Mode</h3>
-                    <div className="inline-flex items-center px-2 py-1 rounded-md bg-primary/10 text-primary text-sm font-medium">
-                      {editedConfig.maintenance?.mode === "photo" ? "Photo + Caption" : "Text"}
-                    </div>
-                  </div>
-
                   {/* Content Preview */}
                   {editedConfig.maintenance?.mode === "photo" ? (
                     <div className="space-y-4">
