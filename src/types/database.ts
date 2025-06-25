@@ -93,6 +93,7 @@ export interface OORPayScreen {
 }
 
 export interface MaintenanceConfig {
+  enabled: boolean;
   alert: string;
   alert_notify: string;
   back_message: string;

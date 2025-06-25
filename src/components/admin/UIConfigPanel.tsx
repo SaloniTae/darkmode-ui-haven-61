@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -8,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { Switch } from "@/components/ui/switch";
 import { Edit, Save, Image, Plus, Trash } from "lucide-react";
 import { updateData } from "@/lib/firebaseService";
 import { updatePrimeData } from "@/lib/firebaseService";
@@ -142,6 +142,29 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     } catch (error) {
       console.error("Error updating maintenance mode:", error);
       toast.error("Failed to update maintenance mode");
+    }
+  };
+
+  // Handle maintenance enable/disable toggle
+  const handleMaintenanceToggle = async (enabled: boolean) => {
+    const updatedConfig = {
+      ...editedConfig,
+      maintenance: {
+        ...editedConfig.maintenance,
+        enabled: enabled
+      }
+    };
+    
+    setEditedConfig(updatedConfig);
+    
+    // Auto-save the enable/disable change
+    try {
+      const updateFn = getUpdateFunction();
+      await updateFn("/ui_config", updatedConfig);
+      toast.success(`Maintenance ${enabled ? 'enabled' : 'disabled'} successfully`);
+    } catch (error) {
+      console.error("Error updating maintenance status:", error);
+      toast.error("Failed to update maintenance status");
     }
   };
 
@@ -697,6 +720,20 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
         <TabsContent value="maintenance" className="mt-0">
           <DataCard title="Maintenance Configuration">
             <div className="space-y-6">
+              {/* Maintenance Enable/Disable Toggle - Always visible and functional */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                <div className="space-y-1">
+                  <Label className="text-base font-medium">Maintenance Mode</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {editedConfig.maintenance?.enabled ? 'Bot is currently in maintenance mode' : 'Bot is currently active'}
+                  </p>
+                </div>
+                <Switch
+                  checked={editedConfig.maintenance?.enabled || false}
+                  onCheckedChange={handleMaintenanceToggle}
+                />
+              </div>
+
               {/* Mode Toggle - Always visible and functional */}
               <div className="space-y-3">
                 <Label className="text-base font-medium">Display Mode</Label>
