@@ -92,6 +92,16 @@ export interface OORPayScreen {
   LOGO_URL: string;
 }
 
+export interface MaintenanceConfig {
+  alert: string;
+  alert_notify: string;
+  back_message: string;
+  caption: string;
+  message: string;
+  mode: "photo" | "text";
+  photo_url: string;
+}
+
 export interface UIConfig {
   approve_flow: {
     account_format: string;
@@ -111,6 +121,7 @@ export interface UIConfig {
   locked_flow: {
     locked_text: string;
   };
+  maintenance: MaintenanceConfig;
   out_of_stock: {
     photo_url: string;
     stock_text: string;

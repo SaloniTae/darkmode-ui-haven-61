@@ -212,6 +212,15 @@ export default function CrunchyrollAdmin() {
               locked_flow: {
                 locked_text: ""
               },
+              maintenance: {
+                alert: "",
+                alert_notify: "",
+                back_message: "",
+                caption: "",
+                message: "",
+                mode: "photo",
+                photo_url: ""
+              },
               out_of_stock: {
                 photo_url: "",
                 stock_text: ""

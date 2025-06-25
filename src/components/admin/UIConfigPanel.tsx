@@ -3,6 +3,7 @@ import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen } from "@/types/databas
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -147,13 +148,14 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
       </div>
 
       <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto p-1 glass-morphism">
+        <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 h-auto p-1 glass-morphism">
           <TabsTrigger value="start_command">Start</TabsTrigger>
           <TabsTrigger value="slot_booking">Select Plan</TabsTrigger>
           <TabsTrigger value="confirmation_flow">Confirmation</TabsTrigger>
           <TabsTrigger value="oor_pay_screen">OOR Pay</TabsTrigger>
           <TabsTrigger value="approve_flow">Approve</TabsTrigger>
           <TabsTrigger value="reject_flow">Reject</TabsTrigger>
+          <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
           <TabsTrigger value="posters">Posters</TabsTrigger>
           <TabsTrigger value="other">Other</TabsTrigger>
         </TabsList>
@@ -662,6 +664,165 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
                         />
                       </div>
                     </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DataCard>
+        </TabsContent>
+        
+        <TabsContent value="maintenance" className="mt-0">
+          <DataCard title="Maintenance Configuration">
+            <div className="space-y-6">
+              {isEditing ? (
+                <div className="space-y-6">
+                  {/* Mode Toggle */}
+                  <div className="space-y-2">
+                    <Label>Display Mode</Label>
+                    <ToggleGroup
+                      type="single"
+                      value={editedConfig.maintenance?.mode || "photo"}
+                      onValueChange={(value) => value && handleInputChange('maintenance', 'mode', value)}
+                      className="justify-start"
+                    >
+                      <ToggleGroupItem value="photo" aria-label="Photo + Caption Mode">
+                        Photo + Caption
+                      </ToggleGroupItem>
+                      <ToggleGroupItem value="text" aria-label="Text Mode">
+                        Text
+                      </ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+
+                  {/* Photo + Caption Mode Fields */}
+                  {editedConfig.maintenance?.mode === "photo" && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="maintenance-photo">Photo URL</Label>
+                        <Input
+                          id="maintenance-photo"
+                          value={editedConfig.maintenance?.photo_url || ""}
+                          onChange={(e) => handleInputChange('maintenance', 'photo_url', e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="maintenance-caption">Caption</Label>
+                        <Textarea
+                          id="maintenance-caption"
+                          value={editedConfig.maintenance?.caption || ""}
+                          onChange={(e) => handleInputChange('maintenance', 'caption', e.target.value)}
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Text Mode Fields */}
+                  {editedConfig.maintenance?.mode === "text" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="maintenance-message">Message</Label>
+                      <Textarea
+                        id="maintenance-message"
+                        value={editedConfig.maintenance?.message || ""}
+                        onChange={(e) => handleInputChange('maintenance', 'message', e.target.value)}
+                        rows={4}
+                      />
+                    </div>
+                  )}
+
+                  {/* Alert Fields */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="maintenance-alert">Callback Alert</Label>
+                      <Textarea
+                        id="maintenance-alert"
+                        value={editedConfig.maintenance?.alert || ""}
+                        onChange={(e) => handleInputChange('maintenance', 'alert', e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="maintenance-alert-notify">Notification Alert</Label>
+                      <Textarea
+                        id="maintenance-alert-notify"
+                        value={editedConfig.maintenance?.alert_notify || ""}
+                        onChange={(e) => handleInputChange('maintenance', 'alert_notify', e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Back Message - Fixed at bottom */}
+                  <div className="space-y-2 border-t pt-4">
+                    <Label htmlFor="maintenance-back-message">Back Message</Label>
+                    <Textarea
+                      id="maintenance-back-message"
+                      value={editedConfig.maintenance?.back_message || ""}
+                      onChange={(e) => handleInputChange('maintenance', 'back_message', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Mode Display */}
+                  <div className="glass-morphism p-4 rounded-md">
+                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Current Mode</h3>
+                    <div className="inline-flex items-center px-2 py-1 rounded-md bg-primary/10 text-primary text-sm font-medium">
+                      {editedConfig.maintenance?.mode === "photo" ? "Photo + Caption" : "Text"}
+                    </div>
+                  </div>
+
+                  {/* Content Preview */}
+                  {editedConfig.maintenance?.mode === "photo" ? (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-sm font-medium mb-2 text-muted-foreground">Photo</h3>
+                        <div className="glass-morphism p-2 rounded-md overflow-hidden">
+                          <AspectRatio ratio={16/9}>
+                            <img
+                              src={editedConfig.maintenance?.photo_url || ""}
+                              alt="Maintenance Photo"
+                              className="w-full h-full object-cover object-center rounded"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://placehold.co/400x225?text=Image+Not+Found';
+                              }}
+                            />
+                          </AspectRatio>
+                        </div>
+                      </div>
+                      
+                      <div className="glass-morphism p-4 rounded-md">
+                        <h3 className="text-sm font-medium mb-2 text-muted-foreground">Caption</h3>
+                        <p className="whitespace-pre-line">{editedConfig.maintenance?.caption || ""}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="glass-morphism p-4 rounded-md">
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Message</h3>
+                      <p className="whitespace-pre-line">{editedConfig.maintenance?.message || ""}</p>
+                    </div>
+                  )}
+
+                  {/* Alert Messages */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="glass-morphism p-4 rounded-md">
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Callback Alert</h3>
+                      <p className="whitespace-pre-line">{editedConfig.maintenance?.alert || ""}</p>
+                    </div>
+                    
+                    <div className="glass-morphism p-4 rounded-md">
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">Notification Alert</h3>
+                      <p className="whitespace-pre-line">{editedConfig.maintenance?.alert_notify || ""}</p>
+                    </div>
+                  </div>
+
+                  {/* Back Message - Fixed at bottom */}
+                  <div className="glass-morphism p-4 rounded-md border-t bg-muted/20">
+                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Back Message</h3>
+                    <p className="whitespace-pre-line">{editedConfig.maintenance?.back_message || ""}</p>
                   </div>
                 </div>
               )}

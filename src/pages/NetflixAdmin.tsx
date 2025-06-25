@@ -85,7 +85,8 @@ export default function NetflixAdmin() {
       </MainLayout>;
   }
 
-  return <MainLayout>
+  return (
+    <MainLayout>
       <div className="space-y-8">
         <Tabs defaultValue="admin" className="w-full">
           <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-8 h-auto p-1 glass-morphism shadow-lg">
@@ -200,6 +201,15 @@ export default function NetflixAdmin() {
               locked_flow: {
                 locked_text: ""
               },
+              maintenance: {
+                alert: "",
+                alert_notify: "",
+                back_message: "",
+                caption: "",
+                message: "",
+                mode: "photo",
+                photo_url: ""
+              },
               out_of_stock: {
                 photo_url: "",
                 stock_text: ""
@@ -237,5 +247,6 @@ export default function NetflixAdmin() {
           </RestrictedTab>
         </Tabs>
       </div>
-    </MainLayout>;
+    </MainLayout>
+  );
 }
