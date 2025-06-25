@@ -188,73 +188,69 @@ export default function CrunchyrollAdmin() {
           </RestrictedTab>
           
           <RestrictedTab tabName="uiconfig">
-            <UIConfigPanel 
-              uiConfig={dbData?.ui_config || {
-                approve_flow: {
-                  account_format: "",
-                  photo_url: "",
-                  success_text: ""
-                },
-                confirmation_flow: {
-                  button_text: "",
-                  callback_data: "",
-                  caption: "",
-                  photo_url: ""
-                },
-                crunchyroll_screen: {
-                  button_text: "",
-                  callback_data: "",
-                  caption: "",
-                  photo_url: ""
-                },
-                freetrial_info: {
-                  photo_url: ""
-                },
-                locked_flow: {
-                  locked_text: ""
-                },
-                maintenance: {
-                  alert: "",
-                  alert_notify: "",
-                  back_message: "",
-                  caption: "",
-                  message: "",
-                  mode: "photo",
-                  photo_url: ""
-                },
-                out_of_stock: {
-                  photo_url: "",
-                  stock_text: ""
-                },
-                oor_pay_screen: {
-                  UPI_ID: "",
-                  MERCHANT_NAME: "",
-                  MID: "",
-                  TEMPLATE_URL: "",
-                  LOGO_URL: ""
-                },
-                referral_info: {
-                  photo_url: ""
-                },
-                reject_flow: {
-                  error_text: "",
-                  photo_url: ""
-                },
-                slot_booking: {
-                  button_format: "",
-                  callback_data: "",
-                  caption: "",
-                  photo_url: ""
-                },
-                start_command: {
-                  buttons: [],
-                  welcome_photo: "",
-                  welcome_text: ""
-                }
-              }} 
-              service="crunchyroll"
-              maintenanceEnabled={dbData?.maintenance?.enabled || false}
-            />
+            <UIConfigPanel uiConfig={dbData?.ui_config || {
+              approve_flow: {
+                account_format: "",
+                photo_url: "",
+                success_text: ""
+              },
+              confirmation_flow: {
+                button_text: "",
+                callback_data: "",
+                caption: "",
+                photo_url: ""
+              },
+              crunchyroll_screen: {
+                button_text: "",
+                callback_data: "",
+                caption: "",
+                photo_url: ""
+              },
+              freetrial_info: {
+                photo_url: ""
+              },
+              locked_flow: {
+                locked_text: ""
+              },
+              maintenance: {
+                alert: "",
+                alert_notify: "",
+                back_message: "",
+                caption: "",
+                message: "",
+                mode: "photo",
+                photo_url: ""
+              },
+              out_of_stock: {
+                photo_url: "",
+                stock_text: ""
+              },
+              oor_pay_screen: {
+                UPI_ID: "",
+                MERCHANT_NAME: "",
+                MID: "",
+                TEMPLATE_URL: "",
+                LOGO_URL: ""
+              },
+              referral_info: {
+                photo_url: ""
+              },
+              reject_flow: {
+                error_text: "",
+                photo_url: ""
+              },
+              slot_booking: {
+                button_format: "",
+                callback_data: "",
+                caption: "",
+                photo_url: ""
+              },
+              start_command: {
+                buttons: [],
+                welcome_photo: "",
+                welcome_text: ""
+              }
+            }} service="crunchyroll" />
           </RestrictedTab>
           
           <RestrictedTab tabName="users">

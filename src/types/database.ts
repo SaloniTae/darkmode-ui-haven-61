@@ -160,9 +160,6 @@ export interface DatabaseSchema {
   free_trial_claims: {
     [key: string]: boolean;
   };
-  maintenance: {
-    enabled: boolean;
-  };
   referral_settings: ReferralSettings;
   referrals: {
     [key: string]: Referral;
