@@ -250,7 +250,9 @@ export default function CrunchyrollAdmin() {
                 welcome_photo: "",
                 welcome_text: ""
               }
-            }} service="crunchyroll" />
+            }} 
+              service="crunchyroll"
+              maintenanceEnabled={dbData?.maintenance?.enabled || false} />
           </RestrictedTab>
           
           <RestrictedTab tabName="users">
