@@ -330,7 +330,7 @@ export function StatusPanel({
             <h2 className="text-2xl font-bold uppercase text-foreground tracking-wider">EXPIRED</h2>
             
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-3 max-[400px]:gap-2">
-              {expiredTransactions.length > 0 ? expiredTransactions.map(([id, transaction]) => <button key={id} onClick={() => openTransactionDetails([id, transaction])} title={formatDateWithTime(transaction.end_time)} className="time-button expired-time-button max-[400px]:w-full max-[400px]:mx-auto bg-black text-inherit">
+              {expiredTransactions.length > 0 ? expiredTransactions.map(([id, transaction]) => <button key={id} onClick={() => openTransactionDetails([id, transaction])} title={formatDateWithTime(transaction.end_time)} className="time-button expired-time-button max-[400px]:w-full max-[400px]:mx-auto bg-black text-white">
                     <span className="time-text text-red-500 dark:text-red-400">
                       {formatTimeWithCustomFonts(transaction.end_time)}
                     </span>
