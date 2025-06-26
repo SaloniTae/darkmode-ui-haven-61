@@ -334,7 +334,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                 variant="outline" 
                 size="sm"
                 onClick={() => setIsConfirmationOpen(true)}
-                className="text-sm bg-background hover:bg-accent text-foreground border-input"
+                className="text-sm"
               >
                 Clear
               </Button>
@@ -345,7 +345,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         <div className="space-y-10 py-4">
           {/* Active Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold uppercase tracking-wider text-foreground">ACTIVE</h2>
+            <h2 className="text-2xl font-bold uppercase tracking-wider">ACTIVE</h2>
             
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-3 max-[400px]:gap-2">
               {activeTransactions.length > 0 ? (
@@ -353,17 +353,17 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="border border-border bg-card/60 rounded-full px-3 py-1.5 min-w-[110px] h-[38px] flex items-center justify-center max-[400px]:min-w-0 max-[400px]:px-2 max-[400px]:h-[34px] max-[400px]:py-0.5 hover:bg-primary hover:border-primary hover:text-primary-foreground focus:bg-primary focus:border-primary focus:text-primary-foreground transition-colors duration-300 max-[400px]:w-full max-[400px]:mx-auto"
+                    className="time-button active-time-button max-[400px]:w-full max-[400px]:mx-auto"
                     title={formatDateWithTime(transaction.end_time)}
                   >
-                    <span className="text-base tracking-wider max-[400px]:text-sm transition-colors duration-300">
+                    <span className="time-text">
                       {formatTimeWithCustomFonts(transaction.end_time)}
                     </span>
                   </button>
                 ))
               ) : (
                 <div className="text-center col-span-3 max-[400px]:col-span-3 py-6">
-                  <p className="text-muted-foreground">No active accounts</p>
+                  <p className="text-white/60">No active accounts</p>
                 </div>
               )}
             </div>
@@ -371,12 +371,12 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           
           {/* Divider */}
           <div className="flex items-center justify-center py-1">
-            <Minus className="w-full h-0.5 text-border" />
+            <Minus className="w-full h-0.5 text-white/50" />
           </div>
           
           {/* Expired Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold uppercase text-foreground tracking-wider">EXPIRED</h2>
+            <h2 className="text-2xl font-bold uppercase text-white tracking-wider">EXPIRED</h2>
             
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-3 max-[400px]:gap-2">
               {expiredTransactions.length > 0 ? (
@@ -384,17 +384,17 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   <button
                     key={id}
                     onClick={() => openTransactionDetails([id, transaction])}
-                    className="border border-border bg-card/60 rounded-full px-3 py-1.5 min-w-[110px] h-[38px] flex items-center justify-center max-[400px]:min-w-0 max-[400px]:px-2 max-[400px]:h-[34px] max-[400px]:py-0.5 hover:bg-destructive hover:border-destructive hover:text-destructive-foreground focus:bg-destructive focus:border-destructive focus:text-destructive-foreground transition-colors duration-300 max-[400px]:w-full max-[400px]:mx-auto"
+                    className="time-button expired-time-button max-[400px]:w-full max-[400px]:mx-auto"
                     title={formatDateWithTime(transaction.end_time)}
                   >
-                    <span className="text-base tracking-wider max-[400px]:text-sm text-destructive hover:text-destructive-foreground focus:text-destructive-foreground transition-colors duration-300">
+                    <span className="time-text text-red-400">
                       {formatTimeWithCustomFonts(transaction.end_time)}
                     </span>
                   </button>
                 ))
               ) : (
                 <div className="text-center col-span-3 max-[400px]:col-span-3 py-6">
-                  <p className="text-muted-foreground">No expired accounts</p>
+                  <p className="text-white/60">No expired accounts</p>
                 </div>
               )}
             </div>
@@ -404,31 +404,31 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       
       {/* Transaction Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-popover border-border backdrop-blur-xl text-popover-foreground max-w-sm max-[400px]:max-w-[90%] dialog-animation">
+        <DialogContent className="bg-black border-white/10 backdrop-blur-xl text-white max-w-sm max-[400px]:max-w-[90%] dialog-animation">
           {selectedTransaction && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-center text-popover-foreground">Account Details</DialogTitle>
+                <DialogTitle className="text-center">Account Details</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">ID:</span>
-                  <span className="break-all text-popover-foreground">{selectedTransaction[0]}</span>
+                  <span className="text-white/60">ID:</span>
+                  <span className="break-all">{selectedTransaction[0]}</span>
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Slot:</span>
-                  <span className="text-popover-foreground">{selectedTransaction[1].slot_id}</span>
+                  <span className="text-white/60">Slot:</span>
+                  <span>{selectedTransaction[1].slot_id}</span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4 max-[400px]:grid-cols-1 max-[400px]:gap-2">
                   {selectedTransaction[1].start_time && (
                     <div className="text-center">
-                      <div className="text-sm text-muted-foreground mb-1">Start</div>
-                      <div className="px-3 py-2 rounded-full border border-border bg-card/60 flex items-center justify-center font-mono max-[400px]:w-full max-[400px]:px-2 max-[400px]:py-1.5" title={formatDateWithTime(selectedTransaction[1].start_time)}>
-                        <span className="inline-flex items-center justify-center text-foreground">
-                          <span className="font-['NexaLight'] transition-colors duration-300">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[0]}</span>
-                          <span className="font-['NexaExtraBold'] text-sm inline-block ml-0.5 max-[400px]:text-xs transition-colors duration-300">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[1]}</span>
+                      <div className="text-sm text-white/60 mb-1">Start</div>
+                      <div className="dialog-time-button" title={formatDateWithTime(selectedTransaction[1].start_time)}>
+                        <span className="inline-flex items-center justify-center">
+                          <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[0]}</span>
+                          <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[1]}</span>
                         </span>
                       </div>
                     </div>
@@ -436,11 +436,11 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   
                   {selectedTransaction[1].approved_at && (
                     <div className="text-center">
-                      <div className="text-sm text-muted-foreground mb-1">Approved</div>
-                      <div className="px-3 py-2 rounded-full border border-border bg-card/60 flex items-center justify-center font-mono max-[400px]:w-full max-[400px]:px-2 max-[400px]:py-1.5" title={formatDateWithTime(selectedTransaction[1].approved_at)}>
-                        <span className="inline-flex items-center justify-center text-foreground">
-                          <span className="font-['NexaLight'] transition-colors duration-300">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[0]}</span>
-                          <span className="font-['NexaExtraBold'] text-sm inline-block ml-0.5 max-[400px]:text-xs transition-colors duration-300">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[1]}</span>
+                      <div className="text-sm text-white/60 mb-1">Approved</div>
+                      <div className="dialog-time-button" title={formatDateWithTime(selectedTransaction[1].approved_at)}>
+                        <span className="inline-flex items-center justify-center">
+                          <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[0]}</span>
+                          <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[1]}</span>
                         </span>
                       </div>
                     </div>
@@ -448,15 +448,15 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   
                   {selectedTransaction[1].end_time && (
                     <div className="text-center">
-                      <div className="text-sm text-muted-foreground mb-1">End</div>
+                      <div className="text-sm text-white/60 mb-1">End</div>
                       <div className={cn(
-                        "px-3 py-2 rounded-full border border-border bg-card/60 flex items-center justify-center font-mono max-[400px]:w-full max-[400px]:px-2 max-[400px]:py-1.5",
-                        new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-destructive" : "text-foreground"
+                        "dialog-time-button",
+                        new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-red-400" : ""
                       )}
                       title={formatDateWithTime(selectedTransaction[1].end_time)}>
                         <span className="inline-flex items-center justify-center">
-                          <span className="font-['NexaLight'] transition-colors duration-300">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[0]}</span>
-                          <span className="font-['NexaExtraBold'] text-sm inline-block ml-0.5 max-[400px]:text-xs transition-colors duration-300">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[1]}</span>
+                          <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[0]}</span>
+                          <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].end_time).split(' ')[1]}</span>
                         </span>
                       </div>
                     </div>
@@ -465,19 +465,19 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                 
                 {selectedTransaction[1].assign_to && (
                   <div className="text-center mt-4">
-                    <p className="font-semibold max-[400px]:break-all text-foreground">Account: {selectedTransaction[1].assign_to}</p>
+                    <p className="font-semibold max-[400px]:break-all">Account: {selectedTransaction[1].assign_to}</p>
                   </div>
                 )}
                 
                 {selectedTransaction[1].last_email && (
                   <div className="text-center">
-                    <p className="text-sm max-[400px]:break-all text-muted-foreground">Email: {selectedTransaction[1].last_email}</p>
+                    <p className="text-sm max-[400px]:break-all">Email: {selectedTransaction[1].last_email}</p>
                   </div>
                 )}
                 
                 {selectedTransaction[1].user_id && (
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground">User ID: {selectedTransaction[1].user_id}</p>
+                    <p className="text-sm text-white/60">User ID: {selectedTransaction[1].user_id}</p>
                   </div>
                 )}
               </div>
