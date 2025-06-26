@@ -239,7 +239,9 @@ export default function NetflixAdmin() {
                 welcome_photo: "",
                 welcome_text: ""
               }
-            }} service="netflix" />
+            }} 
+              service="netflix" 
+              maintenanceEnabled={dbData?.maintenance?.enabled || false} />
           </RestrictedTab>
           
           <RestrictedTab tabName="users">
