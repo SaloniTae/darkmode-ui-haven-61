@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen, DatabaseSchema } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -722,7 +721,7 @@ export function UIConfigPanel({ uiConfig, service, maintenanceEnabled = false }:
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Settings className="h-5 w-5" />
-                    <h3 className="font-medium">Maintenance Mode</h3>
+                    <h3 className="font-medium">Bot Status</h3>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {maintenanceStatus 
