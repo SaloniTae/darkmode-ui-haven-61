@@ -239,7 +239,9 @@ export default function PrimeAdmin() {
                 welcome_photo: "",
                 welcome_text: ""
               }
-            }} service="prime" />
+            }} 
+              service="prime" 
+              maintenanceEnabled={dbData?.maintenance?.enabled || false} />
           </RestrictedTab>
           
           <RestrictedTab tabName="users">
