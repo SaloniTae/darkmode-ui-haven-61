@@ -345,7 +345,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         <div className="space-y-10 py-4">
           {/* Active Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold uppercase tracking-wider">ACTIVE</h2>
+            <h2 className="text-2xl font-bold uppercase tracking-wider text-foreground">ACTIVE</h2>
             
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-3 max-[400px]:gap-2">
               {activeTransactions.length > 0 ? (
@@ -363,7 +363,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                 ))
               ) : (
                 <div className="text-center col-span-3 max-[400px]:col-span-3 py-6">
-                  <p className="text-white/60">No active accounts</p>
+                  <p className="text-muted-foreground">No active accounts</p>
                 </div>
               )}
             </div>
@@ -371,12 +371,12 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           
           {/* Divider */}
           <div className="flex items-center justify-center py-1">
-            <Minus className="w-full h-0.5 text-white/50" />
+            <Minus className="w-full h-0.5 text-muted-foreground" />
           </div>
           
           {/* Expired Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold uppercase text-white tracking-wider">EXPIRED</h2>
+            <h2 className="text-2xl font-bold uppercase text-foreground tracking-wider">EXPIRED</h2>
             
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-3 max-[400px]:gap-2">
               {expiredTransactions.length > 0 ? (
@@ -387,14 +387,14 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     className="time-button expired-time-button max-[400px]:w-full max-[400px]:mx-auto"
                     title={formatDateWithTime(transaction.end_time)}
                   >
-                    <span className="time-text text-red-400">
+                    <span className="time-text text-red-500 dark:text-red-400">
                       {formatTimeWithCustomFonts(transaction.end_time)}
                     </span>
                   </button>
                 ))
               ) : (
                 <div className="text-center col-span-3 max-[400px]:col-span-3 py-6">
-                  <p className="text-white/60">No expired accounts</p>
+                  <p className="text-muted-foreground">No expired accounts</p>
                 </div>
               )}
             </div>
@@ -404,29 +404,29 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       
       {/* Transaction Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-black border-white/10 backdrop-blur-xl text-white max-w-sm max-[400px]:max-w-[90%] dialog-animation">
+        <DialogContent className="bg-background border-border backdrop-blur-xl text-foreground max-w-sm max-[400px]:max-w-[90%] dialog-animation">
           {selectedTransaction && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-center">Account Details</DialogTitle>
+                <DialogTitle className="text-center text-foreground">Account Details</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div className="flex justify-between">
-                  <span className="text-white/60">ID:</span>
-                  <span className="break-all">{selectedTransaction[0]}</span>
+                  <span className="text-muted-foreground">ID:</span>
+                  <span className="break-all text-foreground">{selectedTransaction[0]}</span>
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-white/60">Slot:</span>
-                  <span>{selectedTransaction[1].slot_id}</span>
+                  <span className="text-muted-foreground">Slot:</span>
+                  <span className="text-foreground">{selectedTransaction[1].slot_id}</span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4 max-[400px]:grid-cols-1 max-[400px]:gap-2">
                   {selectedTransaction[1].start_time && (
                     <div className="text-center">
-                      <div className="text-sm text-white/60 mb-1">Start</div>
+                      <div className="text-sm text-muted-foreground mb-1">Start</div>
                       <div className="dialog-time-button" title={formatDateWithTime(selectedTransaction[1].start_time)}>
-                        <span className="inline-flex items-center justify-center">
+                        <span className="inline-flex items-center justify-center text-foreground">
                           <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[0]}</span>
                           <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[1]}</span>
                         </span>
@@ -436,9 +436,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   
                   {selectedTransaction[1].approved_at && (
                     <div className="text-center">
-                      <div className="text-sm text-white/60 mb-1">Approved</div>
+                      <div className="text-sm text-muted-foreground mb-1">Approved</div>
                       <div className="dialog-time-button" title={formatDateWithTime(selectedTransaction[1].approved_at)}>
-                        <span className="inline-flex items-center justify-center">
+                        <span className="inline-flex items-center justify-center text-foreground">
                           <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[0]}</span>
                           <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[1]}</span>
                         </span>
@@ -448,10 +448,10 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   
                   {selectedTransaction[1].end_time && (
                     <div className="text-center">
-                      <div className="text-sm text-white/60 mb-1">End</div>
+                      <div className="text-sm text-muted-foreground mb-1">End</div>
                       <div className={cn(
                         "dialog-time-button",
-                        new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-red-400" : ""
+                        new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-red-500 dark:text-red-400" : "text-foreground"
                       )}
                       title={formatDateWithTime(selectedTransaction[1].end_time)}>
                         <span className="inline-flex items-center justify-center">
@@ -465,19 +465,19 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                 
                 {selectedTransaction[1].assign_to && (
                   <div className="text-center mt-4">
-                    <p className="font-semibold max-[400px]:break-all">Account: {selectedTransaction[1].assign_to}</p>
+                    <p className="font-semibold max-[400px]:break-all text-foreground">Account: {selectedTransaction[1].assign_to}</p>
                   </div>
                 )}
                 
                 {selectedTransaction[1].last_email && (
                   <div className="text-center">
-                    <p className="text-sm max-[400px]:break-all">Email: {selectedTransaction[1].last_email}</p>
+                    <p className="text-sm max-[400px]:break-all text-foreground">Email: {selectedTransaction[1].last_email}</p>
                   </div>
                 )}
                 
                 {selectedTransaction[1].user_id && (
                   <div className="text-center">
-                    <p className="text-sm text-white/60">User ID: {selectedTransaction[1].user_id}</p>
+                    <p className="text-sm text-muted-foreground">User ID: {selectedTransaction[1].user_id}</p>
                   </div>
                 )}
               </div>
@@ -485,7 +485,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           )}
         </DialogContent>
       </Dialog>
-
+      
       {/* Confirmation Dialog for Clear Expired Orders */}
       <ConfirmationDialog
         open={isConfirmationOpen}
