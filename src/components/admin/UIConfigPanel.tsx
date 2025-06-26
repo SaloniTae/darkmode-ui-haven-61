@@ -726,8 +726,8 @@ export function UIConfigPanel({ uiConfig, service, maintenanceEnabled = false }:
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {maintenanceStatus 
-                      ? "Bot is currently under maintenance - users will see maintenance message" 
-                      : "Bot is active and operational - users can access all features"
+                      ? "Bot is currently under maintenance" 
+                      : "Bot is active and operational"
                     }
                   </p>
                 </div>
@@ -901,6 +901,7 @@ export function UIConfigPanel({ uiConfig, service, maintenanceEnabled = false }:
               )}
             </div>
           </DataCard>
+         </div>  
         </TabsContent>
         
         <TabsContent value="posters" className="mt-0">
