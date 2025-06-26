@@ -718,27 +718,37 @@ export function UIConfigPanel({ uiConfig, service, maintenanceEnabled = false }:
           <div className="space-y-6">
             {/* Maintenance Status Toggle */}
             <DataCard title="Bot Status">
-              <div className="flex items-center justify-between p-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    <h3 className="font-medium">Maintenance Mode</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Settings className="h-5 w-5" />
+                      <h3 className="font-medium">Maintenance Mode</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Toggle bot maintenance mode on or off
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {maintenanceStatus 
-                      ? "Bot is currently under maintenance" 
-                      : "Bot is active and operational"
-                    }
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-sm font-medium ${maintenanceStatus ? 'text-orange-500' : 'text-green-500'}`}>
-                    {maintenanceStatus ? 'Under Maintenance' : 'Active'}
-                  </span>
                   <Switch
                     checked={maintenanceStatus}
                     onCheckedChange={handleMaintenanceToggle}
                   />
+                </div>
+                
+                {/* Status indicator in a separate section */}
+                <div className="pt-3 border-t border-border/50">
+                  <div className="flex items-center justify-center">
+                    <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${
+                      maintenanceStatus 
+                        ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400' 
+                        : 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                    }`}>
+                      <div className={`w-2 h-2 rounded-full mr-2 ${
+                        maintenanceStatus ? 'bg-orange-500' : 'bg-green-500'
+                      }`} />
+                      {maintenanceStatus ? 'Under Maintenance' : 'Active'}
+                    </div>
+                  </div>
                 </div>
               </div>
             </DataCard>
