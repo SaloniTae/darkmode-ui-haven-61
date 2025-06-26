@@ -657,7 +657,7 @@ export function UIConfigPanel({
 
                   {/* Back Message - Fixed at bottom */}
                   <div className="glass-morphism p-4 rounded-md border-t bg-muted/20">
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Back Message</h3>
+                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Maintenance Over Message</h3>
                     <p className="whitespace-pre-line">{editedConfig.maintenance?.back_message || ""}</p>
                   </div>
                 </div>}
