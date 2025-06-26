@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen, DatabaseSchema } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -719,22 +718,22 @@ export function UIConfigPanel({ uiConfig, service, maintenanceEnabled = false }:
             {/* Maintenance Status Toggle */}
             <DataCard title="Bot Status">
               <div className="flex items-center justify-between p-4">
-                <div className="space-y-1">
+                <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
                     <Settings className="h-5 w-5" />
-                    <h3 className="font-medium">Maintenance Mode</h3>
+                    <h3 className="font-medium">Bot Status</h3>
                   </div>
+                  <span className={`text-sm font-medium ${maintenanceStatus ? 'text-orange-500' : 'text-green-500'}`}>
+                    {maintenanceStatus ? 'Under Maintenance' : 'Active'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
                   <p className="text-sm text-muted-foreground">
                     {maintenanceStatus 
                       ? "Bot is currently under maintenance" 
                       : "Bot is active and operational"
                     }
                   </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`text-sm font-medium ${maintenanceStatus ? 'text-orange-500' : 'text-green-500'}`}>
-                    {maintenanceStatus ? 'Under Maintenance' : 'Active'}
-                  </span>
                   <Switch
                     checked={maintenanceStatus}
                     onCheckedChange={handleMaintenanceToggle}
