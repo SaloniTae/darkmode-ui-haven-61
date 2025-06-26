@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen } from "@/types/database";
+import { UIConfig, CrunchyrollScreen, NetflixPrimeScreen, DatabaseSchema } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Edit, Save, Image, Plus, Trash } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Edit, Save, Image, Plus, Trash, Settings } from "lucide-react";
 import { updateData } from "@/lib/firebaseService";
 import { updatePrimeData } from "@/lib/firebaseService";
 import { updateNetflixData } from "@/lib/firebaseService";
@@ -18,18 +19,25 @@ import { useLocation } from "react-router-dom";
 interface UIConfigPanelProps {
   uiConfig: UIConfig;
   service: string;
+  maintenanceEnabled?: boolean;
 }
 
-export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
+export function UIConfigPanel({ uiConfig, service, maintenanceEnabled = false }: UIConfigPanelProps) {
   const [activeSection, setActiveSection] = useState("start_command");
   const [editedConfig, setEditedConfig] = useState<UIConfig>({ ...uiConfig });
   const [isEditing, setIsEditing] = useState(false);
+  const [maintenanceStatus, setMaintenanceStatus] = useState(maintenanceEnabled);
   const location = useLocation();
 
   // Update edited config when uiConfig prop changes
   useEffect(() => {
     setEditedConfig({ ...uiConfig });
   }, [uiConfig]);
+
+    // Update maintenance status when prop changes
+  useEffect(() => {
+    setMaintenanceStatus(maintenanceEnabled);
+  }, [maintenanceEnabled]);
 
   const getUpdateFunction = () => {
     if (location.pathname.includes("netflix")) {
@@ -49,6 +57,18 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
     } catch (error) {
       console.error("Error updating UI config:", error);
       toast.error("Failed to update UI configuration");
+          }
+  };
+
+  const handleMaintenanceToggle = async (enabled: boolean) => {
+    try {
+      const updateFn = getUpdateFunction();
+      await updateFn("/maintenance", { enabled });
+      setMaintenanceStatus(enabled);
+      toast.success(`Bot is now ${enabled ? 'under maintenance' : 'active'}`);
+    } catch (error) {
+      console.error("Error updating maintenance status:", error);
+      toast.error("Failed to update maintenance status");
     }
   };
 
@@ -695,6 +715,35 @@ export function UIConfigPanel({ uiConfig, service }: UIConfigPanelProps) {
         </TabsContent>
         
         <TabsContent value="maintenance" className="mt-0">
+          <div className="space-y-6">
+            {/* Maintenance Status Toggle */}
+            <DataCard title="Bot Status">
+              <div className="flex items-center justify-between p-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    <h3 className="font-medium">Maintenance Mode</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {maintenanceStatus 
+                      ? "Bot is currently under maintenance - users will see maintenance message" 
+                      : "Bot is active and operational - users can access all features"
+                    }
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-medium ${maintenanceStatus ? 'text-orange-500' : 'text-green-500'}`}>
+                    {maintenanceStatus ? 'Under Maintenance' : 'Active'}
+                  </span>
+                  <Switch
+                    checked={maintenanceStatus}
+                    onCheckedChange={handleMaintenanceToggle}
+                  />
+                </div>
+              </div>
+            </DataCard>
+                   
+              
           <DataCard title="Maintenance Configuration">
             <div className="space-y-6">
               {/* Mode Toggle - Always visible and functional */}
