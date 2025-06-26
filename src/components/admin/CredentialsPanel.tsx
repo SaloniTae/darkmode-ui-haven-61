@@ -75,7 +75,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
 
   // Get available slots with "all" as default option
   const getAvailableSlots = () => {
-    const availableSlots = ["all"];
+    const availableSlots = ["all", "none"];
     if (slots) {
       availableSlots.push(...Object.keys(slots));
     }
