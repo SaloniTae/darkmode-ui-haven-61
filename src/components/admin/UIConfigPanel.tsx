@@ -571,7 +571,7 @@ export function UIConfigPanel({
               {/* Mode Toggle - Always visible and functional */}
               <div className="space-y-3">
                 <Label className="text-base font-medium">Display Mode</Label>
-                <div className="flex items-center bg-muted/50 p-1 rounded-lg w-fit">
+                <div className="flex items-center bg-neutral-200 dark:bg-muted/50 p-1 rounded-lg w-fit">
                   <button onClick={() => handleMaintenanceModeToggle("photo")} className={`px-4 py-2 rounded-md transition-all duration-200 text-sm font-medium ${editedConfig.maintenance?.mode === "photo" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
                     Photo + Caption
                   </button>
