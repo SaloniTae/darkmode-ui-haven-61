@@ -747,6 +747,16 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                     onChange={(e) => handleNewCredentialChange('password', e.target.value)}
                   />
                 </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="new-cred-secret">Secret</Label>
+                    <Input
+                      id="new-cred-secret"
+                      placeholder="secret"
+                      value={newCredential.secret || ""}
+                      onChange={(e) => handleNewCredentialChange('secret', e.target.value)}
+                    />
+                  </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="new-cred-slot">Slot</Label>
