@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Slots } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -30,7 +29,6 @@ interface Credential {
   belongs_to_slot: string;
   email: string;
   password: string;
-  secret?: string;
   expiry_date: string;
   locked: number;
   max_usage: number;
@@ -66,7 +64,6 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     belongs_to_slot: "",
     email: "",
     password: "",
-    secret: "",
     expiry_date: format(new Date(), 'yyyy-MM-dd'),
     locked: 0,
     max_usage: 4,
@@ -253,7 +250,6 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
         belongs_to_slot: "",
         email: "",
         password: "",
-        secret: "",
         expiry_date: format(new Date(), 'yyyy-MM-dd'),
         locked: 0,
         max_usage: 4,
@@ -335,16 +331,6 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                       placeholder="password"
                       value={newCredential.password}
                       onChange={(e) => handleNewCredentialChange('password', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="new-cred-secret">Secret</Label>
-                    <Input
-                      id="new-cred-secret"
-                      placeholder="secret"
-                      value={newCredential.secret || ""}
-                      onChange={(e) => handleNewCredentialChange('secret', e.target.value)}
                     />
                   </div>
                   
@@ -492,17 +478,6 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                           type="text"
                           value={currentCred.password}
                           onChange={(e) => handleInputChange(credKey, 'password', e.target.value)}
-                        />
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <Label htmlFor={`${credKey}-secret`}>Secret</Label>
-                        <Input
-                          id={`${credKey}-secret`}
-                          type="text"
-                          value={currentCred.secret || ""}
-                          onChange={(e) => handleInputChange(credKey, 'secret', e.target.value)}
-                          placeholder="Enter secret"
                         />
                       </div>
                       

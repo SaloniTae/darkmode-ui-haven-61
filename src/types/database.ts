@@ -13,7 +13,6 @@ export interface Credential {
   locked: number;
   max_usage: number;
   password: string;
-  secret?: string;
   usage_count: number;
 }
 
