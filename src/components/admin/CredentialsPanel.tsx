@@ -266,13 +266,8 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   };
 
   const validCredentialEntries = Object.entries(editedCredentials).filter(
-  ([key, cred]) =>
-    cred &&
-    typeof cred === "object" &&
-    Object.keys(cred).length > 0 &&
-    cred.email !== undefined &&
-    cred.email !== ""
-);
+    ([_, cred]) => cred !== undefined && cred !== null
+  );
 
   if (validCredentialEntries.length === 0) {
     return (
