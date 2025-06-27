@@ -150,14 +150,30 @@
     @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[110px] h-[38px] flex items-center justify-center max-[400px]:min-w-0 max-[400px]:px-2 max-[400px]:h-[34px] max-[400px]:py-0.5;
   }
   
+  /* Light mode time button styles */
+  :root .time-button {
+    @apply border-black bg-white text-black;
+  }
+  
   /* Active time button hover and active states */
   .active-time-button {
     @apply hover:bg-white hover:border-white hover:text-black focus:bg-white focus:border-white focus:text-black transition-colors duration-300;
   }
   
+  /* Light mode active time button hover and active states */
+  :root .active-time-button {
+    @apply hover:bg-black hover:border-black hover:text-white focus:bg-black focus:border-black focus:text-white;
+  }
+  
   .active-time-button:hover .time-text,
   .active-time-button:focus .time-text {
     @apply text-black;
+  }
+  
+  /* Light mode active time button text on hover/focus */
+  :root .active-time-button:hover .time-text,
+  :root .active-time-button:focus .time-text {
+    @apply text-white;
   }
   
   /* Expired time button hover and active states */
