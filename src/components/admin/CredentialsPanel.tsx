@@ -179,12 +179,20 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
 
   const handleDeleteCredential = async (credKey: string) => {
     try {
+      // Remove from Firebase
       await removeData(`/${credKey}`);
       
+      // Update local state by removing the credential
       const updatedCredentials = { ...editedCredentials };
       delete updatedCredentials[credKey];
-      
       setEditedCredentials(updatedCredentials);
+      
+      // If we're currently editing this credential, stop editing
+      if (editingCredential === credKey) {
+        setEditingCredential(null);
+        setSelectedDate(undefined);
+      }
+      
       toast.success(`${credKey} deleted successfully`);
     } catch (error) {
       console.error(`Error deleting ${credKey}:`, error);
