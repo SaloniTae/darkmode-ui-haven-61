@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Slots } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
@@ -49,10 +50,10 @@ interface CredentialsPanelProps {
 }
 
 export function CredentialsPanel({ credentials, slots, service }: CredentialsPanelProps) {
-  const safeCredentials = credentials || {};
-  
+  // Initialize with incoming credentials and set up real-time sync
+  const [currentCredentials, setCurrentCredentials] = useState(credentials || {});
   const [editingCredential, setEditingCredential] = useState<string | null>(null);
-  const [editedCredentials, setEditedCredentials] = useState({ ...safeCredentials });
+  const [editedCredentials, setEditedCredentials] = useState(credentials || {});
   const [confirmationDialog, setConfirmationDialog] = useState<{open: boolean; action: () => Promise<void>; title: string; description: string}>({
     open: false,
     action: async () => {},
@@ -73,7 +74,43 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   });
   const [newCredentialKey, setNewCredentialKey] = useState("");
   
-  const { updateData, setData, removeData } = useFirebaseService(service);
+  const { updateData, setData, removeData, subscribeToData } = useFirebaseService(service);
+
+  // Sync with incoming credentials prop changes
+  useEffect(() => {
+    console.log("Credentials prop updated:", credentials);
+    setCurrentCredentials(credentials || {});
+    setEditedCredentials(credentials || {});
+  }, [credentials]);
+
+  // Set up real-time listener for credentials
+  useEffect(() => {
+    console.log("Setting up real-time listener for credentials");
+    const unsubscribe = subscribeToData("/", (data) => {
+      if (data) {
+        console.log("Real-time data received:", data);
+        // Extract credentials from the data
+        const credentialKeys = Object.keys(data).filter(key => key.startsWith('cred'));
+        const updatedCredentials: { [key: string]: Credential | undefined } = {};
+        
+        credentialKeys.forEach(key => {
+          if (data[key] && typeof data[key] === 'object') {
+            updatedCredentials[key] = data[key];
+          }
+        });
+        
+        console.log("Updated credentials from real-time:", updatedCredentials);
+        setCurrentCredentials(updatedCredentials);
+        setEditedCredentials(updatedCredentials);
+      }
+    });
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [service, subscribeToData]);
 
   // Get available slots with "all" as default option
   const getAvailableSlots = () => {
@@ -100,7 +137,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   };
 
   const handleCancelEdit = () => {
-    setEditedCredentials({ ...safeCredentials });
+    setEditedCredentials({ ...currentCredentials });
     setEditingCredential(null);
     setSelectedDate(undefined);
   };
@@ -113,6 +150,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
         return;
       }
       
+      console.log(`Saving credential ${credKey}:`, credToSave);
       await updateData(`/${credKey}`, credToSave);
       toast.success(`${credKey} updated successfully`);
       setEditingCredential(null);
@@ -143,16 +181,8 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     const newLockedValue = currentCred.locked === 0 ? 1 : 0;
     
     try {
+      console.log(`Toggling lock for ${credKey} to:`, newLockedValue);
       await updateData(`/${credKey}`, { locked: newLockedValue });
-      
-      setEditedCredentials({
-        ...editedCredentials,
-        [credKey]: {
-          ...currentCred,
-          locked: newLockedValue
-        }
-      });
-      
       toast.success(`${credKey} ${newLockedValue === 1 ? 'locked' : 'unlocked'} successfully`);
     } catch (error) {
       console.error(`Error updating lock state for ${credKey}:`, error);
@@ -179,12 +209,20 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
 
   const handleDeleteCredential = async (credKey: string) => {
     try {
+      console.log(`Deleting credential: ${credKey}`);
       await removeData(`/${credKey}`);
       
-      const updatedCredentials = { ...editedCredentials };
+      // Force update local state immediately
+      const updatedCredentials = { ...currentCredentials };
       delete updatedCredentials[credKey];
       
-      setEditedCredentials(updatedCredentials);
+      const updatedEditedCredentials = { ...editedCredentials };
+      delete updatedEditedCredentials[credKey];
+      
+      setCurrentCredentials(updatedCredentials);
+      setEditedCredentials(updatedEditedCredentials);
+      
+      console.log(`Credential ${credKey} deleted successfully`);
       toast.success(`${credKey} deleted successfully`);
     } catch (error) {
       console.error(`Error deleting ${credKey}:`, error);
@@ -239,8 +277,15 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     }
     
     try {
+      console.log(`Creating new credential: ${newCredentialKey}`, newCredential);
       await setData(`/${newCredentialKey}`, newCredential);
       toast.success(`${newCredentialKey} created successfully`);
+      
+      // Update local state immediately
+      setCurrentCredentials({
+        ...currentCredentials,
+        [newCredentialKey]: newCredential
+      });
       
       setEditedCredentials({
         ...editedCredentials,
@@ -265,25 +310,29 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     }
   };
 
-  const validCredentialEntries = Object.entries(editedCredentials).filter(
-  ([key, cred]) =>
-    cred &&
-    typeof cred === "object" &&
-    Object.keys(cred).length > 0 &&
-    cred.email !== undefined &&
-    cred.email !== ""
-);
+  // Use currentCredentials for filtering instead of editedCredentials
+  const validCredentialEntries = Object.entries(currentCredentials).filter(
+    ([key, cred]) => {
+      // More lenient filtering - show credential if it has basic structure
+      return cred && 
+             typeof cred === "object" && 
+             key.startsWith('cred') &&
+             (cred.email !== undefined || cred.password !== undefined);
+    }
+  );
+
+  console.log("Valid credential entries:", validCredentialEntries);
 
   if (validCredentialEntries.length === 0) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">
-  Credentials
-  <span className="md:hidden"><br /></span>
-  <span className="hidden md:inline"> </span>
-  Management
-</h2>
+            Credentials
+            <span className="md:hidden"><br /></span>
+            <span className="hidden md:inline"> </span>
+            Management
+          </h2>
           <Button onClick={() => setIsAddingCredential(true)}>
             <PlusCircle className="mr-2 h-4 w-4" /> Add Credential
           </Button>
@@ -451,11 +500,11 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
-  Credentials
-  <span className="md:hidden"><br /></span>
-  <span className="hidden md:inline"> </span>
-  Management
-</h2>
+          Credentials
+          <span className="md:hidden"><br /></span>
+          <span className="hidden md:inline"> </span>
+          Management
+        </h2>
         <Button onClick={() => setIsAddingCredential(true)}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add Credential
         </Button>
@@ -466,7 +515,8 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
           if (!cred) return null;
           
           const isEditing = editingCredential === credKey;
-          const currentCred = editedCredentials[credKey];
+          // Use currentCredentials for display
+          const currentCred = currentCredentials[credKey];
           
           if (!currentCred) return null;
           
