@@ -36,5 +36,28 @@ export const useFirebaseService = (service: ServiceType | string) => {
     }
   };
 
-  return getServiceFunctions();
+  // Helper function to extract credentials from database data
+  const extractCredentials = (dbData: any) => {
+    if (!dbData) return {};
+    
+    const credentials: { [key: string]: any } = {};
+    
+    // Only include credentials that actually exist and have meaningful data
+    Object.keys(dbData).forEach(key => {
+      if (key.startsWith('cred') && dbData[key] && typeof dbData[key] === 'object') {
+        const cred = dbData[key];
+        // Only include if it has at least email or password (not just empty strings)
+        if (cred.email || cred.password) {
+          credentials[key] = cred;
+        }
+      }
+    });
+    
+    return credentials;
+  };
+
+  return {
+    ...getServiceFunctions(),
+    extractCredentials
+  };
 };

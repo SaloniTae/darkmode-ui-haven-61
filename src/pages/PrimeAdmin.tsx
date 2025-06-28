@@ -22,7 +22,7 @@ export default function PrimeAdmin() {
   const { isAuthenticated } = useAuth();
   const dataFetchedRef = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
-  const { fetchData, subscribeToData } = useFirebaseService('prime');
+  const { fetchData, subscribeToData, extractCredentials } = useFirebaseService('prime');
 
   const loadData = useCallback(async () => {
     try {
@@ -105,49 +105,11 @@ export default function PrimeAdmin() {
           </RestrictedTab>
           
           <RestrictedTab tabName="credentials">
-            <CredentialsPanel credentials={{
-              cred1: dbData?.cred1 || {
-                belongs_to_slot: "",
-                email: "",
-                password: "",
-                expiry_date: "",
-                locked: 0,
-                max_usage: 0,
-                usage_count: 0
-              },
-              cred2: dbData?.cred2 || {
-                belongs_to_slot: "",
-                email: "",
-                password: "",
-                expiry_date: "",
-                locked: 0,
-                max_usage: 0,
-                usage_count: 0
-              },
-              cred3: dbData?.cred3 || {
-                belongs_to_slot: "",
-                email: "",
-                password: "",
-                expiry_date: "",
-                locked: 0,
-                max_usage: 0,
-                usage_count: 0
-              },
-              cred4: dbData?.cred4 || {
-                belongs_to_slot: "",
-                email: "",
-                password: "",
-                expiry_date: "",
-                locked: 0,
-                max_usage: 0,
-                usage_count: 0
-              },
-              ...Object.fromEntries(
-                Object.entries(dbData || {})
-                  .filter(([key]) => key.startsWith('cred') && !['cred1', 'cred2', 'cred3', 'cred4'].includes(key))
-                  .map(([key, value]) => [key, value])
-              )
-            }} slots={dbData?.settings?.slots || {}} service="prime" />
+            <CredentialsPanel 
+              credentials={extractCredentials(dbData)} 
+              slots={dbData?.settings?.slots || {}} 
+              service="prime" 
+            />
           </RestrictedTab>
           
           <RestrictedTab tabName="slots">
