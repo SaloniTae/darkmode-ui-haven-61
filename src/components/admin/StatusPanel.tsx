@@ -107,31 +107,33 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       // Skip entries that are just numbers (counters)
       if (typeof value === "number") return;
       
-      // Handle regular transactions
-      if (key !== "FTRIAL-ID" && key !== "REF-ID" && typeof value === "object" && value.end_time) {
-        allTransactions.push([key, value as Transaction]);
-      }
-      
       // Handle FTRIAL-ID transactions
       if (key === "FTRIAL-ID" && typeof value === "object") {
-        Object.entries(value).forEach(([ftrialKey, ftrialValue]) => {
-          if (typeof ftrialValue === "object" && ftrialValue && (ftrialValue as any).end_time) {
-            allTransactions.push([`FTRIAL-${ftrialKey}`, ftrialValue as Transaction]);
+        Object.entries(value).forEach(([childKey, childValue]) => {
+          if (typeof childValue === "object" && childValue && (childValue as any).end_time) {
+            allTransactions.push([childKey, childValue as Transaction]);
           }
         });
+        return; // Skip further processing for FTRIAL-ID
       }
       
       // Handle REF-ID transactions
       if (key === "REF-ID" && typeof value === "object") {
-        Object.entries(value).forEach(([refKey, refValue]) => {
-          if (typeof refValue === "object" && refValue && (refValue as any).end_time) {
-            allTransactions.push([`REF-${refKey}`, refValue as Transaction]);
+        Object.entries(value).forEach(([childKey, childValue]) => {
+          if (typeof childValue === "object" && childValue && (childValue as any).end_time) {
+            allTransactions.push([childKey, childValue as Transaction]);
           }
         });
+        return; // Skip further processing for REF-ID
       }
       
-      // Handle nested transaction groups (existing logic)
-      if (typeof value === "object" && !value.end_time) {
+      // Handle regular transactions (direct children of transactions)
+      if (typeof value === "object" && value.end_time) {
+        allTransactions.push([key, value as Transaction]);
+      }
+      
+      // Handle nested transaction groups (existing logic for other nested structures)
+      if (typeof value === "object" && !value.end_time && key !== "FTRIAL-ID" && key !== "REF-ID") {
         Object.entries(value).forEach(([nestedKey, nestedValue]) => {
           if (typeof nestedValue === "object" && nestedValue && (nestedValue as any).end_time) {
             allTransactions.push([`${key}-${nestedKey}`, nestedValue as Transaction]);
@@ -286,15 +288,18 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
 
   // Helper function to get the correct path for updating transactions
   const getTransactionUpdatePath = (transactionId: string) => {
-    if (transactionId.startsWith('FTRIAL-')) {
-      const actualId = transactionId.replace('FTRIAL-', '');
-      return `/transactions/FTRIAL-ID/${actualId}`;
-    } else if (transactionId.startsWith('REF-')) {
-      const actualId = transactionId.replace('REF-', '');
-      return `/transactions/REF-ID/${actualId}`;
-    } else {
-      return `/transactions/${transactionId}`;
+    // Check if this transaction exists in FTRIAL-ID
+    if (transactions["FTRIAL-ID"] && transactions["FTRIAL-ID"][transactionId]) {
+      return `/transactions/FTRIAL-ID/${transactionId}`;
     }
+    
+    // Check if this transaction exists in REF-ID
+    if (transactions["REF-ID"] && transactions["REF-ID"][transactionId]) {
+      return `/transactions/REF-ID/${transactionId}`;
+    }
+    
+    // Default to regular transaction path
+    return `/transactions/${transactionId}`;
   };
 
   // Mark expired orders as hidden and update credentials
