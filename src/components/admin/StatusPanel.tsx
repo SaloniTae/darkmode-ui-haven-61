@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import { DataCard } from "@/components/ui/DataCard";
 import { formatTimeWithAmPm } from "@/utils/dateFormatUtils";
@@ -245,32 +246,6 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     setExpiredTransactions(expired);
   }, [transactions, notifiedExpiries, upcomingExpiryNotices]);
 
-  // Helper function to get transaction type and display info
-  const getTransactionTypeInfo = (transactionId: string) => {
-    // Check if this transaction exists in FTRIAL-ID
-    if (transactions["FTRIAL-ID"] && transactions["FTRIAL-ID"][transactionId]) {
-      return {
-        type: 'FTRIAL',
-        label: 'Free Trial',
-        tagColor: 'bg-blue-500',
-        textColor: 'text-blue-100'
-      };
-    }
-    
-    // Check if this transaction exists in REF-ID
-    if (transactions["REF-ID"] && transactions["REF-ID"][transactionId]) {
-      return {
-        type: 'REF',
-        label: 'Referral',
-        tagColor: 'bg-green-500',
-        textColor: 'text-green-100'
-      };
-    }
-    
-    // Regular transaction
-    return null;
-  };
-
   // Initialize and set up auto-refresh
   useEffect(() => {
     filterTransactions();
@@ -438,27 +413,18 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
             
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-3 max-[400px]:gap-2">
               {activeTransactions.length > 0 ? (
-                activeTransactions.map(([id, transaction]) => {
-                  const typeInfo = getTransactionTypeInfo(id);
-                  return (
-                    <div key={id} className="relative">
-                      {typeInfo && (
-                        <div className={`absolute -top-2 -right-2 ${typeInfo.tagColor} ${typeInfo.textColor} text-xs px-2 py-0.5 rounded-full font-semibold z-10 shadow-sm`}>
-                          {typeInfo.type}
-                        </div>
-                      )}
-                      <button
-                        onClick={() => openTransactionDetails([id, transaction])}
-                        className="time-button active-time-button max-[400px]:w-full max-[400px]:mx-auto w-full"
-                        title={`${typeInfo ? `${typeInfo.label} - ` : ''}${formatDateWithTime(transaction.end_time)}`}
-                      >
-                        <span className="time-text">
-                          {formatTimeWithCustomFonts(transaction.end_time)}
-                        </span>
-                      </button>
-                    </div>
-                  );
-                })
+                activeTransactions.map(([id, transaction]) => (
+                  <button
+                    key={id}
+                    onClick={() => openTransactionDetails([id, transaction])}
+                    className="time-button active-time-button max-[400px]:w-full max-[400px]:mx-auto"
+                    title={formatDateWithTime(transaction.end_time)}
+                  >
+                    <span className="time-text">
+                      {formatTimeWithCustomFonts(transaction.end_time)}
+                    </span>
+                  </button>
+                ))
               ) : (
                 <div className="text-center col-span-3 max-[400px]:col-span-3 py-6">
                   <p className="text-muted-foreground">No active accounts</p>
@@ -478,27 +444,18 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
             
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-3 max-[400px]:gap-2">
               {expiredTransactions.length > 0 ? (
-                expiredTransactions.map(([id, transaction]) => {
-                  const typeInfo = getTransactionTypeInfo(id);
-                  return (
-                    <div key={id} className="relative">
-                      {typeInfo && (
-                        <div className={`absolute -top-2 -right-2 ${typeInfo.tagColor} ${typeInfo.textColor} text-xs px-2 py-0.5 rounded-full font-semibold z-10 shadow-sm`}>
-                          {typeInfo.type}
-                        </div>
-                      )}
-                      <button
-                        onClick={() => openTransactionDetails([id, transaction])}
-                        className="time-button expired-time-button max-[400px]:w-full max-[400px]:mx-auto w-full"
-                        title={`${typeInfo ? `${typeInfo.label} - ` : ''}${formatDateWithTime(transaction.end_time)}`}
-                      >
-                        <span className="time-text text-red-500 dark:text-red-400">
-                          {formatTimeWithCustomFonts(transaction.end_time)}
-                        </span>
-                      </button>
-                    </div>
-                  );
-                })
+                expiredTransactions.map(([id, transaction]) => (
+                  <button
+                    key={id}
+                    onClick={() => openTransactionDetails([id, transaction])}
+                    className="time-button expired-time-button max-[400px]:w-full max-[400px]:mx-auto"
+                    title={formatDateWithTime(transaction.end_time)}
+                  >
+                    <span className="time-text text-red-500 dark:text-red-400">
+                      {formatTimeWithCustomFonts(transaction.end_time)}
+                    </span>
+                  </button>
+                ))
               ) : (
                 <div className="text-center col-span-3 max-[400px]:col-span-3 py-6">
                   <p className="text-muted-foreground">No expired accounts</p>
@@ -515,12 +472,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           {selectedTransaction && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-center text-foreground">
-                  {(() => {
-                    const typeInfo = getTransactionTypeInfo(selectedTransaction[0]);
-                    return typeInfo ? `${typeInfo.label} Account Details` : 'Account Details';
-                  })()}
-                </DialogTitle>
+                <DialogTitle className="text-center text-foreground">Account Details</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div className="flex justify-between">
