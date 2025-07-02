@@ -50,7 +50,6 @@ interface CredentialsPanelProps {
 }
 
 export function CredentialsPanel({ credentials, slots, service }: CredentialsPanelProps) {
-  // Initialize with incoming credentials and set up real-time sync
   const [currentCredentials, setCurrentCredentials] = useState(credentials || {});
   const [editingCredential, setEditingCredential] = useState<string | null>(null);
   const [editedCredentials, setEditedCredentials] = useState(credentials || {});
@@ -89,7 +88,6 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     const unsubscribe = subscribeToData("/", (data) => {
       if (data) {
         console.log("Real-time data received:", data);
-        // Extract credentials from the data
         const credentialKeys = Object.keys(data).filter(key => key.startsWith('cred'));
         const updatedCredentials: { [key: string]: Credential | undefined } = {};
         
@@ -101,7 +99,10 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
         
         console.log("Updated credentials from real-time:", updatedCredentials);
         setCurrentCredentials(updatedCredentials);
-        setEditedCredentials(updatedCredentials);
+        // Only update editedCredentials if we're not currently editing
+        if (!editingCredential) {
+          setEditedCredentials(updatedCredentials);
+        }
       }
     });
 
@@ -110,9 +111,8 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
         unsubscribe();
       }
     };
-  }, [service, subscribeToData]);
+  }, [service, subscribeToData, editingCredential]);
 
-  // Get available slots with "all" as default option
   const getAvailableSlots = () => {
     const availableSlots = ["all", "none"];
     if (slots) {
@@ -124,19 +124,28 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   const handleEditCredential = (credKey: string) => {
     setEditingCredential(credKey);
     
-    try {
-      const currentCred = editedCredentials[credKey];
-      if (currentCred?.expiry_date) {
-        setSelectedDate(parse(currentCred.expiry_date, 'yyyy-MM-dd', new Date()));
-      } else {
+    // Initialize editedCredentials with current values for editing
+    const currentCred = currentCredentials[credKey];
+    if (currentCred) {
+      setEditedCredentials(prev => ({
+        ...prev,
+        [credKey]: { ...currentCred }
+      }));
+      
+      try {
+        if (currentCred.expiry_date) {
+          setSelectedDate(parse(currentCred.expiry_date, 'yyyy-MM-dd', new Date()));
+        } else {
+          setSelectedDate(new Date());
+        }
+      } catch (e) {
         setSelectedDate(new Date());
       }
-    } catch (e) {
-      setSelectedDate(new Date());
     }
   };
 
   const handleCancelEdit = () => {
+    // Reset edited credentials to current values
     setEditedCredentials({ ...currentCredentials });
     setEditingCredential(null);
     setSelectedDate(undefined);
@@ -162,17 +171,18 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   };
 
   const handleInputChange = (credKey: string, field: keyof Credential, value: any) => {
-    setEditedCredentials({
-      ...editedCredentials,
+    console.log(`Updating ${credKey}.${field} to:`, value);
+    setEditedCredentials(prev => ({
+      ...prev,
       [credKey]: {
-        ...(editedCredentials[credKey] || {}),
+        ...(prev[credKey] || currentCredentials[credKey] || {}),
         [field]: value
       } as Credential
-    });
+    }));
   };
 
   const handleToggleLock = async (credKey: string) => {
-    const currentCred = editedCredentials[credKey];
+    const currentCred = currentCredentials[credKey];
     if (!currentCred) {
       toast.error(`Cannot toggle lock for undefined credential: ${credKey}`);
       return;
@@ -191,7 +201,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   };
 
   const toggleLockState = (credKey: string) => {
-    const currentCred = editedCredentials[credKey];
+    const currentCred = currentCredentials[credKey];
     if (!currentCred) {
       toast.error(`Cannot toggle lock state for undefined credential: ${credKey}`);
       return;
@@ -212,7 +222,6 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
       console.log(`Deleting credential: ${credKey}`);
       await removeData(`/${credKey}`);
       
-      // Force update local state immediately
       const updatedCredentials = { ...currentCredentials };
       delete updatedCredentials[credKey];
       
@@ -281,7 +290,6 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
       await setData(`/${newCredentialKey}`, newCredential);
       toast.success(`${newCredentialKey} created successfully`);
       
-      // Update local state immediately
       setCurrentCredentials({
         ...currentCredentials,
         [newCredentialKey]: newCredential
@@ -310,10 +318,8 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     }
   };
 
-  // Use currentCredentials for filtering instead of editedCredentials
   const validCredentialEntries = Object.entries(currentCredentials).filter(
     ([key, cred]) => {
-      // More lenient filtering - show credential if it has basic structure
       return cred && 
              typeof cred === "object" && 
              key.startsWith('cred') &&
@@ -515,8 +521,8 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
           if (!cred) return null;
           
           const isEditing = editingCredential === credKey;
-          // Use currentCredentials for display
           const currentCred = currentCredentials[credKey];
+          const editedCred = editedCredentials[credKey];
           
           if (!currentCred) return null;
           
@@ -534,7 +540,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                         <Label htmlFor={`${credKey}-email`}>Email</Label>
                         <Input
                           id={`${credKey}-email`}
-                          value={currentCred.email}
+                          value={editedCred?.email || ""}
                           onChange={(e) => handleInputChange(credKey, 'email', e.target.value)}
                         />
                       </div>
@@ -544,7 +550,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                         <Input
                           id={`${credKey}-password`}
                           type="text"
-                          value={currentCred.password}
+                          value={editedCred?.password || ""}
                           onChange={(e) => handleInputChange(credKey, 'password', e.target.value)}
                         />
                       </div>
@@ -554,7 +560,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                         <Input
                           id={`${credKey}-secret`}
                           type="text"
-                          value={currentCred.secret || ""}
+                          value={editedCred?.secret || ""}
                           onChange={(e) => handleInputChange(credKey, 'secret', e.target.value)}
                           placeholder="Enter secret"
                         />
@@ -563,7 +569,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                       <div className="space-y-1">
                         <Label htmlFor={`${credKey}-slot`}>Slot</Label>
                         <Select
-                          value={currentCred.belongs_to_slot}
+                          value={editedCred?.belongs_to_slot || ""}
                           onValueChange={(value) => handleInputChange(credKey, 'belongs_to_slot', value)}
                         >
                           <SelectTrigger id={`${credKey}-slot`}>
@@ -582,7 +588,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                         <div className="flex">
                           <Input
                             id={`${credKey}-expiry`}
-                            value={currentCred.expiry_date}
+                            value={editedCred?.expiry_date || ""}
                             onChange={(e) => handleInputChange(credKey, 'expiry_date', e.target.value)}
                             className="flex-1"
                           />
@@ -611,7 +617,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                           <Input
                             id={`${credKey}-max-usage`}
                             type="number"
-                            value={currentCred.max_usage}
+                            value={editedCred?.max_usage || 0}
                             onChange={(e) => handleInputChange(credKey, 'max_usage', parseInt(e.target.value))}
                           />
                         </div>
@@ -621,7 +627,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                           <Input
                             id={`${credKey}-usage-count`}
                             type="number"
-                            value={currentCred.usage_count}
+                            value={editedCred?.usage_count || 0}
                             onChange={(e) => handleInputChange(credKey, 'usage_count', parseInt(e.target.value))}
                           />
                         </div>
@@ -631,15 +637,15 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                         <Label className="flex items-center gap-2">
                           Lock Status:
                           <button
-                            onClick={() => handleInputChange(credKey, 'locked', currentCred.locked === 0 ? 1 : 0)}
+                            onClick={() => handleInputChange(credKey, 'locked', (editedCred?.locked || 0) === 0 ? 1 : 0)}
                             className={cn(
                               "flex items-center justify-center w-6 h-6 rounded-full transition-colors",
-                              currentCred.locked === 0 
+                              (editedCred?.locked || 0) === 0 
                                 ? "bg-green-500 text-white hover:bg-green-600" 
                                 : "bg-gray-300 text-gray-600 hover:bg-gray-400"
                             )}
                           >
-                            {currentCred.locked === 0 ? (
+                            {(editedCred?.locked || 0) === 0 ? (
                               <Check className="w-4 h-4" />
                             ) : (
                               <X className="w-4 h-4" />
