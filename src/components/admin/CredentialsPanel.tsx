@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Slots } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
-import { Edit, Save, Lock, Unlock, Check, X, CalendarIcon, PlusCircle, Trash, RotateCw } from "lucide-react";
+import { Edit, Save, Lock, Unlock, Check, X, CalendarIcon, PlusCircle, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, parse } from "date-fns";
@@ -24,7 +25,6 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
-import { getRandomPassword } from "@/data/passwordList";
 
 interface Credential {
   belongs_to_slot: string;
@@ -389,25 +389,12 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                   
                   <div className="space-y-2">
                     <Label htmlFor="new-cred-password">Password</Label>
-                    <div className="flex">
-                      <Input
-                        id="new-cred-password"
-                        placeholder="password"
-                        value={newCredential.password}
-                        onChange={(e) => handleNewCredentialChange('password', e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRotatePassword('new')}
-                        className="ml-2"
-                        title="Generate random password"
-                      >
-                        <RotateCw className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Input
+                      id="new-cred-password"
+                      placeholder="password"
+                      value={newCredential.password}
+                      onChange={(e) => handleNewCredentialChange('password', e.target.value)}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -560,25 +547,12 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                       
                       <div className="space-y-1">
                         <Label htmlFor={`${credKey}-password`}>Password</Label>
-                        <div className="flex">
-                          <Input
-                            id={`${credKey}-password`}
-                            type="text"
-                            value={editedCred?.password || ""}
-                            onChange={(e) => handleInputChange(credKey, 'password', e.target.value)}
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRotatePassword(credKey)}
-                            className="ml-2"
-                            title="Generate random password"
-                          >
-                            <RotateCw className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Input
+                          id={`${credKey}-password`}
+                          type="text"
+                          value={editedCred?.password || ""}
+                          onChange={(e) => handleInputChange(credKey, 'password', e.target.value)}
+                        />
                       </div>
 
                       <div className="space-y-1">
@@ -827,36 +801,23 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                 
                 <div className="space-y-2">
                   <Label htmlFor="new-cred-password">Password</Label>
-                  <div className="flex">
-                    <Input
-                      id="new-cred-password"
-                      placeholder="password"
-                      value={newCredential.password}
-                      onChange={(e) => handleNewCredentialChange('password', e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRotatePassword('new')}
-                      className="ml-2"
-                      title="Generate random password"
-                    >
-                      <RotateCw className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Input
+                    id="new-cred-password"
+                    placeholder="password"
+                    value={newCredential.password}
+                    onChange={(e) => handleNewCredentialChange('password', e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="new-cred-secret">Secret</Label>
-                  <Input
-                    id="new-cred-secret"
-                    placeholder="secret"
-                    value={newCredential.secret || ""}
-                    onChange={(e) => handleNewCredentialChange('secret', e.target.value)}
-                  />
-                </div>
+                    <Label htmlFor="new-cred-secret">Secret</Label>
+                    <Input
+                      id="new-cred-secret"
+                      placeholder="secret"
+                      value={newCredential.secret || ""}
+                      onChange={(e) => handleNewCredentialChange('secret', e.target.value)}
+                    />
+                  </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="new-cred-slot">Slot</Label>
