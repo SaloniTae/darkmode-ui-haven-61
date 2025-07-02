@@ -99,52 +99,6 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     }
   };
 
-  // Helper function to extract all transactions including FTRIAL-ID and REF-ID
-  const extractAllTransactions = (transactionsData: Record<string, any>) => {
-    const allTransactions: [string, Transaction][] = [];
-    
-    Object.entries(transactionsData).forEach(([key, value]) => {
-      // Skip entries that are just numbers (counters)
-      if (typeof value === "number") return;
-      
-      // Handle FTRIAL-ID transactions
-      if (key === "FTRIAL-ID" && typeof value === "object") {
-        Object.entries(value).forEach(([childKey, childValue]) => {
-          if (typeof childValue === "object" && childValue && (childValue as any).end_time) {
-            allTransactions.push([childKey, childValue as Transaction]);
-          }
-        });
-        return; // Skip further processing for FTRIAL-ID
-      }
-      
-      // Handle REF-ID transactions
-      if (key === "REF-ID" && typeof value === "object") {
-        Object.entries(value).forEach(([childKey, childValue]) => {
-          if (typeof childValue === "object" && childValue && (childValue as any).end_time) {
-            allTransactions.push([childKey, childValue as Transaction]);
-          }
-        });
-        return; // Skip further processing for REF-ID
-      }
-      
-      // Handle regular transactions (direct children of transactions)
-      if (typeof value === "object" && value.end_time) {
-        allTransactions.push([key, value as Transaction]);
-      }
-      
-      // Handle nested transaction groups (existing logic for other nested structures)
-      if (typeof value === "object" && !value.end_time && key !== "FTRIAL-ID" && key !== "REF-ID") {
-        Object.entries(value).forEach(([nestedKey, nestedValue]) => {
-          if (typeof nestedValue === "object" && nestedValue && (nestedValue as any).end_time) {
-            allTransactions.push([`${key}-${nestedKey}`, nestedValue as Transaction]);
-          }
-        });
-      }
-    });
-    
-    return allTransactions;
-  };
-
   // Filter transactions into active and expired
   const filterTransactions = useCallback(() => {
     const now = new Date();
@@ -152,10 +106,11 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     const expired: [string, Transaction][] = [];
     let newExpirations = false;
 
-    // Extract all transactions including FTRIAL-ID and REF-ID
-    const allTransactions = extractAllTransactions(transactions);
-
-    allTransactions.forEach(([id, transaction]) => {
+    Object.entries(transactions).forEach(([id, data]) => {
+      // Skip entries that are just numbers (counters)
+      if (typeof data === "number") return;
+      
+      const transaction = data as Transaction;
       if (!transaction.end_time) return;
       
       // Skip hidden transactions
@@ -286,22 +241,6 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     return formattedTime;
   };
 
-  // Helper function to get the correct path for updating transactions
-  const getTransactionUpdatePath = (transactionId: string) => {
-    // Check if this transaction exists in FTRIAL-ID
-    if (transactions["FTRIAL-ID"] && transactions["FTRIAL-ID"][transactionId]) {
-      return `/transactions/FTRIAL-ID/${transactionId}`;
-    }
-    
-    // Check if this transaction exists in REF-ID
-    if (transactions["REF-ID"] && transactions["REF-ID"][transactionId]) {
-      return `/transactions/REF-ID/${transactionId}`;
-    }
-    
-    // Default to regular transaction path
-    return `/transactions/${transactionId}`;
-  };
-
   // Mark expired orders as hidden and update credentials
   const handleClearExpired = async () => {
     try {
@@ -315,11 +254,8 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       // Process each expired transaction
       const processingPromises = expiredTransactions.map(async ([id, transaction]) => {
         try {
-          // Get the correct path for updating the transaction
-          const updatePath = getTransactionUpdatePath(id);
-          
           // Mark the transaction as hidden in the database
-          await updateData(updatePath, {
+          await updateData(`/transactions/${id}`, {
             hidden: true
           });
           
