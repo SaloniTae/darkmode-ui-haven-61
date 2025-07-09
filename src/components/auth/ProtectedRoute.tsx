@@ -13,9 +13,10 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProps) => {
   const { user, currentService } = useAuth();
-  const { isTabRestricted } = useAccessControl();
+  const { isTabRestricted, lastRefresh } = useAccessControl();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
+  const [forceReloadCount, setForceReloadCount] = useState(0);
 
   useEffect(() => {
     // Set loading to false after a brief delay to allow auth state to be determined
@@ -25,6 +26,19 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Auto-reload mechanism to ensure restrictions are applied immediately
+  useEffect(() => {
+    if (user && lastRefresh && forceReloadCount < 2) {
+      const timer = setTimeout(() => {
+        console.log("Auto-refreshing to apply access restrictions...");
+        setForceReloadCount(prev => prev + 1);
+        window.location.reload();
+      }, 1500); // Wait 1.5 seconds after restrictions are loaded
+      
+      return () => clearTimeout(timer);
+    }
+  }, [lastRefresh, user, forceReloadCount]);
 
   // Special case for the config route - we don't redirect
   if (location.pathname === "/config") {

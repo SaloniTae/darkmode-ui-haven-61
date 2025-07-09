@@ -1,19 +1,23 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "./AuthContext";
 
 interface AccessControlContextType {
   isTabRestricted: (tabName: string, userId: string) => boolean;
   isElementRestricted: (elementId: string, userId: string) => { restricted: boolean; type: string };
   restrictedTabs: Record<string, string[]>;
   refreshSettings: () => Promise<void>;
+  lastRefresh: number;
 }
 
 const AccessControlContext = createContext<AccessControlContextType | undefined>(undefined);
 
 export function AccessControlProvider({ children }: { children: React.ReactNode }) {
+  const { user, isAuthenticated } = useAuth();
   const [restrictedTabs, setRestrictedTabs] = useState<Record<string, string[]>>({});
   const [uiRestrictions, setUIRestrictions] = useState<any[]>([]);
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
   
   const fetchAccessSettings = async () => {
     try {
@@ -50,10 +54,21 @@ export function AccessControlProvider({ children }: { children: React.ReactNode 
       
       setUIRestrictions(uiData || []);
       console.log("Loaded UI restrictions:", uiData);
+      
+      // Update last refresh timestamp
+      setLastRefresh(Date.now());
     } catch (err) {
       console.error("Failed to load access settings:", err);
     }
   };
+  
+  // Auto-refresh access settings when user logs in
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log("User authenticated, refreshing access settings...");
+      fetchAccessSettings();
+    }
+  }, [isAuthenticated, user?.id]);
   
   useEffect(() => {
     fetchAccessSettings();
@@ -97,7 +112,8 @@ export function AccessControlProvider({ children }: { children: React.ReactNode 
     isTabRestricted,
     isElementRestricted,
     restrictedTabs,
-    refreshSettings
+    refreshSettings,
+    lastRefresh
   };
 
   return <AccessControlContext.Provider value={value}>{children}</AccessControlContext.Provider>;
