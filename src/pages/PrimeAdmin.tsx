@@ -15,13 +15,16 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
 import { RestrictedTab } from "@/components/config/RestrictedTab";
+import { useAccessControl } from "@/context/AccessControlContext";
 
 export default function PrimeAdmin() {
   const [loading, setLoading] = useState(false);
   const [dbData, setDbData] = useState<DatabaseSchema | null>(null);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { refreshSettings } = useAccessControl();
   const dataFetchedRef = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
+  const hasReloadedAfterDbLoad = useRef(false);
   const { fetchData, subscribeToData, extractCredentials } = useFirebaseService('prime');
 
   const loadData = useCallback(async () => {
@@ -32,6 +35,25 @@ export default function PrimeAdmin() {
       setDbData(data);
       toast.success("Prime database loaded successfully");
       dataFetchedRef.current = true;
+      
+      // Refresh access settings after database is loaded
+      await refreshSettings();
+      
+      // Check if we need to reload for restrictions to apply
+      const restrictionsKey = `restrictions_applied_${user?.id}`;
+      const hasAppliedRestrictions = sessionStorage.getItem(restrictionsKey);
+      
+      if (!hasAppliedRestrictions && !hasReloadedAfterDbLoad.current) {
+        console.log("Database loaded successfully, applying access restrictions...");
+        sessionStorage.setItem(restrictionsKey, 'true');
+        hasReloadedAfterDbLoad.current = true;
+        
+        // Small delay to ensure everything is processed
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+        return;
+      }
       
       // Set up real-time listener
       unsubscribeRef.current = subscribeToData("/", (realtimeData) => {
@@ -45,7 +67,7 @@ export default function PrimeAdmin() {
     } finally {
       setLoading(false);
     }
-  }, [fetchData, subscribeToData]);
+  }, [fetchData, subscribeToData, refreshSettings, user?.id]);
 
   useEffect(() => {
     // Only fetch data if authenticated and not already fetched
@@ -60,6 +82,15 @@ export default function PrimeAdmin() {
       }
     };
   }, [isAuthenticated, loadData]);
+
+  // Clear session storage when user logs out
+  useEffect(() => {
+    if (!user) {
+      const restrictionsKey = `restrictions_applied_${user?.id}`;
+      sessionStorage.removeItem(restrictionsKey);
+      hasReloadedAfterDbLoad.current = false;
+    }
+  }, [user]);
 
   // If not authenticated, don't show anything as the ProtectedRoute component
   // will handle the redirect to login page
