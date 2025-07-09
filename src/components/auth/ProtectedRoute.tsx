@@ -16,7 +16,6 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
   const { isTabRestricted, isInitialized } = useAccessControl();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
-  const [hasReloaded, setHasReloaded] = useState(false);
 
   useEffect(() => {
     // Set loading to false after a brief delay to allow auth state to be determined
@@ -27,30 +26,15 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
     return () => clearTimeout(timer);
   }, []);
 
-  // One-time reload when restrictions are first loaded for new users
-  useEffect(() => {
-    if (user && isInitialized && !hasReloaded) {
-      // Check if this is a fresh login by looking at sessionStorage
-      const hasLoggedInThisSession = sessionStorage.getItem('restrictions_applied');
-      
-      if (!hasLoggedInThisSession) {
-        console.log("Applying access restrictions for first time...");
-        sessionStorage.setItem('restrictions_applied', 'true');
-        setHasReloaded(true);
-        
-        // Small delay before reload to ensure state is properly set
-        setTimeout(() => {
-          window.location.reload();
-        }, 100);
-      }
-    }
-  }, [user, isInitialized, hasReloaded]);
-
   // Clear the session flag when user logs out
   useEffect(() => {
     if (!user) {
-      sessionStorage.removeItem('restrictions_applied');
-      setHasReloaded(false);
+      // Clear all restriction flags for all users when logging out
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('restrictions_applied_')) {
+          sessionStorage.removeItem(key);
+        }
+      });
     }
   }, [user]);
 
