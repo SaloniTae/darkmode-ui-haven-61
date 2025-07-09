@@ -9,6 +9,7 @@ interface AccessControlContextType {
   restrictedTabs: Record<string, string[]>;
   refreshSettings: () => Promise<void>;
   lastRefresh: number;
+  isInitialized: boolean;
 }
 
 const AccessControlContext = createContext<AccessControlContextType | undefined>(undefined);
@@ -18,6 +19,7 @@ export function AccessControlProvider({ children }: { children: React.ReactNode 
   const [restrictedTabs, setRestrictedTabs] = useState<Record<string, string[]>>({});
   const [uiRestrictions, setUIRestrictions] = useState<any[]>([]);
   const [lastRefresh, setLastRefresh] = useState(Date.now());
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const fetchAccessSettings = async () => {
     try {
@@ -55,21 +57,23 @@ export function AccessControlProvider({ children }: { children: React.ReactNode 
       setUIRestrictions(uiData || []);
       console.log("Loaded UI restrictions:", uiData);
       
-      // Update last refresh timestamp
+      // Update last refresh timestamp and mark as initialized
       setLastRefresh(Date.now());
+      setIsInitialized(true);
     } catch (err) {
       console.error("Failed to load access settings:", err);
     }
   };
   
-  // Auto-refresh access settings when user logs in
+  // Auto-refresh access settings when user logs in - but only once
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user && !isInitialized) {
       console.log("User authenticated, refreshing access settings...");
       fetchAccessSettings();
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, isInitialized]);
   
+  // Initial fetch on mount
   useEffect(() => {
     fetchAccessSettings();
   }, []);
@@ -113,7 +117,8 @@ export function AccessControlProvider({ children }: { children: React.ReactNode 
     isElementRestricted,
     restrictedTabs,
     refreshSettings,
-    lastRefresh
+    lastRefresh,
+    isInitialized
   };
 
   return <AccessControlContext.Provider value={value}>{children}</AccessControlContext.Provider>;

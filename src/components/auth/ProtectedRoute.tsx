@@ -13,10 +13,10 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProps) => {
   const { user, currentService } = useAuth();
-  const { isTabRestricted, lastRefresh } = useAccessControl();
+  const { isTabRestricted, isInitialized } = useAccessControl();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
-  const [forceReloadCount, setForceReloadCount] = useState(0);
+  const [hasReloaded, setHasReloaded] = useState(false);
 
   useEffect(() => {
     // Set loading to false after a brief delay to allow auth state to be determined
@@ -27,18 +27,32 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
     return () => clearTimeout(timer);
   }, []);
 
-  // Auto-reload mechanism to ensure restrictions are applied immediately
+  // One-time reload when restrictions are first loaded for new users
   useEffect(() => {
-    if (user && lastRefresh && forceReloadCount < 2) {
-      const timer = setTimeout(() => {
-        console.log("Auto-refreshing to apply access restrictions...");
-        setForceReloadCount(prev => prev + 1);
-        window.location.reload();
-      }, 1500); // Wait 1.5 seconds after restrictions are loaded
+    if (user && isInitialized && !hasReloaded) {
+      // Check if this is a fresh login by looking at sessionStorage
+      const hasLoggedInThisSession = sessionStorage.getItem('restrictions_applied');
       
-      return () => clearTimeout(timer);
+      if (!hasLoggedInThisSession) {
+        console.log("Applying access restrictions for first time...");
+        sessionStorage.setItem('restrictions_applied', 'true');
+        setHasReloaded(true);
+        
+        // Small delay before reload to ensure state is properly set
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
+      }
     }
-  }, [lastRefresh, user, forceReloadCount]);
+  }, [user, isInitialized, hasReloaded]);
+
+  // Clear the session flag when user logs out
+  useEffect(() => {
+    if (!user) {
+      sessionStorage.removeItem('restrictions_applied');
+      setHasReloaded(false);
+    }
+  }, [user]);
 
   // Special case for the config route - we don't redirect
   if (location.pathname === "/config") {
@@ -46,7 +60,7 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
   }
 
   // Show loading state while checking access
-  if (loading) {
+  if (loading || !isInitialized) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center">
