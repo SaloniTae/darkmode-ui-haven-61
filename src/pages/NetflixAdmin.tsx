@@ -24,7 +24,6 @@ export default function NetflixAdmin() {
   const { refreshSettings } = useAccessControl();
   const dataFetchedRef = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
-  const hasReloadedAfterDbLoad = useRef(false);
   const { fetchData, subscribeToData, extractCredentials } = useFirebaseService('netflix');
 
   const loadData = useCallback(async () => {
@@ -38,22 +37,6 @@ export default function NetflixAdmin() {
       
       // Refresh access settings after database is loaded
       await refreshSettings();
-      
-      // Check if we need to reload for restrictions to apply
-      const restrictionsKey = `restrictions_applied_${user?.id}`;
-      const hasAppliedRestrictions = sessionStorage.getItem(restrictionsKey);
-      
-      if (!hasAppliedRestrictions && !hasReloadedAfterDbLoad.current) {
-        console.log("Database loaded successfully, applying access restrictions...");
-        sessionStorage.setItem(restrictionsKey, 'true');
-        hasReloadedAfterDbLoad.current = true;
-        
-        // Small delay to ensure everything is processed
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
-        return;
-      }
       
       // Set up real-time listener
       unsubscribeRef.current = subscribeToData("/", (realtimeData) => {
@@ -86,9 +69,6 @@ export default function NetflixAdmin() {
   // Clear session storage when user logs out
   useEffect(() => {
     if (!user) {
-      const restrictionsKey = `restrictions_applied_${user?.id}`;
-      sessionStorage.removeItem(restrictionsKey);
-      hasReloadedAfterDbLoad.current = false;
     }
   }, [user]);
 
