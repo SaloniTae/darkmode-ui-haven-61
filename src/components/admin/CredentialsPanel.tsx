@@ -79,10 +79,13 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   useEffect(() => {
     console.log("Credentials prop updated:", credentials);
     setCurrentCredentials(credentials || {});
-    setEditedCredentials(credentials || {});
-  }, [credentials]);
+    // Don't reset editedCredentials if we're currently editing
+    if (!editingCredential) {
+      setEditedCredentials(credentials || {});
+    }
+  }, [credentials, editingCredential]);
 
-  // Set up real-time listener for credentials
+  // Set up real-time listener for credentials with immediate updates
   useEffect(() => {
     console.log("Setting up real-time listener for credentials");
     const unsubscribe = subscribeToData("/", (data) => {
@@ -99,7 +102,8 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
         
         console.log("Updated credentials from real-time:", updatedCredentials);
         setCurrentCredentials(updatedCredentials);
-        // Only update editedCredentials if we're not currently editing
+        
+        // Update editedCredentials immediately if not currently editing
         if (!editingCredential) {
           setEditedCredentials(updatedCredentials);
         }
@@ -181,6 +185,13 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     }));
   };
 
+  // Fixed number input handler to prevent leading zeros
+  const handleNumberInputChange = (credKey: string, field: keyof Credential, value: string) => {
+    // Allow empty string or convert to number, ensuring no leading zeros
+    const numValue = value === '' ? 0 : parseInt(value, 10) || 0;
+    handleInputChange(credKey, field, numValue);
+  };
+
   const handleToggleLock = async (credKey: string) => {
     const currentCred = currentCredentials[credKey];
     if (!currentCred) {
@@ -221,17 +232,6 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     try {
       console.log(`Deleting credential: ${credKey}`);
       await removeData(`/${credKey}`);
-      
-      const updatedCredentials = { ...currentCredentials };
-      delete updatedCredentials[credKey];
-      
-      const updatedEditedCredentials = { ...editedCredentials };
-      delete updatedEditedCredentials[credKey];
-      
-      setCurrentCredentials(updatedCredentials);
-      setEditedCredentials(updatedEditedCredentials);
-      
-      console.log(`Credential ${credKey} deleted successfully`);
       toast.success(`${credKey} deleted successfully`);
     } catch (error) {
       console.error(`Error deleting ${credKey}:`, error);
@@ -293,6 +293,12 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
       [field]: value
     });
   };
+
+  // Fixed number input handler for new credential
+  const handleNewCredentialNumberChange = (field: keyof Credential, value: string) => {
+    const numValue = value === '' ? 0 : parseInt(value, 10) || 0;
+    handleNewCredentialChange(field, numValue);
+  };
   
   const handleCreateCredential = async () => {
     if (!newCredentialKey || !newCredential.email || !newCredential.password || !newCredential.belongs_to_slot) {
@@ -304,16 +310,6 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
       console.log(`Creating new credential: ${newCredentialKey}`, newCredential);
       await setData(`/${newCredentialKey}`, newCredential);
       toast.success(`${newCredentialKey} created successfully`);
-      
-      setCurrentCredentials({
-        ...currentCredentials,
-        [newCredentialKey]: newCredential
-      });
-      
-      setEditedCredentials({
-        ...editedCredentials,
-        [newCredentialKey]: newCredential
-      });
       
       setNewCredentialKey("");
       setNewCredential({
@@ -485,8 +481,9 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                       <Input
                         id="new-cred-max-usage"
                         type="number"
-                        value={newCredential.max_usage}
-                        onChange={(e) => handleNewCredentialChange('max_usage', parseInt(e.target.value))}
+                        min="0"
+                        value={newCredential.max_usage.toString()}
+                        onChange={(e) => handleNewCredentialNumberChange('max_usage', e.target.value)}
                       />
                     </div>
                     
@@ -656,8 +653,9 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                           <Input
                             id={`${credKey}-max-usage`}
                             type="number"
-                            value={editedCred?.max_usage || 0}
-                            onChange={(e) => handleInputChange(credKey, 'max_usage', parseInt(e.target.value))}
+                            min="0"
+                            value={editedCred?.max_usage?.toString() || "0"}
+                            onChange={(e) => handleNumberInputChange(credKey, 'max_usage', e.target.value)}
                           />
                         </div>
                         
@@ -666,8 +664,9 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                           <Input
                             id={`${credKey}-usage-count`}
                             type="number"
-                            value={editedCred?.usage_count || 0}
-                            onChange={(e) => handleInputChange(credKey, 'usage_count', parseInt(e.target.value))}
+                            min="0"
+                            value={editedCred?.usage_count?.toString() || "0"}
+                            onChange={(e) => handleNumberInputChange(credKey, 'usage_count', e.target.value)}
                           />
                         </div>
                       </div>
@@ -861,14 +860,14 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="new-cred-secret">Secret</Label>
-                    <Input
-                      id="new-cred-secret"
-                      placeholder="secret"
-                      value={newCredential.secret || ""}
-                      onChange={(e) => handleNewCredentialChange('secret', e.target.value)}
-                    />
-                  </div>
+                  <Label htmlFor="new-cred-secret">Secret</Label>
+                  <Input
+                    id="new-cred-secret"
+                    placeholder="secret"
+                    value={newCredential.secret || ""}
+                    onChange={(e) => handleNewCredentialChange('secret', e.target.value)}
+                  />
+                </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="new-cred-slot">Slot</Label>
@@ -921,8 +920,9 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                     <Input
                       id="new-cred-max-usage"
                       type="number"
-                      value={newCredential.max_usage}
-                      onChange={(e) => handleNewCredentialChange('max_usage', parseInt(e.target.value))}
+                      min="0"
+                      value={newCredential.max_usage.toString()}
+                      onChange={(e) => handleNewCredentialNumberChange('max_usage', e.target.value)}
                     />
                   </div>
                   
