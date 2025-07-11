@@ -10,7 +10,7 @@ import { ConfirmationDialog } from "@/components/admin/ConfirmationDialog";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Transaction {
   approved_at: string;
@@ -282,13 +282,35 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     setIsDialogOpen(true);
   };
 
-  // Function to get display text for buttons based on sort option
+  // Function to get display text for buttons based on sort option with custom font styling
   const getButtonDisplayText = (transaction: Transaction, sortBy: SortOption) => {
     switch (sortBy) {
       case 'slot':
-        return transaction.slot_id ? transaction.slot_id.toUpperCase() : 'NO SLOT';
+        const slotId = transaction.slot_id ? transaction.slot_id.toUpperCase() : 'NO SLOT';
+        // Parse SLOT and numbers separately for different fonts
+        const slotParts = slotId.match(/([A-Z]+)(_?)(\d*)/);
+        if (slotParts) {
+          return (
+            <>
+              <span className="font-nexa-extrabold">{slotParts[1]}</span>
+              <span className="font-sans">{slotParts[2]}{slotParts[3]}</span>
+            </>
+          );
+        }
+        return <span className="font-nexa-extrabold">{slotId}</span>;
       case 'credential':
-        return transaction.assign_to ? transaction.assign_to.toUpperCase() : 'NO CREDENTIAL';
+        const credId = transaction.assign_to ? transaction.assign_to.toUpperCase() : 'NO CREDENTIAL';
+        // Parse CRED and numbers separately for different fonts
+        const credParts = credId.match(/([A-Z]+)(_?)(\d*)/);
+        if (credParts) {
+          return (
+            <>
+              <span className="font-nexa-extrabold">{credParts[1]}</span>
+              <span className="font-sans">{credParts[2]}{credParts[3]}</span>
+            </>
+          );
+        }
+        return <span className="font-nexa-extrabold">{credId}</span>;
       case 'time':
       default:
         return formatTimeWithCustomFonts(transaction.end_time);
@@ -419,17 +441,16 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         title="Account Status" 
         headerAction={
           <div className="flex items-center space-x-2">
-            <ToggleGroup type="single" value={sortOption} onValueChange={(value: SortOption) => value && setSortOption(value)} size="sm">
-              <ToggleGroupItem value="time" className="text-xs px-2 py-1">
-                Time
-              </ToggleGroupItem>
-              <ToggleGroupItem value="slot" className="text-xs px-2 py-1">
-                Slot
-              </ToggleGroupItem>
-              <ToggleGroupItem value="credential" className="text-xs px-2 py-1">
-                Cred
-              </ToggleGroupItem>
-            </ToggleGroup>
+            <Select value={sortOption} onValueChange={(value: SortOption) => setSortOption(value)}>
+              <SelectTrigger className="w-20 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="time">Time</SelectItem>
+                <SelectItem value="slot">Slot</SelectItem>
+                <SelectItem value="credential">Cred</SelectItem>
+              </SelectContent>
+            </Select>
             {expiredTransactions.length > 0 && (
               <Button 
                 variant="outline" 
