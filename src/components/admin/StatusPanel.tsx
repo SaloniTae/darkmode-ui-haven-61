@@ -10,7 +10,7 @@ import { ConfirmationDialog } from "@/components/admin/ConfirmationDialog";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface Transaction {
   approved_at: string;
@@ -286,9 +286,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
   const getButtonDisplayText = (transaction: Transaction, sortBy: SortOption) => {
     switch (sortBy) {
       case 'slot':
-        return transaction.slot_id || 'No Slot';
+        return transaction.slot_id ? transaction.slot_id.toUpperCase() : 'NO SLOT';
       case 'credential':
-        return transaction.assign_to || 'No Credential';
+        return transaction.assign_to ? transaction.assign_to.toUpperCase() : 'NO CREDENTIAL';
       case 'time':
       default:
         return formatTimeWithCustomFonts(transaction.end_time);
@@ -419,16 +419,17 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         title="Account Status" 
         headerAction={
           <div className="flex items-center space-x-2">
-            <Select value={sortOption} onValueChange={(value: SortOption) => setSortOption(value)}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="time">Time</SelectItem>
-                <SelectItem value="slot">Slot</SelectItem>
-                <SelectItem value="credential">Credential</SelectItem>
-              </SelectContent>
-            </Select>
+            <ToggleGroup type="single" value={sortOption} onValueChange={(value: SortOption) => value && setSortOption(value)} size="sm">
+              <ToggleGroupItem value="time" className="text-xs px-2 py-1">
+                Time
+              </ToggleGroupItem>
+              <ToggleGroupItem value="slot" className="text-xs px-2 py-1">
+                Slot
+              </ToggleGroupItem>
+              <ToggleGroupItem value="credential" className="text-xs px-2 py-1">
+                Cred
+              </ToggleGroupItem>
+            </ToggleGroup>
             {expiredTransactions.length > 0 && (
               <Button 
                 variant="outline" 
