@@ -176,6 +176,12 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
 
   const handleInputChange = (credKey: string, field: keyof Credential, value: any) => {
     console.log(`Updating ${credKey}.${field} to:`, value);
+    
+    // Remove spaces from secret field
+    if (field === 'secret' && typeof value === 'string') {
+      value = value.replace(/\s+/g, '');
+    }
+    
     setEditedCredentials(prev => ({
       ...prev,
       [credKey]: {
@@ -288,6 +294,11 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   };
   
   const handleNewCredentialChange = (field: keyof Credential, value: any) => {
+    // Remove spaces from secret field
+    if (field === 'secret' && typeof value === 'string') {
+      value = value.replace(/\s+/g, '');
+    }
+    
     setNewCredential({
       ...newCredential,
       [field]: value
