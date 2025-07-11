@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { DataCard } from "@/components/ui/DataCard";
 import { formatTimeWithAmPm } from "@/utils/dateFormatUtils";
@@ -11,6 +10,7 @@ import { ConfirmationDialog } from "@/components/admin/ConfirmationDialog";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Transaction {
   approved_at: string;
@@ -29,6 +29,8 @@ interface StatusPanelProps {
   service: string;
 }
 
+type SortOption = 'time' | 'slot' | 'credential';
+
 export function StatusPanel({ transactions, service }: StatusPanelProps) {
   const [activeTransactions, setActiveTransactions] = useState<[string, Transaction][]>([]);
   const [expiredTransactions, setExpiredTransactions] = useState<[string, Transaction][]>([]);
@@ -38,6 +40,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [notifiedExpiries, setNotifiedExpiries] = useState<Record<string, boolean>>({});
   const [upcomingExpiryNotices, setUpcomingExpiryNotices] = useState<Record<string, boolean>>({});
+  const [sortOption, setSortOption] = useState<SortOption>('time');
   const { fetchData, updateData } = useFirebaseService(service);
   const { user } = useAuth();
 
@@ -145,6 +148,23 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     return allTransactions;
   };
 
+  // Sort transactions based on selected option
+  const sortTransactions = (transactions: [string, Transaction][], sortBy: SortOption) => {
+    return [...transactions].sort((a, b) => {
+      switch (sortBy) {
+        case 'slot':
+          return (a[1].slot_id || '').localeCompare(b[1].slot_id || '');
+        case 'credential':
+          return (a[1].assign_to || '').localeCompare(b[1].assign_to || '');
+        case 'time':
+        default:
+          // Keep existing time-based sorting
+          return new Date(a[1].end_time.replace(' ', 'T')).getTime() - 
+                 new Date(b[1].end_time.replace(' ', 'T')).getTime();
+      }
+    });
+  };
+
   // Filter transactions into active and expired
   const filterTransactions = useCallback(() => {
     const now = new Date();
@@ -182,20 +202,13 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       }
     });
 
-    // Sort by end time (most recent expiring first for active, most recently expired first for expired)
-    active.sort((a, b) => 
-      new Date(a[1].end_time.replace(' ', 'T')).getTime() - 
-      new Date(b[1].end_time.replace(' ', 'T')).getTime()
-    );
-    
-    expired.sort((a, b) => 
-      new Date(b[1].end_time.replace(' ', 'T')).getTime() - 
-      new Date(a[1].end_time.replace(' ', 'T')).getTime()
-    );
+    // Apply sorting to both active and expired transactions
+    const sortedActive = sortTransactions(active, sortOption);
+    const sortedExpired = sortTransactions(expired, sortOption);
 
     // Check for upcoming expirations in the next hour that we haven't notified about
     const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-    const upcomingExpiries = active.filter(([id, tx]) => {
+    const upcomingExpiries = sortedActive.filter(([id, tx]) => {
       const endTime = new Date(tx.end_time.replace(' ', 'T'));
       return endTime <= oneHourFromNow && !upcomingExpiryNotices[id];
     });
@@ -223,8 +236,8 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     });
 
     // Send notification for newly expired accounts
-    if (newExpirations && expired.length > 0) {
-      const nextExpiry = getNextExpiryTime(active);
+    if (newExpirations && sortedExpired.length > 0) {
+      const nextExpiry = getNextExpiryTime(sortedActive);
       let nextExpiryInfo = "";
       
       if (nextExpiry) {
@@ -232,7 +245,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         nextExpiryInfo = ` Next account expires ${nextExpiryTime}.`;
       }
       
-      const toastMessage = `${expired.length} account${expired.length > 1 ? 's' : ''} have expired.${nextExpiryInfo}`;
+      const toastMessage = `${sortedExpired.length} account${sortedExpired.length > 1 ? 's' : ''} have expired.${nextExpiryInfo}`;
       
       toast({
         title: "Accounts Expired",
@@ -242,9 +255,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       });
     }
 
-    setActiveTransactions(active);
-    setExpiredTransactions(expired);
-  }, [transactions, notifiedExpiries, upcomingExpiryNotices]);
+    setActiveTransactions(sortedActive);
+    setExpiredTransactions(sortedExpired);
+  }, [transactions, notifiedExpiries, upcomingExpiryNotices, sortOption]);
 
   // Initialize and set up auto-refresh
   useEffect(() => {
@@ -267,6 +280,19 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
   const openTransactionDetails = (transaction: [string, Transaction]) => {
     setSelectedTransaction(transaction);
     setIsDialogOpen(true);
+  };
+
+  // Function to get display text for buttons based on sort option
+  const getButtonDisplayText = (transaction: Transaction, sortBy: SortOption) => {
+    switch (sortBy) {
+      case 'slot':
+        return transaction.slot_id || 'No Slot';
+      case 'credential':
+        return transaction.assign_to || 'No Credential';
+      case 'time':
+      default:
+        return formatTimeWithCustomFonts(transaction.end_time);
+    }
   };
 
   // Custom formatting function to separate hours+minutes from AM/PM
@@ -393,6 +419,16 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         title="Account Status" 
         headerAction={
           <div className="flex items-center space-x-2">
+            <Select value={sortOption} onValueChange={(value: SortOption) => setSortOption(value)}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="time">Time</SelectItem>
+                <SelectItem value="slot">Slot</SelectItem>
+                <SelectItem value="credential">Credential</SelectItem>
+              </SelectContent>
+            </Select>
             {expiredTransactions.length > 0 && (
               <Button 
                 variant="outline" 
@@ -421,7 +457,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     title={formatDateWithTime(transaction.end_time)}
                   >
                     <span className="time-text">
-                      {formatTimeWithCustomFonts(transaction.end_time)}
+                      {getButtonDisplayText(transaction, sortOption)}
                     </span>
                   </button>
                 ))
@@ -452,7 +488,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     title={formatDateWithTime(transaction.end_time)}
                   >
                     <span className="time-text text-red-500 dark:text-red-400">
-                      {formatTimeWithCustomFonts(transaction.end_time)}
+                      {getButtonDisplayText(transaction, sortOption)}
                     </span>
                   </button>
                 ))
