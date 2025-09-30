@@ -360,43 +360,46 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       let clearedCount = 0;
       let errorCount = 0;
 
-      // Process each expired transaction
-      const processingPromises = expiredTransactions.map(async ([id, transaction]) => {
+      // Step 1: Group expired transactions by credential to count them
+      const credentialCounts: Record<string, number> = {};
+      expiredTransactions.forEach(([id, transaction]) => {
+        if (transaction.assign_to) {
+          credentialCounts[transaction.assign_to] = (credentialCounts[transaction.assign_to] || 0) + 1;
+        }
+      });
+
+      // Step 2: Mark all transactions as hidden (can be done in parallel)
+      const hidingPromises = expiredTransactions.map(async ([id, transaction]) => {
         try {
-          // Get the correct path for updating the transaction
           const updatePath = getTransactionUpdatePath(id);
-          
-          // Mark the transaction as hidden in the database
-          await updateData(updatePath, {
-            hidden: true
-          });
-          
-          // Only update credential usage if it has assign_to property
-          if (transaction.assign_to) {
-            const credKey = transaction.assign_to;
-            
-            // Check if the credential exists in the database
-            if (credData[credKey] && typeof credData[credKey].usage_count === 'number') {
-              // Decrement the usage count, ensuring it doesn't go below 0
-              const currentCount = credData[credKey].usage_count;
-              const newCount = Math.max(0, currentCount - 1);
-              
-              // Update the credential's usage count
-              await updateData(`/${credKey}`, {
-                usage_count: newCount
-              });
-            }
-          }
-          
+          await updateData(updatePath, { hidden: true });
           clearedCount++;
         } catch (e) {
-          console.error(`Error processing transaction ${id}:`, e);
+          console.error(`Error hiding transaction ${id}:`, e);
           errorCount++;
         }
       });
       
-      // Wait for all processes to complete
-      await Promise.all(processingPromises);
+      await Promise.all(hidingPromises);
+      
+      // Step 3: Update each credential's usage_count once with the batch count
+      const credentialUpdatePromises = Object.entries(credentialCounts).map(async ([credKey, count]) => {
+        try {
+          // Check if the credential exists in the database
+          if (credData[credKey] && typeof credData[credKey].usage_count === 'number') {
+            // Decrement by the total count, ensuring it doesn't go below 0
+            const currentCount = credData[credKey].usage_count;
+            const newCount = Math.max(0, currentCount - count);
+            
+            // Update the credential's usage count once
+            await updateData(`/${credKey}`, { usage_count: newCount });
+          }
+        } catch (e) {
+          console.error(`Error updating credential ${credKey}:`, e);
+        }
+      });
+      
+      await Promise.all(credentialUpdatePromises);
       
       // Clear expired transactions from UI
       setExpiredTransactions([]);
@@ -406,7 +409,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         if (clearedCount > 0) {
           toast({
             title: "Partially Completed",
-            description: `Cleared ${clearedCount} orders, but ${errorCount} failed. Some usage counts updated.`,
+            description: `Cleared ${clearedCount} orders, but ${errorCount} failed. Usage counts updated.`,
             variant: "default"
           });
         } else {
