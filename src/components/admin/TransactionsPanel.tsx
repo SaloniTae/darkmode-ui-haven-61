@@ -1,10 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Transactions } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search, Calendar, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Trash2, Search, Calendar, Clock, CheckCircle, AlertCircle, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import { safeFormat } from "@/utils/dateFormatUtils";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
+import { EditTransactionDialog } from "./EditTransactionDialog";
 
 interface TransactionsPanelProps {
   transactions: Transactions;
@@ -42,8 +43,15 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
     open: false,
     orderId: ""
   });
+  const [editTransaction, setEditTransaction] = useState<ProcessedTransaction | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   
   const { removeData } = useFirebaseService(service);
+
+  // Force refresh when transactions change
+  useEffect(() => {
+    setRefreshKey(prev => prev + 1);
+  }, [transactions]);
   
   const processTransactions = (): ProcessedTransaction[] => {
     const processedTransactions: ProcessedTransaction[] = [];
@@ -159,6 +167,8 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
     try {
       await removeData(path);
       toast.success("Transaction deleted successfully");
+      setDeleteConfirmation({ open: false, id: "", type: "" });
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error("Error deleting transaction:", error);
       toast.error("Failed to delete transaction");
@@ -171,6 +181,8 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
     try {
       await removeData(path);
       toast.success("Order ID deleted successfully");
+      setDeleteOrderIdConfirmation({ open: false, orderId: "" });
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error("Error deleting Order ID:", error);
       toast.error("Failed to delete Order ID");
@@ -184,35 +196,20 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
     return safeFormat(dateString, "PPP p", "Invalid Date");
   };
 
-  // Safely format time for display
-  const formatTimeRange = (startTime?: string, endTime?: string): JSX.Element | string => {
-    if (!startTime || !endTime) return "N/A";
+  // Format individual time for display
+  const formatTime = (timeString?: string): string => {
+    if (!timeString) return "N/A";
     
     try {
-      const startDate = new Date(startTime);
-      const endDate = new Date(endTime);
+      const date = new Date(timeString);
       
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        return "Invalid Time Range";
+      if (isNaN(date.getTime())) {
+        return "Invalid Time";
       }
       
-      return (
-        <div className="text-xs">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            <span>{safeFormat(startDate, "MMM dd, yyyy", "Invalid Date")}</span>
-          </div>
-          <div className="flex items-center gap-1 mt-1">
-            <Clock className="h-3 w-3" />
-            <span>
-              {safeFormat(startDate, "h:mm a", "?")} - 
-              {safeFormat(endDate, "h:mm a", "?")}
-            </span>
-          </div>
-        </div>
-      );
+      return safeFormat(date, "MMM dd, yyyy h:mm a", "Invalid Date");
     } catch (error) {
-      console.error("Error formatting time range:", error);
+      console.error("Error formatting time:", error);
       return "Error formatting time";
     }
   };
@@ -292,7 +289,7 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
         </DataCard>
       </div>
       
-      <div className="glass-morphism rounded-lg overflow-hidden">
+      <div className="glass-morphism rounded-lg overflow-hidden" key={refreshKey}>
         {processedTransactions.length > 0 ? (
           <div className="overflow-auto">
             <Table>
@@ -301,8 +298,8 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
                   <TableHead>Transaction ID</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Slot</TableHead>
-                  <TableHead>Time Period</TableHead>
-                  <TableHead>Approval Date</TableHead>
+                  <TableHead>Start</TableHead>
+                  <TableHead>End</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -320,14 +317,21 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
                       </span>
                     </TableCell>
                     <TableCell>{transaction.slot || "N/A"}</TableCell>
-                    <TableCell>
-                      {formatTimeRange(transaction.startTime, transaction.endTime)}
+                    <TableCell className="text-xs">
+                      {formatTime(transaction.startTime)}
                     </TableCell>
                     <TableCell className="text-xs">
-                      {formatDateTime(transaction.approved)}
+                      {formatTime(transaction.endTime)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end">
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setEditTransaction(transaction)}
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </Button>
                         <Button 
                           variant="destructive" 
                           size="sm"
@@ -413,6 +417,18 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
         description={`This will permanently delete the Order ID: ${deleteOrderIdConfirmation.orderId}. This action cannot be undone.`}
         onConfirm={handleDeleteOrderId}
       />
+
+      {/* Edit Transaction Dialog */}
+      {editTransaction && (
+        <EditTransactionDialog
+          open={!!editTransaction}
+          onOpenChange={(open) => {
+            if (!open) setEditTransaction(null);
+          }}
+          transaction={editTransaction}
+          service={service}
+        />
+      )}
     </div>
   );
 }
