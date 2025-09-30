@@ -32,6 +32,7 @@ interface ProcessedTransaction {
 export function TransactionsPanel({ transactions, usedOrderIds, service }: TransactionsPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("active");
   const [deleteConfirmation, setDeleteConfirmation] = useState<{open: boolean; id: string; type: string}>({
     open: false,
     id: "",
@@ -46,6 +47,7 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
   
   const processTransactions = (): ProcessedTransaction[] => {
     const processedTransactions: ProcessedTransaction[] = [];
+    const now = Date.now();
     
     const regularTransactions: Record<string, any> = {};
     const specialTransactions: Record<string, Record<string, any>> = {};
@@ -59,11 +61,26 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
     });
     
     Object.entries(regularTransactions).forEach(([transactionId, details]) => {
+      const transaction = details as any;
+      
+      // Check if transaction matches search term (transaction ID or user ID)
+      const matchesSearch = searchTerm === "" || 
+        transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (transaction.user_id && transaction.user_id.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      // Check if transaction is expired
+      const isExpired = transaction.end_time ? new Date(transaction.end_time).getTime() < now : false;
+      
+      // Check if transaction matches status filter
+      const matchesStatus = statusFilter === "all" || 
+        (statusFilter === "active" && !isExpired) ||
+        (statusFilter === "expired" && isExpired);
+      
       if (
         (filterType === "all" || filterType === "regular") &&
-        (transactionId.toLowerCase().includes(searchTerm.toLowerCase()))
+        matchesSearch &&
+        matchesStatus
       ) {
-        const transaction = details as any;
         processedTransactions.push({
           id: transactionId,
           type: "Regular",
@@ -78,14 +95,29 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
     
     Object.entries(specialTransactions).forEach(([type, transactions]) => {
       Object.entries(transactions).forEach(([transactionId, details]) => {
+        const transaction = details as any;
+        
+        // Check if transaction matches search term (transaction ID or user ID)
+        const matchesSearch = searchTerm === "" || 
+          transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (transaction.user_id && transaction.user_id.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        // Check if transaction is expired
+        const isExpired = transaction.end_time ? new Date(transaction.end_time).getTime() < now : false;
+        
+        // Check if transaction matches status filter
+        const matchesStatus = statusFilter === "all" || 
+          (statusFilter === "active" && !isExpired) ||
+          (statusFilter === "expired" && isExpired);
+        
         if (
           (transactionId !== type + "-OTTONRENT") && 
           (filterType === "all" || 
            (filterType === "freetrial" && type === "FTRIAL-ID") ||
            (filterType === "referral" && type === "REF-ID")) &&
-          (transactionId.toLowerCase().includes(searchTerm.toLowerCase()))
+          matchesSearch &&
+          matchesStatus
         ) {
-          const transaction = details as any;
           processedTransactions.push({
             id: transactionId,
             type: type === "FTRIAL-ID" ? "Free Trial" : "Referral",
@@ -196,19 +228,30 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search transactions..."
+              placeholder="Search by Transaction/User ID..."
               className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-32">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
+            </SelectContent>
+          </Select>
+          
           <Select value={filterType} onValueChange={setFilterType}>
             <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
-            <SelectContent className="bg-background">
-              <SelectItem value="all">All Transactions</SelectItem>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="regular">Regular</SelectItem>
               <SelectItem value="freetrial">Free Trial</SelectItem>
               <SelectItem value="referral">Referral</SelectItem>
