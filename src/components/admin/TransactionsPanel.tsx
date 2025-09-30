@@ -66,7 +66,7 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
       // Check if transaction matches search term (transaction ID or user ID)
       const matchesSearch = searchTerm === "" || 
         transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (transaction.user_id && transaction.user_id.toLowerCase().includes(searchTerm.toLowerCase()));
+        (transaction.user_id && String(transaction.user_id).toLowerCase().includes(searchTerm.toLowerCase()));
       
       // Check if transaction is expired
       const isExpired = transaction.end_time ? new Date(transaction.end_time).getTime() < now : false;
@@ -100,7 +100,7 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
         // Check if transaction matches search term (transaction ID or user ID)
         const matchesSearch = searchTerm === "" || 
           transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (transaction.user_id && transaction.user_id.toLowerCase().includes(searchTerm.toLowerCase()));
+          (transaction.user_id && String(transaction.user_id).toLowerCase().includes(searchTerm.toLowerCase()));
         
         // Check if transaction is expired
         const isExpired = transaction.end_time ? new Date(transaction.end_time).getTime() < now : false;
