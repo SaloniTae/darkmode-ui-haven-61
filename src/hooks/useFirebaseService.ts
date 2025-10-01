@@ -2,7 +2,8 @@
 import { 
   fetchData, updateData, setData, removeData, subscribeToData,
   fetchPrimeData, updatePrimeData, setPrimeData, removePrimeData, subscribeToPrimeData,
-  fetchNetflixData, updateNetflixData, setNetflixData, removeNetflixData, subscribeToNetflixData
+  fetchNetflixData, updateNetflixData, setNetflixData, removeNetflixData, subscribeToNetflixData,
+  fetchNswfData, updateNswfData, setNswfData, removeNswfData, subscribeToNswfData
 } from "@/lib/firebaseService";
 import { ServiceType } from "@/types/auth";
 
@@ -24,6 +25,14 @@ export const useFirebaseService = (service: ServiceType | string) => {
           setData: setNetflixData,
           removeData: removeNetflixData,
           subscribeToData: subscribeToNetflixData
+        };
+      case 'nswf':
+        return {
+          fetchData: fetchNswfData,
+          updateData: updateNswfData,
+          setData: setNswfData,
+          removeData: removeNswfData,
+          subscribeToData: subscribeToNswfData
         };
       default:
         return {

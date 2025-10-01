@@ -16,6 +16,7 @@ import PersistLogin from "@/components/auth/PersistLogin";
 const CrunchyrollAdmin = lazy(() => import("./pages/CrunchyrollAdmin"));
 const NetflixAdmin = lazy(() => import("./pages/NetflixAdmin"));
 const PrimeAdmin = lazy(() => import("./pages/PrimeAdmin"));
+const NSWFAdmin = lazy(() => import("./pages/NSWFAdmin"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const PasswordResetPage = lazy(() => import("./pages/PasswordResetPage"));
 const ConfigPage = lazy(() => import("./pages/ConfigPage"));
@@ -71,6 +72,12 @@ const App = memo(() => (
                   <Route path="/prime" element={
                     <ProtectedRoute requiredService="prime">
                       <PrimeAdmin />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/nswf" element={
+                    <ProtectedRoute requiredService="nswf">
+                      <NSWFAdmin />
                     </ProtectedRoute>
                   } />
                 </Route>

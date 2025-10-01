@@ -2,10 +2,11 @@
 import { database } from "./firebase";
 import { primeDatabase } from "./firebase-prime";
 import { netflixDatabase } from "./firebase-netflix";
+import { nswfDatabase } from "./firebase-nswf";
 import { ref, get, set, remove, update, onValue, off, Database } from "firebase/database";
 
 // Factory function to create platform-specific service
-export const createFirebaseService = (platform: 'default' | 'prime' | 'netflix' = 'default') => {
+export const createFirebaseService = (platform: 'default' | 'prime' | 'netflix' | 'nswf' = 'default') => {
   let db: Database;
   
   switch (platform) {
@@ -14,6 +15,9 @@ export const createFirebaseService = (platform: 'default' | 'prime' | 'netflix' 
       break;
     case 'netflix':
       db = netflixDatabase;
+      break;
+    case 'nswf':
+      db = nswfDatabase;
       break;
     default:
       db = database; // Crunchyroll database is the default
@@ -89,3 +93,11 @@ export const {
   removeData: removeNetflixData,
   subscribeToData: subscribeToNetflixData
 } = createFirebaseService('netflix');
+
+export const {
+  fetchData: fetchNswfData,
+  updateData: updateNswfData,
+  setData: setNswfData,
+  removeData: removeNswfData,
+  subscribeToData: subscribeToNswfData
+} = createFirebaseService('nswf');
