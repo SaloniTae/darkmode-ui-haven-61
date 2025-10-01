@@ -64,11 +64,21 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, service
     setEditedData({ ...editedData, end_time: formattedDate });
   };
 
+  const formatDisplayTime = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr.replace(' ', 'T'));
+      return format(date, 'hh:mm:ss dd MMM');
+    } catch {
+      return dateStr;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Transaction: {transaction.id}</DialogTitle>
+          <DialogTitle>Edit: {transaction.id}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
@@ -106,7 +116,7 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, service
               <Label>Start Time</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  value={editedData.start_time}
+                  value={formatDisplayTime(editedData.start_time)}
                   readOnly
                   className="flex-1"
                 />
@@ -121,7 +131,7 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, service
               <Label>End Time</Label>
               <div className="flex items-center gap-2">
                 <Input
-                  value={editedData.end_time}
+                  value={formatDisplayTime(editedData.end_time)}
                   readOnly
                   className="flex-1"
                 />
@@ -152,7 +162,7 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, service
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Cancel
           </Button>
