@@ -65,13 +65,20 @@ export function AccessControlProvider({ children }: { children: React.ReactNode 
     }
   };
   
-  // Auto-refresh access settings when user logs in - but only once
+  // Auto-refresh access settings when user logs in or changes
   useEffect(() => {
-    if (isAuthenticated && user && !isInitialized) {
-      console.log("User authenticated, refreshing access settings...");
+    if (isAuthenticated && user) {
+      console.log("User authenticated, refreshing access settings for user:", user.id);
+      // Reset initialized state when user changes to force a fresh fetch
+      setIsInitialized(false);
       fetchAccessSettings();
+    } else if (!isAuthenticated) {
+      // Clear restrictions when user logs out
+      setRestrictedTabs({});
+      setUIRestrictions([]);
+      setIsInitialized(false);
     }
-  }, [isAuthenticated, user?.id, isInitialized]);
+  }, [isAuthenticated, user?.id]);
   
   // Initial fetch on mount
   useEffect(() => {
