@@ -91,92 +91,76 @@ export default function NSWFAdmin() {
     <MainLayout>
       <Tabs defaultValue="admin" className="w-full space-y-6">
         <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
-          <RestrictedTab tabName="admin">
-            Admin
-          </RestrictedTab>
-          <RestrictedTab tabName="credentials">
-            Credentials
-          </RestrictedTab>
-          <RestrictedTab tabName="slots">
-            Slots
-          </RestrictedTab>
-          <RestrictedTab tabName="referrals">
-            Referrals
-          </RestrictedTab>
-          <RestrictedTab tabName="transactions">
-            Transactions
-          </RestrictedTab>
-          <RestrictedTab tabName="status">
-            Status
-          </RestrictedTab>
-          <RestrictedTab tabName="uiconfig">
-            UI Config
-          </RestrictedTab>
-          <RestrictedTab tabName="users">
-            Users
-          </RestrictedTab>
+          <TabsTrigger value="admin">Admin</TabsTrigger>
+          <TabsTrigger value="credentials">Credentials</TabsTrigger>
+          <TabsTrigger value="slots">Slots</TabsTrigger>
+          <TabsTrigger value="referrals">Referrals</TabsTrigger>
+          <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          <TabsTrigger value="status">Status</TabsTrigger>
+          <TabsTrigger value="uiconfig">UI Config</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="admin" className="space-y-4">
+        <RestrictedTab tabName="admin">
           <AdminPanel
             adminConfig={dbData?.admin || {}}
             service="nswf"
           />
-        </TabsContent>
+        </RestrictedTab>
 
-        <TabsContent value="credentials" className="space-y-4">
+        <RestrictedTab tabName="credentials">
           <CredentialsPanel
             credentials={dbData?.credentials || {}}
             slots={dbData?.slots || {}}
             service="nswf"
           />
-        </TabsContent>
+        </RestrictedTab>
 
-        <TabsContent value="slots" className="space-y-4">
+        <RestrictedTab tabName="slots">
           <SlotsPanel
             slots={dbData?.slots || {}}
             service="nswf"
           />
-        </TabsContent>
+        </RestrictedTab>
 
-        <TabsContent value="referrals" className="space-y-4">
+        <RestrictedTab tabName="referrals">
           <ReferralsPanel
             referrals={dbData?.referrals || {}}
             referralSettings={dbData?.referral_settings || {}}
             freeTrialClaims={dbData?.free_trial_claims || {}}
             service="nswf"
           />
-        </TabsContent>
+        </RestrictedTab>
 
-        <TabsContent value="transactions" className="space-y-4">
+        <RestrictedTab tabName="transactions">
           <TransactionsPanel
             transactions={dbData?.transactions || {}}
             usedOrderIds={dbData?.used_order_ids || {}}
             service="nswf"
           />
-        </TabsContent>
+        </RestrictedTab>
 
-        <TabsContent value="status" className="space-y-4">
+        <RestrictedTab tabName="status">
           <StatusPanel
             transactions={dbData?.transactions || {}}
             service="nswf"
           />
-        </TabsContent>
+        </RestrictedTab>
 
-        <TabsContent value="uiconfig" className="space-y-4">
+        <RestrictedTab tabName="uiconfig">
           <UIConfigPanel
             uiConfig={dbData?.ui_config || {}}
             maintenanceEnabled={maintenanceEnabled}
             service="nswf"
           />
-        </TabsContent>
+        </RestrictedTab>
 
-        <TabsContent value="users" className="space-y-4">
+        <RestrictedTab tabName="users">
           <UsersPanel 
             users={dbData?.users || {}}
             service="nswf" 
           />
-        </TabsContent>
+        </RestrictedTab>
       </Tabs>
     </MainLayout>
   );
