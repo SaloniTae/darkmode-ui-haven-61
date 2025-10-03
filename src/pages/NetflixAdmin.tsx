@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminPanel } from "@/components/admin/AdminPanel";
@@ -19,7 +19,8 @@ import { RestrictedTab } from "@/components/config/RestrictedTab";
 import { useAccessControl } from "@/context/AccessControlContext";
 
 export default function NetflixAdmin() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [dbData, setDbData] = useState<DatabaseSchema | null>(null);
   const activeTab = searchParams.get("tab") || "admin";
@@ -97,10 +98,14 @@ export default function NetflixAdmin() {
       </MainLayout>;
   }
 
+  const handleTabChange = (value: string) => {
+    navigate(`/netflix?tab=${value}`, { replace: true });
+  };
+
   return (
     <MainLayout>
       <div className="space-y-8">
-        <Tabs value={activeTab} onValueChange={(value) => setSearchParams({ tab: value })} className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-8 h-auto p-1 glass-morphism shadow-lg">
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="admin">Admins</TabsTrigger>
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="credentials">Credentials</TabsTrigger>
