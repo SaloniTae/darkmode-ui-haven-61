@@ -23,6 +23,9 @@ export default function NSWFAdmin() {
   const [loading, setLoading] = useState(false);
   const [dbData, setDbData] = useState<DatabaseSchema | null>(null);
   const activeTab = searchParams.get("tab") || "admin";
+  
+  console.log("NSWF Admin - Current tab:", activeTab, "Search params:", searchParams.toString());
+  
   const { isAuthenticated, user } = useAuth();
   const { refreshSettings } = useAccessControl();
   const dataFetchedRef = useRef(false);
