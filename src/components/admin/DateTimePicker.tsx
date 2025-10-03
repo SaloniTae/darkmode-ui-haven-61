@@ -27,13 +27,14 @@ interface DateTimePickerProps {
 }
 
 export function DateTimePicker({ value, onChange, align = "end" }: DateTimePickerProps) {
+  const [open, setOpen] = useState(false);
   const { hours, minutes, periods } = getTimePickerValues();
   
   // Safely parse the date and provide a fallback if invalid
   const selectedDate = parseSlotDateTime(value);
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="icon">
           <CalendarIcon className="h-4 w-4" />
@@ -157,6 +158,7 @@ export function DateTimePicker({ value, onChange, align = "end" }: DateTimePicke
             <Button 
               className="w-full mt-3" 
               onClick={() => {
+                setOpen(false);
                 toast.success("Time confirmed");
               }}
             >
