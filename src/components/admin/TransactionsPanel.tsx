@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Transactions } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search, Calendar, Clock, CheckCircle, AlertCircle, Edit } from "lucide-react";
+import { Trash2, Search, Calendar, Clock, CheckCircle, AlertCircle, Edit, ChevronLeft, ChevronRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,8 +32,11 @@ interface ProcessedTransaction {
 
 export function TransactionsPanel({ transactions, usedOrderIds, service }: TransactionsPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("active");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(50);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{open: boolean; id: string; type: string}>({
     open: false,
     id: "",
@@ -48,12 +51,21 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
   
   const { removeData } = useFirebaseService(service);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1); // Reset to first page on search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Force refresh when transactions change
   useEffect(() => {
     setRefreshKey(prev => prev + 1);
   }, [transactions]);
   
-  const processTransactions = (): ProcessedTransaction[] => {
+  const processTransactions = useCallback((): ProcessedTransaction[] => {
     const processedTransactions: ProcessedTransaction[] = [];
     const now = Date.now();
     
@@ -72,9 +84,9 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
       const transaction = details as any;
       
       // Check if transaction matches search term (transaction ID or user ID)
-      const matchesSearch = searchTerm === "" || 
-        transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (transaction.user_id && String(transaction.user_id).toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesSearch = debouncedSearchTerm === "" || 
+        transactionId.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        (transaction.user_id && String(transaction.user_id).toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
       
       // Check if transaction is expired
       const isExpired = transaction.end_time ? new Date(transaction.end_time).getTime() < now : false;
@@ -106,9 +118,9 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
         const transaction = details as any;
         
         // Check if transaction matches search term (transaction ID or user ID)
-        const matchesSearch = searchTerm === "" || 
-          transactionId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (transaction.user_id && String(transaction.user_id).toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesSearch = debouncedSearchTerm === "" || 
+          transactionId.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+          (transaction.user_id && String(transaction.user_id).toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
         
         // Check if transaction is expired
         const isExpired = transaction.end_time ? new Date(transaction.end_time).getTime() < now : false;
@@ -156,7 +168,7 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
         return a.id.localeCompare(b.id);
       }
     });
-  };
+  }, [transactions, debouncedSearchTerm, filterType, statusFilter]);
 
   const handleDeleteTransaction = async () => {
     const { id, type } = deleteConfirmation;
@@ -214,7 +226,21 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
     }
   };
 
-  const processedTransactions = processTransactions();
+  const processedTransactions = useMemo(() => processTransactions(), [processTransactions]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(processedTransactions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTransactions = useMemo(
+    () => processedTransactions.slice(startIndex, endIndex),
+    [processedTransactions, startIndex, endIndex]
+  );
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterType, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -291,65 +317,97 @@ export function TransactionsPanel({ transactions, usedOrderIds, service }: Trans
       
       <div className="glass-morphism rounded-lg overflow-hidden" key={refreshKey}>
         {processedTransactions.length > 0 ? (
-          <div className="overflow-auto">
-            <Table>
-              <TableHeader className="sticky top-0 bg-background z-10">
-                <TableRow>
-                  <TableHead>Transaction ID</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Slot</TableHead>
-                  <TableHead>Start</TableHead>
-                  <TableHead>End</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {processedTransactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
-                    <TableCell className="font-medium">{transaction.id}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        transaction.type === "Regular" ? "bg-blue-500/20 text-blue-400" :
-                        transaction.type === "Free Trial" ? "bg-purple-500/20 text-purple-400" : 
-                                                           "bg-green-500/20 text-green-400"
-                      }`}>
-                        {transaction.type}
-                      </span>
-                    </TableCell>
-                    <TableCell>{transaction.slot || "N/A"}</TableCell>
-                    <TableCell className="text-xs">
-                      {formatTime(transaction.startTime)}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {formatTime(transaction.endTime)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => setEditTransaction(transaction)}
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => setDeleteConfirmation({
-                            open: true, 
-                            id: transaction.id,
-                            type: transaction.type
-                          })}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          <>
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead>Transaction ID</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Slot</TableHead>
+                    <TableHead>Start</TableHead>
+                    <TableHead>End</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {paginatedTransactions.map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell className="font-medium">{transaction.id}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          transaction.type === "Regular" ? "bg-blue-500/20 text-blue-400" :
+                          transaction.type === "Free Trial" ? "bg-purple-500/20 text-purple-400" : 
+                                                             "bg-green-500/20 text-green-400"
+                        }`}>
+                          {transaction.type}
+                        </span>
+                      </TableCell>
+                      <TableCell>{transaction.slot || "N/A"}</TableCell>
+                      <TableCell className="text-xs">
+                        {formatTime(transaction.startTime)}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {formatTime(transaction.endTime)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setEditTransaction(transaction)}
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => setDeleteConfirmation({
+                              open: true, 
+                              id: transaction.id,
+                              type: transaction.type
+                            })}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                <div className="text-sm text-muted-foreground">
+                  Showing {startIndex + 1}-{Math.min(endIndex, processedTransactions.length)} of {processedTransactions.length}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-medium">Page {currentPage} of {totalPages}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <EmptyState 
             title="No transactions found"

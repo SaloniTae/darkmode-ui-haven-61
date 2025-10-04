@@ -1,9 +1,9 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, UserCheck, UserMinus, Plus, Check } from "lucide-react";
+import { Search, UserCheck, UserMinus, Plus, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { 
@@ -27,17 +27,29 @@ interface UsersPanelProps {
 
 export function UsersPanel({ users, service }: UsersPanelProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [newUserId, setNewUserId] = useState("");
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [localUsers, setLocalUsers] = useState<{[key: string]: boolean}>(users || {});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(50);
   
   const { setData, removeData } = useFirebaseService(service);
   
   useEffect(() => {
     setLocalUsers(users || {});
   }, [users]);
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1); // Reset to first page on search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
   
   const handleAddUser = async () => {
     if (!newUserId.trim()) {
@@ -93,12 +105,20 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
     }
   };
   
-  const filteredUsers = Object.entries(localUsers || {}).filter(([userId]) =>
-    userId.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  const sortedUsers = filteredUsers.sort((a, b) => 
-    a[0].localeCompare(b[0])
+  const sortedUsers = useMemo(() => {
+    const filtered = Object.entries(localUsers || {}).filter(([userId]) =>
+      userId.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+    return filtered.sort((a, b) => a[0].localeCompare(b[0]));
+  }, [localUsers, debouncedSearchTerm]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = useMemo(
+    () => sortedUsers.slice(startIndex, endIndex),
+    [sortedUsers, startIndex, endIndex]
   );
 
   return (
@@ -126,64 +146,96 @@ export function UsersPanel({ users, service }: UsersPanelProps) {
       <DataCard title={`All Users (${Object.keys(localUsers || {}).length})`}>
         <div className="glass-morphism rounded-lg overflow-hidden">
           {sortedUsers.length > 0 ? (
-            <div className="max-h-[600px] overflow-y-auto scrollbar-none">
-              <Table>
-                <TableHeader className="sticky top-0 bg-background z-10">
-                  <TableRow>
-                    <TableHead>User ID</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedUsers.map(([userId, isActive]) => (
-                    <TableRow key={userId}>
-                      <TableCell className="font-medium">{userId}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          {isActive ? (
-                            <>
-                              <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                              <span className="text-sm">Active</span>
-                            </>
-                          ) : (
-                            <>
-                              <div className="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
-                              <span className="text-sm">Inactive</span>
-                            </>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant={isActive ? "destructive" : "outline"} 
-                            size="sm"
-                            onClick={() => handleToggleUserStatus(userId, isActive)}
-                          >
-                            {isActive ? "Deactivate" : "Activate"}
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(userId);
-                              setIsConfirmingDelete(true);
-                            }}
-                          >
-                            <UserMinus className="h-4 w-4 mr-1" /> Remove
-                          </Button>
-                        </div>
-                      </TableCell>
+            <>
+              <div className="overflow-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background z-10">
+                    <TableRow>
+                      <TableHead>User ID</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedUsers.map(([userId, isActive]) => (
+                      <TableRow key={userId}>
+                        <TableCell className="font-medium">{userId}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            {isActive ? (
+                              <>
+                                <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                                <span className="text-sm">Active</span>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                                <span className="text-sm">Inactive</span>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant={isActive ? "destructive" : "outline"} 
+                              size="sm"
+                              onClick={() => handleToggleUserStatus(userId, isActive)}
+                            >
+                              {isActive ? "Deactivate" : "Activate"}
+                            </Button>
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUser(userId);
+                                setIsConfirmingDelete(true);
+                              }}
+                            >
+                              <UserMinus className="h-4 w-4 mr-1" /> Remove
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {startIndex + 1}-{Math.min(endIndex, sortedUsers.length)} of {sortedUsers.length}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-medium">Page {currentPage} of {totalPages}</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <EmptyState 
               title="No users found"
-              description={searchTerm ? "Try adjusting your search" : "Start by adding users"}
+              description={debouncedSearchTerm ? "Try adjusting your search" : "Start by adding users"}
               icon={<UserCheck className="h-10 w-10" />}
               action={
                 <Button onClick={() => setIsAddingUser(true)}>
