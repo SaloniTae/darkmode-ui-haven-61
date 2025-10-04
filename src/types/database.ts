@@ -1,3 +1,4 @@
+
 // Admin Config Types
 export interface AdminConfig {
   inferior_admins: string[];
@@ -12,6 +13,7 @@ export interface Credential {
   locked: number;
   max_usage: number;
   password: string;
+  secret?: string;
   usage_count: number;
 }
 
@@ -83,6 +85,24 @@ export interface NetflixPrimeScreen {
   photo_url: string;
 }
 
+export interface OORPayScreen {
+  UPI_ID: string;
+  MERCHANT_NAME: string;
+  MID: string;
+  TEMPLATE_URL: string;
+  LOGO_URL: string;
+}
+
+export interface MaintenanceConfig {
+  alert: string;
+  alert_notify: string;
+  back_message: string;
+  caption: string;
+  message: string;
+  mode: "photo" | "text";
+  photo_url: string;
+}
+
 export interface UIConfig {
   approve_flow: {
     account_format: string;
@@ -102,15 +122,12 @@ export interface UIConfig {
   locked_flow: {
     locked_text: string;
   };
+  maintenance: MaintenanceConfig;
   out_of_stock: {
     photo_url: string;
-    messages: string[];
+    stock_text: string;
   };
-  phonepe_screen: {
-    caption: string;
-    followup_text: string;
-    photo_url: string;
-  };
+  oor_pay_screen: OORPayScreen;
   referral_info: {
     photo_url: string;
   };
@@ -143,6 +160,9 @@ export interface DatabaseSchema {
   cred4?: Credential;
   free_trial_claims: {
     [key: string]: boolean;
+  };
+  maintenance: {
+    enabled: boolean;
   };
   referral_settings: ReferralSettings;
   referrals: {

@@ -6,7 +6,7 @@ import { useTheme } from "@/components/ThemeProvider";
 interface LogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
-  service?: 'crunchyroll' | 'netflix' | 'prime';
+  service?: 'crunchyroll' | 'netflix' | 'prime' | 'nswf';
 }
 
 export const Logo = memo(function Logo({ 
@@ -32,6 +32,10 @@ export const Logo = memo(function Logo({
         return resolvedTheme === "light" 
           ? "https://raw.githubusercontent.com/OTTONRENT01/FOR-PHOTOS/refs/heads/main/Prime-black.png" 
           : "https://raw.githubusercontent.com/OTTONRENT01/FOR-PHOTOS/refs/heads/main/Prime-white.png";
+      case 'nswf':
+        return resolvedTheme === "light"
+          ? "https://img.icons8.com/?size=500&id=35348&format=png&color=000000"
+          : "https://img.icons8.com/?size=500&id=35348&format=png&color=FFFFFF";
       case 'crunchyroll':
       default:
         return resolvedTheme === "light" 

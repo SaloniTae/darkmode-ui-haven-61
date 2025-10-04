@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Slots } from "@/types/database";
 import { DataCard } from "@/components/ui/DataCard";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
-import { Edit, Save, Lock, Unlock, Check, X, CalendarIcon, PlusCircle, Trash } from "lucide-react";
+import { Edit, Save, Lock, Unlock, Check, X, CalendarIcon, PlusCircle, Trash, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, parse } from "date-fns";
@@ -24,11 +24,13 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
+import { getRandomPassword } from "@/data/passwordList";
 
 interface Credential {
   belongs_to_slot: string;
   email: string;
   password: string;
+  secret?: string;
   expiry_date: string;
   locked: number;
   max_usage: number;
@@ -48,10 +50,9 @@ interface CredentialsPanelProps {
 }
 
 export function CredentialsPanel({ credentials, slots, service }: CredentialsPanelProps) {
-  const safeCredentials = credentials || {};
-  
+  const [currentCredentials, setCurrentCredentials] = useState(credentials || {});
   const [editingCredential, setEditingCredential] = useState<string | null>(null);
-  const [editedCredentials, setEditedCredentials] = useState({ ...safeCredentials });
+  const [editedCredentials, setEditedCredentials] = useState(credentials || {});
   const [confirmationDialog, setConfirmationDialog] = useState<{open: boolean; action: () => Promise<void>; title: string; description: string}>({
     open: false,
     action: async () => {},
@@ -64,6 +65,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     belongs_to_slot: "",
     email: "",
     password: "",
+    secret: "",    
     expiry_date: format(new Date(), 'yyyy-MM-dd'),
     locked: 0,
     max_usage: 4,
@@ -71,25 +73,84 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   });
   const [newCredentialKey, setNewCredentialKey] = useState("");
   
-  const { updateData, setData, removeData } = useFirebaseService(service);
+  const { updateData, setData, removeData, subscribeToData } = useFirebaseService(service);
+
+  // Sync with incoming credentials prop changes
+  useEffect(() => {
+    console.log("Credentials prop updated:", credentials);
+    setCurrentCredentials(credentials || {});
+    // Don't reset editedCredentials if we're currently editing
+    if (!editingCredential) {
+      setEditedCredentials(credentials || {});
+    }
+  }, [credentials, editingCredential]);
+
+  // Set up real-time listener for credentials with immediate updates
+  useEffect(() => {
+    console.log("Setting up real-time listener for credentials");
+    const unsubscribe = subscribeToData("/", (data) => {
+      if (data) {
+        console.log("Real-time data received:", data);
+        const credentialKeys = Object.keys(data).filter(key => key.startsWith('cred'));
+        const updatedCredentials: { [key: string]: Credential | undefined } = {};
+        
+        credentialKeys.forEach(key => {
+          if (data[key] && typeof data[key] === 'object') {
+            updatedCredentials[key] = data[key];
+          }
+        });
+        
+        console.log("Updated credentials from real-time:", updatedCredentials);
+        setCurrentCredentials(updatedCredentials);
+        
+        // Update editedCredentials immediately if not currently editing
+        if (!editingCredential) {
+          setEditedCredentials(updatedCredentials);
+        }
+      }
+    });
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [service, subscribeToData, editingCredential]);
+
+  const getAvailableSlots = () => {
+    const availableSlots = ["all", "none"];
+    if (slots) {
+      availableSlots.push(...Object.keys(slots));
+    }
+    return availableSlots;
+  };
 
   const handleEditCredential = (credKey: string) => {
     setEditingCredential(credKey);
     
-    try {
-      const currentCred = editedCredentials[credKey];
-      if (currentCred?.expiry_date) {
-        setSelectedDate(parse(currentCred.expiry_date, 'yyyy-MM-dd', new Date()));
-      } else {
+    // Initialize editedCredentials with current values for editing
+    const currentCred = currentCredentials[credKey];
+    if (currentCred) {
+      setEditedCredentials(prev => ({
+        ...prev,
+        [credKey]: { ...currentCred }
+      }));
+      
+      try {
+        if (currentCred.expiry_date) {
+          setSelectedDate(parse(currentCred.expiry_date, 'yyyy-MM-dd', new Date()));
+        } else {
+          setSelectedDate(new Date());
+        }
+      } catch (e) {
         setSelectedDate(new Date());
       }
-    } catch (e) {
-      setSelectedDate(new Date());
     }
   };
 
   const handleCancelEdit = () => {
-    setEditedCredentials({ ...safeCredentials });
+    // Reset edited credentials to current values
+    setEditedCredentials({ ...currentCredentials });
     setEditingCredential(null);
     setSelectedDate(undefined);
   };
@@ -102,6 +163,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
         return;
       }
       
+      console.log(`Saving credential ${credKey}:`, credToSave);
       await updateData(`/${credKey}`, credToSave);
       toast.success(`${credKey} updated successfully`);
       setEditingCredential(null);
@@ -113,17 +175,31 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   };
 
   const handleInputChange = (credKey: string, field: keyof Credential, value: any) => {
-    setEditedCredentials({
-      ...editedCredentials,
+    console.log(`Updating ${credKey}.${field} to:`, value);
+    
+    // Remove spaces from secret field
+    if (field === 'secret' && typeof value === 'string') {
+      value = value.replace(/\s+/g, '');
+    }
+    
+    setEditedCredentials(prev => ({
+      ...prev,
       [credKey]: {
-        ...(editedCredentials[credKey] || {}),
+        ...(prev[credKey] || currentCredentials[credKey] || {}),
         [field]: value
       } as Credential
-    });
+    }));
+  };
+
+  // Fixed number input handler to prevent leading zeros
+  const handleNumberInputChange = (credKey: string, field: keyof Credential, value: string) => {
+    // Allow empty string or convert to number, ensuring no leading zeros
+    const numValue = value === '' ? 0 : parseInt(value, 10) || 0;
+    handleInputChange(credKey, field, numValue);
   };
 
   const handleToggleLock = async (credKey: string) => {
-    const currentCred = editedCredentials[credKey];
+    const currentCred = currentCredentials[credKey];
     if (!currentCred) {
       toast.error(`Cannot toggle lock for undefined credential: ${credKey}`);
       return;
@@ -132,16 +208,8 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     const newLockedValue = currentCred.locked === 0 ? 1 : 0;
     
     try {
+      console.log(`Toggling lock for ${credKey} to:`, newLockedValue);
       await updateData(`/${credKey}`, { locked: newLockedValue });
-      
-      setEditedCredentials({
-        ...editedCredentials,
-        [credKey]: {
-          ...currentCred,
-          locked: newLockedValue
-        }
-      });
-      
       toast.success(`${credKey} ${newLockedValue === 1 ? 'locked' : 'unlocked'} successfully`);
     } catch (error) {
       console.error(`Error updating lock state for ${credKey}:`, error);
@@ -150,7 +218,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   };
 
   const toggleLockState = (credKey: string) => {
-    const currentCred = editedCredentials[credKey];
+    const currentCred = currentCredentials[credKey];
     if (!currentCred) {
       toast.error(`Cannot toggle lock state for undefined credential: ${credKey}`);
       return;
@@ -168,12 +236,8 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
 
   const handleDeleteCredential = async (credKey: string) => {
     try {
+      console.log(`Deleting credential: ${credKey}`);
       await removeData(`/${credKey}`);
-      
-      const updatedCredentials = { ...editedCredentials };
-      delete updatedCredentials[credKey];
-      
-      setEditedCredentials(updatedCredentials);
       toast.success(`${credKey} deleted successfully`);
     } catch (error) {
       console.error(`Error deleting ${credKey}:`, error);
@@ -188,6 +252,21 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
       title: `Delete ${credKey}`,
       description: `Are you sure you want to delete ${credKey}? This action cannot be undone.`
     });
+  };
+
+  const handleRotatePassword = (credKey: string) => {
+    const randomPassword = getRandomPassword();
+    
+    if (credKey === 'new') {
+      setNewCredential({
+        ...newCredential,
+        password: randomPassword
+      });
+    } else {
+      handleInputChange(credKey, 'password', randomPassword);
+    }
+    
+    toast.success("Password rotated successfully");
   };
 
   const formatDate = (dateString: string): string => {
@@ -215,10 +294,21 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
   };
   
   const handleNewCredentialChange = (field: keyof Credential, value: any) => {
+    // Remove spaces from secret field
+    if (field === 'secret' && typeof value === 'string') {
+      value = value.replace(/\s+/g, '');
+    }
+    
     setNewCredential({
       ...newCredential,
       [field]: value
     });
+  };
+
+  // Fixed number input handler for new credential
+  const handleNewCredentialNumberChange = (field: keyof Credential, value: string) => {
+    const numValue = value === '' ? 0 : parseInt(value, 10) || 0;
+    handleNewCredentialChange(field, numValue);
   };
   
   const handleCreateCredential = async () => {
@@ -228,19 +318,16 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     }
     
     try {
+      console.log(`Creating new credential: ${newCredentialKey}`, newCredential);
       await setData(`/${newCredentialKey}`, newCredential);
       toast.success(`${newCredentialKey} created successfully`);
-      
-      setEditedCredentials({
-        ...editedCredentials,
-        [newCredentialKey]: newCredential
-      });
       
       setNewCredentialKey("");
       setNewCredential({
         belongs_to_slot: "",
         email: "",
         password: "",
+        secret: "",
         expiry_date: format(new Date(), 'yyyy-MM-dd'),
         locked: 0,
         max_usage: 4,
@@ -253,20 +340,27 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     }
   };
 
-  const validCredentialEntries = Object.entries(editedCredentials).filter(
-    ([_, cred]) => cred !== undefined && cred !== null
+  const validCredentialEntries = Object.entries(currentCredentials).filter(
+    ([key, cred]) => {
+      return cred && 
+             typeof cred === "object" && 
+             key.startsWith('cred') &&
+             (cred.email !== undefined || cred.password !== undefined);
+    }
   );
+
+  console.log("Valid credential entries:", validCredentialEntries);
 
   if (validCredentialEntries.length === 0) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">
-  Credentials
-  <span className="md:hidden"><br /></span>
-  <span className="hidden md:inline"> </span>
-  Management
-</h2>
+            Credentials
+            <span className="md:hidden"><br /></span>
+            <span className="hidden md:inline"> </span>
+            Management
+          </h2>
           <Button onClick={() => setIsAddingCredential(true)}>
             <PlusCircle className="mr-2 h-4 w-4" /> Add Credential
           </Button>
@@ -317,11 +411,33 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                   
                   <div className="space-y-2">
                     <Label htmlFor="new-cred-password">Password</Label>
+                    <div className="flex">
+                      <Input
+                        id="new-cred-password"
+                        placeholder="password"
+                        value={newCredential.password}
+                        onChange={(e) => handleNewCredentialChange('password', e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="ml-2"
+                        onClick={() => handleRotatePassword('new')}
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="new-cred-secret">Secret</Label>
                     <Input
-                      id="new-cred-password"
-                      placeholder="password"
-                      value={newCredential.password}
-                      onChange={(e) => handleNewCredentialChange('password', e.target.value)}
+                      id="new-cred-secret"
+                      placeholder="secret"
+                      value={newCredential.secret || ""}
+                      onChange={(e) => handleNewCredentialChange('secret', e.target.value)}
                     />
                   </div>
                   
@@ -335,7 +451,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                         <SelectValue placeholder="Select slot" />
                       </SelectTrigger>
                       <SelectContent className="bg-background border border-input">
-                        {Object.keys(slots || {}).map((slotKey) => (
+                        {getAvailableSlots().map((slotKey) => (
                           <SelectItem key={slotKey} value={slotKey}>{slotKey}</SelectItem>
                         ))}
                       </SelectContent>
@@ -376,8 +492,9 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                       <Input
                         id="new-cred-max-usage"
                         type="number"
-                        value={newCredential.max_usage}
-                        onChange={(e) => handleNewCredentialChange('max_usage', parseInt(e.target.value))}
+                        min="0"
+                        value={newCredential.max_usage.toString()}
+                        onChange={(e) => handleNewCredentialNumberChange('max_usage', e.target.value)}
                       />
                     </div>
                     
@@ -424,11 +541,11 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
-  Credentials
-  <span className="md:hidden"><br /></span>
-  <span className="hidden md:inline"> </span>
-  Management
-</h2>
+          Credentials
+          <span className="md:hidden"><br /></span>
+          <span className="hidden md:inline"> </span>
+          Management
+        </h2>
         <Button onClick={() => setIsAddingCredential(true)}>
           <PlusCircle className="mr-2 h-4 w-4" /> Add Credential
         </Button>
@@ -439,7 +556,8 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
           if (!cred) return null;
           
           const isEditing = editingCredential === credKey;
-          const currentCred = editedCredentials[credKey];
+          const currentCred = currentCredentials[credKey];
+          const editedCred = editedCredentials[credKey];
           
           if (!currentCred) return null;
           
@@ -457,32 +575,55 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                         <Label htmlFor={`${credKey}-email`}>Email</Label>
                         <Input
                           id={`${credKey}-email`}
-                          value={currentCred.email}
+                          value={editedCred?.email || ""}
                           onChange={(e) => handleInputChange(credKey, 'email', e.target.value)}
                         />
                       </div>
                       
                       <div className="space-y-1">
                         <Label htmlFor={`${credKey}-password`}>Password</Label>
+                        <div className="flex">
+                          <Input
+                            id={`${credKey}-password`}
+                            type="text"
+                            value={editedCred?.password || ""}
+                            onChange={(e) => handleInputChange(credKey, 'password', e.target.value)}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="ml-2"
+                            onClick={() => handleRotatePassword(credKey)}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label htmlFor={`${credKey}-secret`}>Secret</Label>
                         <Input
-                          id={`${credKey}-password`}
+                          id={`${credKey}-secret`}
                           type="text"
-                          value={currentCred.password}
-                          onChange={(e) => handleInputChange(credKey, 'password', e.target.value)}
+                          value={editedCred?.secret || ""}
+                          onChange={(e) => handleInputChange(credKey, 'secret', e.target.value)}
+                          placeholder="Enter secret"
                         />
                       </div>
                       
                       <div className="space-y-1">
                         <Label htmlFor={`${credKey}-slot`}>Slot</Label>
                         <Select
-                          value={currentCred.belongs_to_slot}
+                          value={editedCred?.belongs_to_slot || ""}
                           onValueChange={(value) => handleInputChange(credKey, 'belongs_to_slot', value)}
                         >
                           <SelectTrigger id={`${credKey}-slot`}>
                             <SelectValue placeholder="Select slot" />
                           </SelectTrigger>
                           <SelectContent className="bg-background border border-input">
-                            {Object.keys(slots || {}).map((slotKey) => (
+                            {getAvailableSlots().map((slotKey) => (
                               <SelectItem key={slotKey} value={slotKey}>{slotKey}</SelectItem>
                             ))}
                           </SelectContent>
@@ -494,7 +635,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                         <div className="flex">
                           <Input
                             id={`${credKey}-expiry`}
-                            value={currentCred.expiry_date}
+                            value={editedCred?.expiry_date || ""}
                             onChange={(e) => handleInputChange(credKey, 'expiry_date', e.target.value)}
                             className="flex-1"
                           />
@@ -523,8 +664,9 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                           <Input
                             id={`${credKey}-max-usage`}
                             type="number"
-                            value={currentCred.max_usage}
-                            onChange={(e) => handleInputChange(credKey, 'max_usage', parseInt(e.target.value))}
+                            min="0"
+                            value={editedCred?.max_usage?.toString() || "0"}
+                            onChange={(e) => handleNumberInputChange(credKey, 'max_usage', e.target.value)}
                           />
                         </div>
                         
@@ -533,8 +675,9 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                           <Input
                             id={`${credKey}-usage-count`}
                             type="number"
-                            value={currentCred.usage_count}
-                            onChange={(e) => handleInputChange(credKey, 'usage_count', parseInt(e.target.value))}
+                            min="0"
+                            value={editedCred?.usage_count?.toString() || "0"}
+                            onChange={(e) => handleNumberInputChange(credKey, 'usage_count', e.target.value)}
                           />
                         </div>
                       </div>
@@ -543,15 +686,15 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                         <Label className="flex items-center gap-2">
                           Lock Status:
                           <button
-                            onClick={() => handleInputChange(credKey, 'locked', currentCred.locked === 0 ? 1 : 0)}
+                            onClick={() => handleInputChange(credKey, 'locked', (editedCred?.locked || 0) === 0 ? 1 : 0)}
                             className={cn(
                               "flex items-center justify-center w-6 h-6 rounded-full transition-colors",
-                              currentCred.locked === 0 
+                              (editedCred?.locked || 0) === 0 
                                 ? "bg-green-500 text-white hover:bg-green-600" 
                                 : "bg-gray-300 text-gray-600 hover:bg-gray-400"
                             )}
                           >
-                            {currentCred.locked === 0 ? (
+                            {(editedCred?.locked || 0) === 0 ? (
                               <Check className="w-4 h-4" />
                             ) : (
                               <X className="w-4 h-4" />
@@ -707,11 +850,33 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                 
                 <div className="space-y-2">
                   <Label htmlFor="new-cred-password">Password</Label>
+                  <div className="flex">
+                    <Input
+                      id="new-cred-password"
+                      placeholder="password"
+                      value={newCredential.password}
+                      onChange={(e) => handleNewCredentialChange('password', e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="ml-2"
+                      onClick={() => handleRotatePassword('new')}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="new-cred-secret">Secret</Label>
                   <Input
-                    id="new-cred-password"
-                    placeholder="password"
-                    value={newCredential.password}
-                    onChange={(e) => handleNewCredentialChange('password', e.target.value)}
+                    id="new-cred-secret"
+                    placeholder="secret"
+                    value={newCredential.secret || ""}
+                    onChange={(e) => handleNewCredentialChange('secret', e.target.value)}
                   />
                 </div>
                 
@@ -725,7 +890,7 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                       <SelectValue placeholder="Select slot" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border border-input">
-                      {Object.keys(slots || {}).map((slotKey) => (
+                      {getAvailableSlots().map((slotKey) => (
                         <SelectItem key={slotKey} value={slotKey}>{slotKey}</SelectItem>
                       ))}
                     </SelectContent>
@@ -766,8 +931,9 @@ export function CredentialsPanel({ credentials, slots, service }: CredentialsPan
                     <Input
                       id="new-cred-max-usage"
                       type="number"
-                      value={newCredential.max_usage}
-                      onChange={(e) => handleNewCredentialChange('max_usage', parseInt(e.target.value))}
+                      min="0"
+                      value={newCredential.max_usage.toString()}
+                      onChange={(e) => handleNewCredentialNumberChange('max_usage', e.target.value)}
                     />
                   </div>
                   

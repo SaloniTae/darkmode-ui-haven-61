@@ -147,22 +147,22 @@
   
   /* Time button styles */
   .time-button {
-    @apply border border-white/20 bg-black/60 rounded-full px-3 py-1.5 min-w-[110px] h-[38px] flex items-center justify-center max-[400px]:min-w-0 max-[400px]:px-2 max-[400px]:h-[34px] max-[400px]:py-0.5;
+    @apply bg-white border border-gray-300 rounded-full px-3 py-1.5 min-w-[110px] h-[38px] flex items-center justify-center max-[400px]:min-w-0 max-[400px]:px-2 max-[400px]:h-[34px] max-[400px]:py-0.5 dark:border-white/20 dark:bg-black/60;
   }
   
   /* Active time button hover and active states */
   .active-time-button {
-    @apply hover:bg-white hover:border-white hover:text-black focus:bg-white focus:border-white focus:text-black transition-colors duration-300;
+    @apply hover:bg-gray-900 hover:border-gray-900 hover:text-white focus:bg-gray-900 focus:border-gray-900 focus:text-white transition-colors duration-300 dark:hover:bg-white dark:hover:border-white dark:hover:text-black dark:focus:bg-white dark:focus:border-white dark:focus:text-black;
   }
   
   .active-time-button:hover .time-text,
   .active-time-button:focus .time-text {
-    @apply text-black;
+    @apply text-white dark:text-black;
   }
   
   /* Expired time button hover and active states */
   .expired-time-button {
-    @apply hover:bg-red-400 hover:border-red-400 hover:text-white focus:bg-red-400 focus:border-red-400 focus:text-white transition-colors duration-300;
+    @apply hover:bg-red-500 hover:border-red-500 hover:text-white focus:bg-red-500 focus:border-red-500 focus:text-white transition-colors duration-300 dark:hover:bg-red-400 dark:hover:border-red-400 dark:focus:bg-red-400 dark:focus:border-red-400;
   }
   
   .expired-time-button:hover .time-text,
@@ -171,7 +171,7 @@
   }
   
   .time-text {
-    @apply text-base tracking-wider max-[400px]:text-sm transition-colors duration-300;
+    @apply text-base tracking-wider max-[400px]:text-sm transition-colors duration-300 text-gray-800 dark:text-white;
   }
   
   .time-hour-minute {
@@ -184,7 +184,7 @@
   
   /* Dialog time button styles */
   .dialog-time-button {
-    @apply px-3 py-2 rounded-full border border-white/10 bg-black/60 flex items-center justify-center font-mono max-[400px]:w-full max-[400px]:px-2 max-[400px]:py-1.5;
+    @apply px-3 py-2 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center font-mono max-[400px]:w-full max-[400px]:px-2 max-[400px]:py-1.5 dark:border-white/10 dark:bg-black/60;
   }
   
   /* Dialog animation */

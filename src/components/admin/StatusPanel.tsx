@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { DataCard } from "@/components/ui/DataCard";
 import { formatTimeWithAmPm } from "@/utils/dateFormatUtils";
@@ -11,6 +10,7 @@ import { ConfirmationDialog } from "@/components/admin/ConfirmationDialog";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Transaction {
   approved_at: string;
@@ -29,6 +29,8 @@ interface StatusPanelProps {
   service: string;
 }
 
+type SortOption = 'time' | 'slot' | 'credential';
+
 export function StatusPanel({ transactions, service }: StatusPanelProps) {
   const [activeTransactions, setActiveTransactions] = useState<[string, Transaction][]>([]);
   const [expiredTransactions, setExpiredTransactions] = useState<[string, Transaction][]>([]);
@@ -38,6 +40,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [notifiedExpiries, setNotifiedExpiries] = useState<Record<string, boolean>>({});
   const [upcomingExpiryNotices, setUpcomingExpiryNotices] = useState<Record<string, boolean>>({});
+  const [sortOption, setSortOption] = useState<SortOption>('time');
   const { fetchData, updateData } = useFirebaseService(service);
   const { user } = useAuth();
 
@@ -99,6 +102,69 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     }
   };
 
+  // Helper function to extract all transactions including FTRIAL-ID and REF-ID
+  const extractAllTransactions = (transactionsData: Record<string, any>) => {
+    const allTransactions: [string, Transaction][] = [];
+    
+    Object.entries(transactionsData).forEach(([key, value]) => {
+      // Skip entries that are just numbers (counters)
+      if (typeof value === "number") return;
+      
+      // Handle FTRIAL-ID transactions
+      if (key === "FTRIAL-ID" && typeof value === "object") {
+        Object.entries(value).forEach(([childKey, childValue]) => {
+          if (typeof childValue === "object" && childValue && (childValue as any).end_time) {
+            allTransactions.push([childKey, childValue as Transaction]);
+          }
+        });
+        return; // Skip further processing for FTRIAL-ID
+      }
+      
+      // Handle REF-ID transactions
+      if (key === "REF-ID" && typeof value === "object") {
+        Object.entries(value).forEach(([childKey, childValue]) => {
+          if (typeof childValue === "object" && childValue && (childValue as any).end_time) {
+            allTransactions.push([childKey, childValue as Transaction]);
+          }
+        });
+        return; // Skip further processing for REF-ID
+      }
+      
+      // Handle regular transactions (direct children of transactions)
+      if (typeof value === "object" && value.end_time) {
+        allTransactions.push([key, value as Transaction]);
+      }
+      
+      // Handle nested transaction groups (existing logic for other nested structures)
+      if (typeof value === "object" && !value.end_time && key !== "FTRIAL-ID" && key !== "REF-ID") {
+        Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+          if (typeof nestedValue === "object" && nestedValue && (nestedValue as any).end_time) {
+            allTransactions.push([`${key}-${nestedKey}`, nestedValue as Transaction]);
+          }
+        });
+      }
+    });
+    
+    return allTransactions;
+  };
+
+  // Sort transactions based on selected option
+  const sortTransactions = (transactions: [string, Transaction][], sortBy: SortOption) => {
+    return [...transactions].sort((a, b) => {
+      switch (sortBy) {
+        case 'slot':
+          return (a[1].slot_id || '').localeCompare(b[1].slot_id || '');
+        case 'credential':
+          return (a[1].assign_to || '').localeCompare(b[1].assign_to || '');
+        case 'time':
+        default:
+          // Keep existing time-based sorting
+          return new Date(a[1].end_time.replace(' ', 'T')).getTime() - 
+                 new Date(b[1].end_time.replace(' ', 'T')).getTime();
+      }
+    });
+  };
+
   // Filter transactions into active and expired
   const filterTransactions = useCallback(() => {
     const now = new Date();
@@ -106,11 +172,10 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     const expired: [string, Transaction][] = [];
     let newExpirations = false;
 
-    Object.entries(transactions).forEach(([id, data]) => {
-      // Skip entries that are just numbers (counters)
-      if (typeof data === "number") return;
-      
-      const transaction = data as Transaction;
+    // Extract all transactions including FTRIAL-ID and REF-ID
+    const allTransactions = extractAllTransactions(transactions);
+
+    allTransactions.forEach(([id, transaction]) => {
       if (!transaction.end_time) return;
       
       // Skip hidden transactions
@@ -137,20 +202,13 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       }
     });
 
-    // Sort by end time (most recent expiring first for active, most recently expired first for expired)
-    active.sort((a, b) => 
-      new Date(a[1].end_time.replace(' ', 'T')).getTime() - 
-      new Date(b[1].end_time.replace(' ', 'T')).getTime()
-    );
-    
-    expired.sort((a, b) => 
-      new Date(b[1].end_time.replace(' ', 'T')).getTime() - 
-      new Date(a[1].end_time.replace(' ', 'T')).getTime()
-    );
+    // Apply sorting to both active and expired transactions
+    const sortedActive = sortTransactions(active, sortOption);
+    const sortedExpired = sortTransactions(expired, sortOption);
 
     // Check for upcoming expirations in the next hour that we haven't notified about
     const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-    const upcomingExpiries = active.filter(([id, tx]) => {
+    const upcomingExpiries = sortedActive.filter(([id, tx]) => {
       const endTime = new Date(tx.end_time.replace(' ', 'T'));
       return endTime <= oneHourFromNow && !upcomingExpiryNotices[id];
     });
@@ -178,8 +236,8 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     });
 
     // Send notification for newly expired accounts
-    if (newExpirations && expired.length > 0) {
-      const nextExpiry = getNextExpiryTime(active);
+    if (newExpirations && sortedExpired.length > 0) {
+      const nextExpiry = getNextExpiryTime(sortedActive);
       let nextExpiryInfo = "";
       
       if (nextExpiry) {
@@ -187,7 +245,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         nextExpiryInfo = ` Next account expires ${nextExpiryTime}.`;
       }
       
-      const toastMessage = `${expired.length} account${expired.length > 1 ? 's' : ''} have expired.${nextExpiryInfo}`;
+      const toastMessage = `${sortedExpired.length} account${sortedExpired.length > 1 ? 's' : ''} have expired.${nextExpiryInfo}`;
       
       toast({
         title: "Accounts Expired",
@@ -197,9 +255,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       });
     }
 
-    setActiveTransactions(active);
-    setExpiredTransactions(expired);
-  }, [transactions, notifiedExpiries, upcomingExpiryNotices]);
+    setActiveTransactions(sortedActive);
+    setExpiredTransactions(sortedExpired);
+  }, [transactions, notifiedExpiries, upcomingExpiryNotices, sortOption]);
 
   // Initialize and set up auto-refresh
   useEffect(() => {
@@ -224,6 +282,41 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     setIsDialogOpen(true);
   };
 
+  // Function to get display text for buttons based on sort option with custom font styling
+  const getButtonDisplayText = (transaction: Transaction, sortBy: SortOption) => {
+    switch (sortBy) {
+      case 'slot':
+        const slotId = transaction.slot_id ? transaction.slot_id.toUpperCase() : 'NO SLOT';
+        // Parse SLOT and numbers separately for different fonts
+        const slotParts = slotId.match(/([A-Z]+)(_?)(\d*)/);
+        if (slotParts) {
+          return (
+            <>
+              <span className="font-nexa-extrabold">{slotParts[1]}</span>
+              <span className="font-sans">{slotParts[2]}{slotParts[3]}</span>
+            </>
+          );
+        }
+        return <span className="font-nexa-extrabold">{slotId}</span>;
+      case 'credential':
+        const credId = transaction.assign_to ? transaction.assign_to.toUpperCase() : 'NO CREDENTIAL';
+        // Parse CRED and numbers separately for different fonts
+        const credParts = credId.match(/([A-Z]+)(_?)(\d*)/);
+        if (credParts) {
+          return (
+            <>
+              <span className="font-nexa-extrabold">{credParts[1]}</span>
+              <span className="font-sans">{credParts[2]}{credParts[3]}</span>
+            </>
+          );
+        }
+        return <span className="font-nexa-extrabold">{credId}</span>;
+      case 'time':
+      default:
+        return formatTimeWithCustomFonts(transaction.end_time);
+    }
+  };
+
   // Custom formatting function to separate hours+minutes from AM/PM
   const formatTimeWithCustomFonts = (timeString: string) => {
     const formattedTime = formatTimeWithAmPm(timeString);
@@ -241,6 +334,22 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     return formattedTime;
   };
 
+  // Helper function to get the correct path for updating transactions
+  const getTransactionUpdatePath = (transactionId: string) => {
+    // Check if this transaction exists in FTRIAL-ID
+    if (transactions["FTRIAL-ID"] && transactions["FTRIAL-ID"][transactionId]) {
+      return `/transactions/FTRIAL-ID/${transactionId}`;
+    }
+    
+    // Check if this transaction exists in REF-ID
+    if (transactions["REF-ID"] && transactions["REF-ID"][transactionId]) {
+      return `/transactions/REF-ID/${transactionId}`;
+    }
+    
+    // Default to regular transaction path
+    return `/transactions/${transactionId}`;
+  };
+
   // Mark expired orders as hidden and update credentials
   const handleClearExpired = async () => {
     try {
@@ -251,40 +360,46 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       let clearedCount = 0;
       let errorCount = 0;
 
-      // Process each expired transaction
-      const processingPromises = expiredTransactions.map(async ([id, transaction]) => {
+      // Step 1: Group expired transactions by credential to count them
+      const credentialCounts: Record<string, number> = {};
+      expiredTransactions.forEach(([id, transaction]) => {
+        if (transaction.assign_to) {
+          credentialCounts[transaction.assign_to] = (credentialCounts[transaction.assign_to] || 0) + 1;
+        }
+      });
+
+      // Step 2: Mark all transactions as hidden (can be done in parallel)
+      const hidingPromises = expiredTransactions.map(async ([id, transaction]) => {
         try {
-          // Mark the transaction as hidden in the database
-          await updateData(`/transactions/${id}`, {
-            hidden: true
-          });
-          
-          // Only update credential usage if it has assign_to property
-          if (transaction.assign_to) {
-            const credKey = transaction.assign_to;
-            
-            // Check if the credential exists in the database
-            if (credData[credKey] && typeof credData[credKey].usage_count === 'number') {
-              // Decrement the usage count, ensuring it doesn't go below 0
-              const currentCount = credData[credKey].usage_count;
-              const newCount = Math.max(0, currentCount - 1);
-              
-              // Update the credential's usage count
-              await updateData(`/${credKey}`, {
-                usage_count: newCount
-              });
-            }
-          }
-          
+          const updatePath = getTransactionUpdatePath(id);
+          await updateData(updatePath, { hidden: true });
           clearedCount++;
         } catch (e) {
-          console.error(`Error processing transaction ${id}:`, e);
+          console.error(`Error hiding transaction ${id}:`, e);
           errorCount++;
         }
       });
       
-      // Wait for all processes to complete
-      await Promise.all(processingPromises);
+      await Promise.all(hidingPromises);
+      
+      // Step 3: Update each credential's usage_count once with the batch count
+      const credentialUpdatePromises = Object.entries(credentialCounts).map(async ([credKey, count]) => {
+        try {
+          // Check if the credential exists in the database
+          if (credData[credKey] && typeof credData[credKey].usage_count === 'number') {
+            // Decrement by the total count, ensuring it doesn't go below 0
+            const currentCount = credData[credKey].usage_count;
+            const newCount = Math.max(0, currentCount - count);
+            
+            // Update the credential's usage count once
+            await updateData(`/${credKey}`, { usage_count: newCount });
+          }
+        } catch (e) {
+          console.error(`Error updating credential ${credKey}:`, e);
+        }
+      });
+      
+      await Promise.all(credentialUpdatePromises);
       
       // Clear expired transactions from UI
       setExpiredTransactions([]);
@@ -294,7 +409,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         if (clearedCount > 0) {
           toast({
             title: "Partially Completed",
-            description: `Cleared ${clearedCount} orders, but ${errorCount} failed. Some usage counts updated.`,
+            description: `Cleared ${clearedCount} orders, but ${errorCount} failed. Usage counts updated.`,
             variant: "default"
           });
         } else {
@@ -329,6 +444,16 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         title="Account Status" 
         headerAction={
           <div className="flex items-center space-x-2">
+            <Select value={sortOption} onValueChange={(value: SortOption) => setSortOption(value)}>
+              <SelectTrigger className="w-20 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="time">Time</SelectItem>
+                <SelectItem value="slot">Slot</SelectItem>
+                <SelectItem value="credential">Cred</SelectItem>
+              </SelectContent>
+            </Select>
             {expiredTransactions.length > 0 && (
               <Button 
                 variant="outline" 
@@ -345,7 +470,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
         <div className="space-y-10 py-4">
           {/* Active Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold uppercase tracking-wider">ACTIVE</h2>
+            <h2 className="text-2xl font-bold uppercase tracking-wider text-foreground">ACTIVE</h2>
             
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-3 max-[400px]:gap-2">
               {activeTransactions.length > 0 ? (
@@ -357,13 +482,13 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     title={formatDateWithTime(transaction.end_time)}
                   >
                     <span className="time-text">
-                      {formatTimeWithCustomFonts(transaction.end_time)}
+                      {getButtonDisplayText(transaction, sortOption)}
                     </span>
                   </button>
                 ))
               ) : (
                 <div className="text-center col-span-3 max-[400px]:col-span-3 py-6">
-                  <p className="text-white/60">No active accounts</p>
+                  <p className="text-muted-foreground">No active accounts</p>
                 </div>
               )}
             </div>
@@ -371,12 +496,12 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           
           {/* Divider */}
           <div className="flex items-center justify-center py-1">
-            <Minus className="w-full h-0.5 text-white/50" />
+            <Minus className="w-full h-0.5 text-muted-foreground" />
           </div>
           
           {/* Expired Section */}
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold uppercase text-white tracking-wider">EXPIRED</h2>
+            <h2 className="text-2xl font-bold uppercase text-foreground tracking-wider">EXPIRED</h2>
             
             <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 xs:grid-cols-2 max-[400px]:grid-cols-3 max-[400px]:gap-2">
               {expiredTransactions.length > 0 ? (
@@ -387,14 +512,14 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                     className="time-button expired-time-button max-[400px]:w-full max-[400px]:mx-auto"
                     title={formatDateWithTime(transaction.end_time)}
                   >
-                    <span className="time-text text-red-400">
-                      {formatTimeWithCustomFonts(transaction.end_time)}
+                    <span className="time-text text-red-500 dark:text-red-400">
+                      {getButtonDisplayText(transaction, sortOption)}
                     </span>
                   </button>
                 ))
               ) : (
                 <div className="text-center col-span-3 max-[400px]:col-span-3 py-6">
-                  <p className="text-white/60">No expired accounts</p>
+                  <p className="text-muted-foreground">No expired accounts</p>
                 </div>
               )}
             </div>
@@ -404,29 +529,29 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       
       {/* Transaction Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-black border-white/10 backdrop-blur-xl text-white max-w-sm max-[400px]:max-w-[90%] dialog-animation">
+        <DialogContent className="bg-background border-border backdrop-blur-xl text-foreground max-w-sm max-[400px]:max-w-[90%] dialog-animation">
           {selectedTransaction && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-center">Account Details</DialogTitle>
+                <DialogTitle className="text-center text-foreground">Account Details</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-4">
                 <div className="flex justify-between">
-                  <span className="text-white/60">ID:</span>
-                  <span className="break-all">{selectedTransaction[0]}</span>
+                  <span className="text-muted-foreground">ID:</span>
+                  <span className="break-all text-foreground">{selectedTransaction[0]}</span>
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-white/60">Slot:</span>
-                  <span>{selectedTransaction[1].slot_id}</span>
+                  <span className="text-muted-foreground">Slot:</span>
+                  <span className="text-foreground">{selectedTransaction[1].slot_id}</span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4 max-[400px]:grid-cols-1 max-[400px]:gap-2">
                   {selectedTransaction[1].start_time && (
                     <div className="text-center">
-                      <div className="text-sm text-white/60 mb-1">Start</div>
+                      <div className="text-sm text-muted-foreground mb-1">Start</div>
                       <div className="dialog-time-button" title={formatDateWithTime(selectedTransaction[1].start_time)}>
-                        <span className="inline-flex items-center justify-center">
+                        <span className="inline-flex items-center justify-center text-foreground">
                           <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[0]}</span>
                           <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].start_time).split(' ')[1]}</span>
                         </span>
@@ -436,9 +561,9 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   
                   {selectedTransaction[1].approved_at && (
                     <div className="text-center">
-                      <div className="text-sm text-white/60 mb-1">Approved</div>
+                      <div className="text-sm text-muted-foreground mb-1">Approved</div>
                       <div className="dialog-time-button" title={formatDateWithTime(selectedTransaction[1].approved_at)}>
-                        <span className="inline-flex items-center justify-center">
+                        <span className="inline-flex items-center justify-center text-foreground">
                           <span className="time-hour-minute">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[0]}</span>
                           <span className="time-am-pm">{formatTimeWithAmPm(selectedTransaction[1].approved_at).split(' ')[1]}</span>
                         </span>
@@ -448,10 +573,10 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                   
                   {selectedTransaction[1].end_time && (
                     <div className="text-center">
-                      <div className="text-sm text-white/60 mb-1">End</div>
+                      <div className="text-sm text-muted-foreground mb-1">End</div>
                       <div className={cn(
                         "dialog-time-button",
-                        new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-red-400" : ""
+                        new Date(selectedTransaction[1].end_time.replace(' ', 'T')) < new Date() ? "text-red-500 dark:text-red-400" : "text-foreground"
                       )}
                       title={formatDateWithTime(selectedTransaction[1].end_time)}>
                         <span className="inline-flex items-center justify-center">
@@ -465,19 +590,19 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
                 
                 {selectedTransaction[1].assign_to && (
                   <div className="text-center mt-4">
-                    <p className="font-semibold max-[400px]:break-all">Account: {selectedTransaction[1].assign_to}</p>
+                    <p className="font-semibold max-[400px]:break-all text-foreground">Account: {selectedTransaction[1].assign_to}</p>
                   </div>
                 )}
                 
                 {selectedTransaction[1].last_email && (
                   <div className="text-center">
-                    <p className="text-sm max-[400px]:break-all">Email: {selectedTransaction[1].last_email}</p>
+                    <p className="text-sm max-[400px]:break-all text-foreground">Email: {selectedTransaction[1].last_email}</p>
                   </div>
                 )}
                 
                 {selectedTransaction[1].user_id && (
                   <div className="text-center">
-                    <p className="text-sm text-white/60">User ID: {selectedTransaction[1].user_id}</p>
+                    <p className="text-sm text-muted-foreground">User ID: {selectedTransaction[1].user_id}</p>
                   </div>
                 )}
               </div>
@@ -485,7 +610,7 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
           )}
         </DialogContent>
       </Dialog>
-
+      
       {/* Confirmation Dialog for Clear Expired Orders */}
       <ConfirmationDialog
         open={isConfirmationOpen}

@@ -14,7 +14,13 @@ interface AdminPanelProps {
 }
 
 export function AdminPanel({ adminConfig, service }: AdminPanelProps) {
-  const [editedConfig, setEditedConfig] = useState<AdminConfig>({ ...adminConfig });
+  // Ensure adminConfig always has the required arrays
+  const initialConfig: AdminConfig = {
+    superior_admins: adminConfig?.superior_admins || [],
+    inferior_admins: adminConfig?.inferior_admins || []
+  };
+  
+  const [editedConfig, setEditedConfig] = useState<AdminConfig>(initialConfig);
   const [isEditing, setIsEditing] = useState(false);
   
   const { updateData } = useFirebaseService(service);
@@ -38,7 +44,7 @@ export function AdminPanel({ adminConfig, service }: AdminPanelProps) {
           variant={isEditing ? "default" : "outline"}
           onClick={() => {
             if (isEditing) {
-              setEditedConfig({ ...adminConfig });
+              setEditedConfig(initialConfig);
             }
             setIsEditing(!isEditing);
           }}

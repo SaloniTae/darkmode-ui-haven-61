@@ -8,12 +8,12 @@ import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredService?: "crunchyroll" | "netflix" | "prime";
+  requiredService?: "crunchyroll" | "netflix" | "prime" | "nswf";
 }
 
 export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProps) => {
   const { user, currentService } = useAuth();
-  const { isTabRestricted } = useAccessControl();
+  const { isTabRestricted, isInitialized } = useAccessControl();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
 
@@ -26,13 +26,25 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
     return () => clearTimeout(timer);
   }, []);
 
+  // Clear the session flag when user logs out
+  useEffect(() => {
+    if (!user) {
+      // Clear all restriction flags for all users when logging out
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('restrictions_applied_')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+  }, [user]);
+
   // Special case for the config route - we don't redirect
   if (location.pathname === "/config") {
     return <>{children}</>;
   }
 
   // Show loading state while checking access
-  if (loading) {
+  if (loading || !isInitialized) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center">
@@ -55,7 +67,7 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
 
   // Check for tab access - parse the current tab from the URL if in admin
   const currentPath = location.pathname;
-  const tabMatches = currentPath.match(/\/(crunchyroll|netflix|prime)\/?(.*)?/);
+  const tabMatches = currentPath.match(/\/(crunchyroll|netflix|prime|nswf)\/?(.*)?/);
   
   if (tabMatches && tabMatches[2] && user) {
     const currentTab = tabMatches[2];
