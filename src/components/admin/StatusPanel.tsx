@@ -175,6 +175,8 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
     // Extract all transactions including FTRIAL-ID and REF-ID
     const allTransactions = extractAllTransactions(transactions);
 
+    console.log("Filtering transactions, total found:", allTransactions.length);
+
     allTransactions.forEach(([id, transaction]) => {
       if (!transaction.end_time) return;
       
@@ -401,8 +403,20 @@ export function StatusPanel({ transactions, service }: StatusPanelProps) {
       
       await Promise.all(credentialUpdatePromises);
       
-      // Clear expired transactions from UI
+      // Clear expired transactions from UI immediately
       setExpiredTransactions([]);
+      
+      // Clear the notified expiries to prevent them from reappearing
+      const clearedIds = expiredTransactions.map(([id]) => id);
+      setNotifiedExpiries(prev => {
+        const updated = { ...prev };
+        clearedIds.forEach(id => {
+          delete updated[id];
+        });
+        return updated;
+      });
+      
+      console.log("Cleared expired transactions:", clearedIds);
       
       // Show appropriate toast message
       if (errorCount > 0) {
