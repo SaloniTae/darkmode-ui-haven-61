@@ -6,7 +6,7 @@ import { nswfDatabase } from "./firebase-nswf";
 import { ref, get, set, remove, update, onValue, off, Database } from "firebase/database";
 
 // Factory function to create platform-specific service
-export const createFirebaseService = (platform: 'default' | 'prime' | 'netflix' | 'nswf' = 'default') => {
+export const createFirebaseService = (platform: 'default' | 'prime' | 'netflix' | 'NSFW' = 'default') => {
   let db: Database;
   
   switch (platform) {
@@ -16,7 +16,7 @@ export const createFirebaseService = (platform: 'default' | 'prime' | 'netflix' 
     case 'netflix':
       db = netflixDatabase;
       break;
-    case 'nswf':
+    case 'NSFW':
       db = nswfDatabase;
       break;
     default:
@@ -100,4 +100,4 @@ export const {
   setData: setNswfData,
   removeData: removeNswfData,
   subscribeToData: subscribeToNswfData
-} = createFirebaseService('nswf');
+} = createFirebaseService('NSFW');

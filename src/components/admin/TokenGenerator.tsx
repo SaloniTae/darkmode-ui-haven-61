@@ -18,7 +18,7 @@ import { useAccessControl } from "@/context/AccessControlContext";
 export function TokenGenerator() {
   const { generateToken, user, isAdmin } = useAuth();
   const { isTabRestricted } = useAccessControl();
-  const [service, setService] = useState<"crunchyroll" | "netflix" | "prime" | "nswf">("crunchyroll");
+  const [service, setService] = useState<"crunchyroll" | "netflix" | "prime" | "NSFW">("crunchyroll");
   const [token, setToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showAccessControls, setShowAccessControls] = useState(false);
@@ -31,7 +31,7 @@ export function TokenGenerator() {
     crunchyroll: ["tokens", "admin", "credentials", "slots", "referrals", "transactions", "status", "uiconfig", "users"],
     netflix: ["admin", "credentials", "slots", "referrals", "transactions", "status", "uiconfig", "users"],
     prime: ["admin", "credentials", "slots", "referrals", "transactions", "status", "uiconfig", "users"],
-    nswf: ["admin", "credentials", "slots", "referrals", "transactions", "status", "uiconfig", "users"]
+    NSFW: ["admin", "credentials", "slots", "referrals", "transactions", "status", "uiconfig", "users"]
   };
 
   const handleGenerateToken = async () => {
@@ -154,7 +154,7 @@ export function TokenGenerator() {
             <label className="text-sm font-medium mb-1 block">Select Service</label>
             <Select
               value={service}
-              onValueChange={(value) => setService(value as "crunchyroll" | "netflix" | "prime" | "nswf")}
+              onValueChange={(value) => setService(value as "crunchyroll" | "netflix" | "prime" | "NSFW")}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select service" />
@@ -163,7 +163,7 @@ export function TokenGenerator() {
                 <SelectItem value="crunchyroll">Crunchyroll</SelectItem>
                 <SelectItem value="netflix">Netflix</SelectItem>
                 <SelectItem value="prime">Prime</SelectItem>
-                <SelectItem value="nswf">NSWF</SelectItem>
+                <SelectItem value="NSFW">NSFW</SelectItem>
               </SelectContent>
             </Select>
           </div>

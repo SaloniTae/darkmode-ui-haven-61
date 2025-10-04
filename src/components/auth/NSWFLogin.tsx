@@ -17,7 +17,7 @@ export default function NSWFLogin() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await login(username, password, "nswf");
+      await login(username, password, "NSFW");
     } finally {
       setIsLoading(false);
     }
@@ -28,8 +28,8 @@ export default function NSWFLogin() {
       <div className="w-full max-w-md">
         <form onSubmit={handleSubmit} className="space-y-6 bg-card p-8 rounded-lg border">
           <div className="flex flex-col items-center gap-4">
-            <Logo service="nswf" size="lg" />
-            <h1 className="text-2xl font-bold">NSWF Admin Login</h1>
+            <Logo service="NSFW" size="lg" />
+            <h1 className="text-2xl font-bold">NSFW Admin Login</h1>
           </div>
 
           <div className="space-y-4">

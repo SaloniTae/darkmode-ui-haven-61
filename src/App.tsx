@@ -75,8 +75,8 @@ const App = memo(() => (
                     </ProtectedRoute>
                   } />
                   
-                  <Route path="/nswf" element={
-                    <ProtectedRoute requiredService="nswf">
+                  <Route path="/NSFW" element={
+                    <ProtectedRoute requiredService="NSFW">
                       <NSWFAdmin />
                     </ProtectedRoute>
                   } />

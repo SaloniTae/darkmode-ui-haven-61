@@ -26,7 +26,7 @@ export const useFirebaseService = (service: ServiceType | string) => {
           removeData: removeNetflixData,
           subscribeToData: subscribeToNetflixData
         };
-      case 'nswf':
+      case 'NSFW':
         return {
           fetchData: fetchNswfData,
           updateData: updateNswfData,

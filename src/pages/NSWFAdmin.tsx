@@ -27,7 +27,7 @@ export default function NSWFAdmin() {
   const { refreshSettings } = useAccessControl();
   const dataFetchedRef = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
-  const { fetchData, subscribeToData, extractCredentials } = useFirebaseService('nswf');
+  const { fetchData, subscribeToData, extractCredentials } = useFirebaseService('NSFW');
 
   const loadData = useCallback(async () => {
     try {
@@ -35,7 +35,7 @@ export default function NSWFAdmin() {
       // Initial data load
       const data = await fetchData("/");
       setDbData(data);
-      toast.success("NSWF database loaded successfully");
+      toast.success("NSFW database loaded successfully");
       dataFetchedRef.current = true;
       
       // Refresh access settings after database is loaded
@@ -48,8 +48,8 @@ export default function NSWFAdmin() {
         }
       });
     } catch (error) {
-      console.error("Error loading NSWF database:", error);
-      toast.error("Failed to load NSWF database");
+      console.error("Error loading NSFW database:", error);
+      toast.error("Failed to load NSFW database");
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ export default function NSWFAdmin() {
     return <MainLayout className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-          <h2 className="text-xl font-medium">Loading NSWF database...</h2>
+          <h2 className="text-xl font-medium">Loading NSFW database...</h2>
         </div>
       </MainLayout>;
   }
@@ -92,7 +92,7 @@ export default function NSWFAdmin() {
     return <MainLayout>
         <div className="glass-morphism p-8 text-center">
           <h2 className="text-2xl font-bold mb-4">Database Error</h2>
-          <p className="text-red-400">Failed to load NSWF database. Please check your connection and try again.</p>
+          <p className="text-red-400">Failed to load NSFW database. Please check your connection and try again.</p>
         </div>
       </MainLayout>;
   }
@@ -113,19 +113,19 @@ export default function NSWFAdmin() {
           </TabsList>
           
           <RestrictedTab tabName="admin">
-            <AdminPanel adminConfig={dbData?.admin_config || { superior_admins: [], inferior_admins: [] }} service="nswf" />
+            <AdminPanel adminConfig={dbData?.admin_config || { superior_admins: [], inferior_admins: [] }} service="NSFW" />
           </RestrictedTab>
           
           <RestrictedTab tabName="credentials">
             <CredentialsPanel 
               credentials={extractCredentials(dbData)} 
               slots={dbData?.settings?.slots || {}} 
-              service="nswf" 
+              service="NSFW"
             />
           </RestrictedTab>
           
           <RestrictedTab tabName="slots">
-            <SlotsPanel slots={dbData?.settings?.slots || {}} service="nswf" />
+            <SlotsPanel slots={dbData?.settings?.slots || {}} service="NSFW" />
           </RestrictedTab>
           
           <RestrictedTab tabName="referrals">
@@ -138,16 +138,16 @@ export default function NSWFAdmin() {
                 required_point: 0
               }} 
               freeTrialClaims={dbData?.free_trial_claims || {}}
-              service="nswf"
+              service="NSFW"
             />
           </RestrictedTab>
           
           <RestrictedTab tabName="transactions">
-            <TransactionsPanel transactions={dbData?.transactions || {}} usedOrderIds={dbData?.used_orderids || {}} service="nswf" />
+            <TransactionsPanel transactions={dbData?.transactions || {}} usedOrderIds={dbData?.used_orderids || {}} service="NSFW" />
           </RestrictedTab>
           
           <RestrictedTab tabName="status">
-            <StatusPanel transactions={dbData?.transactions || {}} service="nswf" />
+            <StatusPanel transactions={dbData?.transactions || {}} service="NSFW" />
           </RestrictedTab>
           
           <RestrictedTab tabName="uiconfig">
@@ -214,12 +214,12 @@ export default function NSWFAdmin() {
                 welcome_text: ""
               }
             }} 
-              service="nswf" 
+              service="NSFW"
               maintenanceEnabled={dbData?.maintenance?.enabled || false} />
           </RestrictedTab>
           
           <RestrictedTab tabName="users">
-            <UsersPanel users={dbData?.users || {}} service="nswf" />
+            <UsersPanel users={dbData?.users || {}} service="NSFW" />
           </RestrictedTab>
         </Tabs>
       </div>

@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredService?: "crunchyroll" | "netflix" | "prime" | "nswf";
+  requiredService?: "crunchyroll" | "netflix" | "prime" | "NSFW";
 }
 
 export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProps) => {
@@ -67,7 +67,7 @@ export const ProtectedRoute = ({ children, requiredService }: ProtectedRouteProp
 
   // Check for tab access - parse the current tab from the URL if in admin
   const currentPath = location.pathname;
-  const tabMatches = currentPath.match(/\/(crunchyroll|netflix|prime|nswf)\/?(.*)?/);
+  const tabMatches = currentPath.match(/\/(crunchyroll|netflix|prime|NSFW)\/?(.*)?/);
   
   if (tabMatches && tabMatches[2] && user) {
     const currentTab = tabMatches[2];
