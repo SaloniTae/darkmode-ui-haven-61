@@ -15,7 +15,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "@/components/ThemeProvider";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type ServiceType = "crunchyroll" | "netflix" | "prime" | "nswf";
+type ServiceType = "crunchyroll" | "netflix" | "prime";
 
 export default function LoginPage() {
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
@@ -123,8 +123,6 @@ export default function LoginPage() {
         return "Netflix";
       case "prime":
         return "Prime Video";
-      case "nswf":
-        return "NSWF";
       default:
         return "Service";
     }
@@ -166,7 +164,7 @@ export default function LoginPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 gap-4">
-                    {(["crunchyroll", "netflix", "prime", "nswf"] as ServiceType[]).map((service, index) => (
+                    {(["crunchyroll", "netflix", "prime"] as ServiceType[]).map((service, index) => (
                       <Button 
                         key={service} 
                         onClick={() => handleServiceSelect(service)} 

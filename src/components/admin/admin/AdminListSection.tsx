@@ -78,29 +78,23 @@ export function AdminListSection({
         )}
 
         <div className="grid gap-3">
-          {adminList && adminList.length > 0 ? (
-            adminList.map((admin) => (
-              <div 
-                key={admin} 
-                className="flex items-center justify-between p-3 rounded-md glass-morphism"
-              >
-                <span className="font-medium">{admin}</span>
-                {isEditing && (
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={() => confirmRemoveAdmin(admin)}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))
-          ) : (
-            <p className="text-muted-foreground text-sm text-center py-4">
-              No {adminType} admins configured
-            </p>
-          )}
+          {adminList.map((admin) => (
+            <div 
+              key={admin} 
+              className="flex items-center justify-between p-3 rounded-md glass-morphism"
+            >
+              <span className="font-medium">{admin}</span>
+              {isEditing && (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => confirmRemoveAdmin(admin)}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 

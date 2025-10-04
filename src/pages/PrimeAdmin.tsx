@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminPanel } from "@/components/admin/AdminPanel";
@@ -16,18 +15,14 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
 import { RestrictedTab } from "@/components/config/RestrictedTab";
-import { useAccessControl } from "@/context/AccessControlContext";
 
 export default function PrimeAdmin() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [dbData, setDbData] = useState<DatabaseSchema | null>(null);
-  const activeTab = searchParams.get("tab") || "admin";
-  const { isAuthenticated, user } = useAuth();
-  const { refreshSettings } = useAccessControl();
+  const { isAuthenticated } = useAuth();
   const dataFetchedRef = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
-  const { fetchData, subscribeToData, extractCredentials } = useFirebaseService('prime');
+  const { fetchData, subscribeToData } = useFirebaseService('prime');
 
   const loadData = useCallback(async () => {
     try {
@@ -38,10 +33,6 @@ export default function PrimeAdmin() {
       toast.success("Prime database loaded successfully");
       dataFetchedRef.current = true;
       
-      // Refresh access settings after database is loaded
-      await refreshSettings();
-      
-
       // Set up real-time listener
       unsubscribeRef.current = subscribeToData("/", (realtimeData) => {
         if (realtimeData) {
@@ -54,7 +45,7 @@ export default function PrimeAdmin() {
     } finally {
       setLoading(false);
     }
-  }, [fetchData, subscribeToData, refreshSettings, user?.id]);
+  }, [fetchData, subscribeToData]);
 
   useEffect(() => {
     // Only fetch data if authenticated and not already fetched
@@ -69,12 +60,6 @@ export default function PrimeAdmin() {
       }
     };
   }, [isAuthenticated, loadData]);
-
-  // Clear session storage when user logs out
-  useEffect(() => {
-    if (!user) {
-    }
-  }, [user]);
 
   // If not authenticated, don't show anything as the ProtectedRoute component
   // will handle the redirect to login page
@@ -100,10 +85,9 @@ export default function PrimeAdmin() {
       </MainLayout>;
   }
 
-  return (
-    <MainLayout>
+  return <MainLayout>
       <div className="space-y-8">
-        <Tabs value={activeTab} onValueChange={(value) => setSearchParams({ tab: value })} className="w-full">
+        <Tabs defaultValue="admin" className="w-full">
           <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-8 h-auto p-1 glass-morphism shadow-lg">
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="admin">Admins</TabsTrigger>
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="credentials">Credentials</TabsTrigger>
@@ -120,11 +104,49 @@ export default function PrimeAdmin() {
           </RestrictedTab>
           
           <RestrictedTab tabName="credentials">
-            <CredentialsPanel 
-              credentials={extractCredentials(dbData)} 
-              slots={dbData?.settings?.slots || {}} 
-              service="prime" 
-            />
+            <CredentialsPanel credentials={{
+              cred1: dbData?.cred1 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
+              cred2: dbData?.cred2 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
+              cred3: dbData?.cred3 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
+              cred4: dbData?.cred4 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
+              ...Object.fromEntries(
+                Object.entries(dbData || {})
+                  .filter(([key]) => key.startsWith('cred') && !['cred1', 'cred2', 'cred3', 'cred4'].includes(key))
+                  .map(([key, value]) => [key, value])
+              )
+            }} slots={dbData?.settings?.slots || {}} service="prime" />
           </RestrictedTab>
           
           <RestrictedTab tabName="slots">
@@ -178,25 +200,14 @@ export default function PrimeAdmin() {
               locked_flow: {
                 locked_text: ""
               },
-              maintenance: {
-                alert: "",
-                alert_notify: "",
-                back_message: "",
-                caption: "",
-                message: "",
-                mode: "photo",
-                photo_url: ""
-              },
               out_of_stock: {
                 photo_url: "",
-                stock_text: ""
+                messages: []
               },
-              oor_pay_screen: {
-                UPI_ID: "",
-                MERCHANT_NAME: "",
-                MID: "",
-                TEMPLATE_URL: "",
-                LOGO_URL: ""
+              phonepe_screen: {
+                caption: "",
+                followup_text: "",
+                photo_url: ""
               },
               referral_info: {
                 photo_url: ""
@@ -216,9 +227,7 @@ export default function PrimeAdmin() {
                 welcome_photo: "",
                 welcome_text: ""
               }
-            }} 
-              service="prime" 
-              maintenanceEnabled={dbData?.maintenance?.enabled || false} />
+            }} service="prime" />
           </RestrictedTab>
           
           <RestrictedTab tabName="users">
@@ -226,6 +235,5 @@ export default function PrimeAdmin() {
           </RestrictedTab>
         </Tabs>
       </div>
-    </MainLayout>
-  );
+    </MainLayout>;
 }

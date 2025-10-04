@@ -1,7 +1,7 @@
 
 import { Session, User } from "@supabase/supabase-js";
 
-export type ServiceType = "crunchyroll" | "netflix" | "prime" | "nswf";
+export type ServiceType = "crunchyroll" | "netflix" | "prime";
 
 export interface AuthContextType {
   isAuthenticated: boolean;

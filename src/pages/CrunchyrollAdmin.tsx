@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminPanel } from "@/components/admin/AdminPanel";
@@ -17,18 +16,14 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useFirebaseService } from "@/hooks/useFirebaseService";
 import { RestrictedTab } from "@/components/config/RestrictedTab";
-import { useAccessControl } from "@/context/AccessControlContext";
 
 export default function CrunchyrollAdmin() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [dbData, setDbData] = useState<DatabaseSchema | null>(null);
-  const activeTab = searchParams.get("tab") || "tokens";
-  const { isAuthenticated, user } = useAuth();
-  const { refreshSettings } = useAccessControl();
+  const { isAuthenticated } = useAuth();
   const dataFetchedRef = useRef(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
-  const { fetchData, subscribeToData, extractCredentials } = useFirebaseService('crunchyroll');
+  const { fetchData, subscribeToData } = useFirebaseService('crunchyroll');
 
   const loadData = useCallback(async () => {
     try {
@@ -38,9 +33,6 @@ export default function CrunchyrollAdmin() {
       setDbData(data);
       toast.success("Crunchyroll database loaded successfully");
       dataFetchedRef.current = true;
-      
-      // Refresh access settings after database is loaded
-      await refreshSettings();
       
       // Set up real-time listener
       unsubscribeRef.current = subscribeToData("/", (realtimeData) => {
@@ -54,7 +46,7 @@ export default function CrunchyrollAdmin() {
     } finally {
       setLoading(false);
     }
-  }, [fetchData, subscribeToData, refreshSettings, user?.id]);
+  }, [fetchData, subscribeToData]);
 
   useEffect(() => {
     // Only fetch data if authenticated and not already fetched
@@ -70,12 +62,6 @@ export default function CrunchyrollAdmin() {
     };
   }, [isAuthenticated, loadData]);
 
-  // Clear session storage when user logs out
-  useEffect(() => {
-    if (!user) {
-    }
-  }, [user]);
-
   // If not authenticated, don't show anything as the ProtectedRoute component
   // will handle the redirect to login page
   if (!isAuthenticated) {
@@ -83,31 +69,26 @@ export default function CrunchyrollAdmin() {
   }
 
   if (loading) {
-    return (
-      <MainLayout className="flex items-center justify-center min-h-screen">
+    return <MainLayout className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
           <h2 className="text-xl font-medium">Loading Crunchyroll database...</h2>
         </div>
-      </MainLayout>
-    );
+      </MainLayout>;
   }
 
   if (!dbData) {
-    return (
-      <MainLayout>
+    return <MainLayout>
         <div className="glass-morphism p-8 text-center">
           <h2 className="text-2xl font-bold mb-4">Database Error</h2>
           <p className="text-red-400">Failed to load Crunchyroll database. Please check your connection and try again.</p>
         </div>
-      </MainLayout>
-    );
+      </MainLayout>;
   }
 
-  return (
-    <MainLayout>
+  return <MainLayout>
       <div className="space-y-8">
-        <Tabs value={activeTab} onValueChange={(value) => setSearchParams({ tab: value })} className="w-full">
+        <Tabs defaultValue="tokens" className="w-full">
           <TabsList className="w-full mb-6 grid grid-cols-2 md:grid-cols-9 h-auto p-1 glass-morphism shadow-lg">
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="tokens">Tokens</TabsTrigger>
             <TabsTrigger className="py-2.5 text-sm font-medium transition-all hover:bg-white/10" value="admin">Admins</TabsTrigger>
@@ -129,11 +110,49 @@ export default function CrunchyrollAdmin() {
           </RestrictedTab>
           
           <RestrictedTab tabName="credentials">
-            <CredentialsPanel 
-              credentials={extractCredentials(dbData)} 
-              slots={dbData?.settings?.slots || {}} 
-              service="crunchyroll" 
-            />
+            <CredentialsPanel credentials={{
+              cred1: dbData?.cred1 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
+              cred2: dbData?.cred2 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
+              cred3: dbData?.cred3 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
+              cred4: dbData?.cred4 || {
+                belongs_to_slot: "",
+                email: "",
+                password: "",
+                expiry_date: "",
+                locked: 0,
+                max_usage: 0,
+                usage_count: 0
+              },
+              ...Object.fromEntries(
+                Object.entries(dbData || {})
+                  .filter(([key]) => key.startsWith('cred') && !['cred1', 'cred2', 'cred3', 'cred4'].includes(key))
+                  .map(([key, value]) => [key, value])
+              )
+            }} slots={dbData?.settings?.slots || {}} service="crunchyroll" />
           </RestrictedTab>
           
           <RestrictedTab tabName="slots">
@@ -187,25 +206,14 @@ export default function CrunchyrollAdmin() {
               locked_flow: {
                 locked_text: ""
               },
-              maintenance: {
-                alert: "",
-                alert_notify: "",
-                back_message: "",
-                caption: "",
-                message: "",
-                mode: "photo",
-                photo_url: ""
-              },
               out_of_stock: {
                 photo_url: "",
-                stock_text: ""
+                messages: []
               },
-              oor_pay_screen: {
-                UPI_ID: "",
-                MERCHANT_NAME: "",
-                MID: "",
-                TEMPLATE_URL: "",
-                LOGO_URL: ""
+              phonepe_screen: {
+                caption: "",
+                followup_text: "",
+                photo_url: ""
               },
               referral_info: {
                 photo_url: ""
@@ -225,9 +233,7 @@ export default function CrunchyrollAdmin() {
                 welcome_photo: "",
                 welcome_text: ""
               }
-            }} 
-              service="crunchyroll"
-              maintenanceEnabled={dbData?.maintenance?.enabled || false} />
+            }} service="crunchyroll" />
           </RestrictedTab>
           
           <RestrictedTab tabName="users">
@@ -235,6 +241,5 @@ export default function CrunchyrollAdmin() {
           </RestrictedTab>
         </Tabs>
       </div>
-    </MainLayout>
-  );
+    </MainLayout>;
 }
